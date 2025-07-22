@@ -64,6 +64,9 @@ const Auth = () => {
           case 'guide':
             navigate('/guide');
             break;
+          case 'Sysadmin':
+            navigate('/Admin');
+            break;
           default:
             navigate('/');
             break;

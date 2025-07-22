@@ -302,36 +302,16 @@ const VehiclesPage = () => {
 
     try {
       // Dummy API call - replace with your actual endpoint
-      /*
-      const response = await api.post('/transport/vehicles', {
+      
+      const response = await api.post('/transport/addvehicles', {
         ...formData,
         seats: parseInt(formData.seats),
         pricingPerKm: parseFloat(formData.pricingPerKm),
         year: parseInt(formData.year)
       });
-      */
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock successful response
-      const newVehicle = {
-        _id: Date.now().toString(),
-        ...formData,
-        seats: parseInt(formData.seats),
-        pricingPerKm: parseFloat(formData.pricingPerKm),
-        year: parseInt(formData.year),
-        userId: 'currentUser'
-      };
-
-      // Update local state (remove when using real API)
-      const updatedVehicles = [...vehicles, newVehicle];
-      setVehicles(updatedVehicles);
       
-      // Update filtered vehicles
-      if (selectedFilter === "all" || selectedFilter === formData.vehicleType) {
-        setFilteredVehicles(prev => [...prev, newVehicle]);
-      }
+
+      
 
       // Reset form and close modal
       setFormData({
@@ -347,6 +327,8 @@ const VehiclesPage = () => {
       });
       setShowAddModal(false);
       setError('');
+
+      await fetchVehicles(); // Refresh vehicles list after adding
 
     } catch (err) {
       console.error('Error adding vehicle:', err);

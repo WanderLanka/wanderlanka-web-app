@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "./axiosConfig.js"; // Use your existing axios config
 import "./Rooms.css";
 
 const RoomsPage = () => {
+  const navigate=useNavigate();
   const { hotelid } = useParams();
   const [rooms, setRooms] = useState([]);
   const [filteredRooms, setFilteredRooms] = useState([]);
@@ -13,6 +14,38 @@ const RoomsPage = () => {
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [hotelData, setHotelData] = useState(null);
+  
+  // Add Room Modal State
+  const [showAddRoomModal, setShowAddRoomModal] = useState(false);
+  const [addRoomLoading, setAddRoomLoading] = useState(false);
+  const [addRoomForm, setAddRoomForm] = useState({
+    roomcount: '',
+    availableroomcount: '',
+    type: 'luxury',
+    isAC: false,
+    maxOccupancy: '',
+    isPetsAllowed: false,
+    pricePerNight: '',
+    pricePerDay: '',
+    description: '',
+    images: ['']
+  });
+  const [addRoomErrors, setAddRoomErrors] = useState({});
+
+  // Update Room Modal State
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateForm, setUpdateForm] = useState({
+    roomcount: '',
+    availableroomcount: '',
+    type: '',
+    isAC: false,
+    maxOccupancy: '',
+    isPetsAllowed: false,
+    pricePerNight: '',
+    pricePerDay: ''
+  });
+  const [updateErrors, setUpdateErrors] = useState({});
 
   // API call using your existing axios configuration
   const fetchRooms = async () => {
@@ -84,6 +117,191 @@ const RoomsPage = () => {
     setSelectedRoom(room);
     setShowRoomModal(true);
   };
+
+  // Handle room image click (separate from card click)
+  const handleRoomImageClick = (room, e) => {
+    e.stopPropagation(); // Prevent card click event
+    setSelectedRoom(room);
+    setShowRoomModal(true);
+  };
+
+  // Handle update details button click
+  const handleUpdateDetails = () => {
+    // Pre-fill form with existing room data
+    setUpdateForm({
+      roomcount: selectedRoom?.roomcount || '',
+      availableroomcount: selectedRoom?.availableroomcount || '',
+      type: selectedRoom?.type || '',
+      isAC: selectedRoom?.isAC || false,
+      maxOccupancy: selectedRoom?.maxOccupancy || '',
+      isPetsAllowed: selectedRoom?.isPetsAllowed || false,
+      pricePerNight: selectedRoom?.pricePerNight || '',
+      pricePerDay: selectedRoom?.pricePerDay || ''
+    });
+    setUpdateErrors({});
+    setShowRoomModal(false);
+    setShowUpdateModal(true);
+  };
+
+  // Handle update form input changes
+  const handleUpdateInput = (e) => {
+    const { name, value, type, checked } = e.target;
+    setUpdateForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    if (updateErrors[name]) {
+      setUpdateErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  // Validate update form
+  const validateUpdateForm = () => {
+    const errors = {};
+    if (!updateForm.roomcount || updateForm.roomcount < 1) errors.roomcount = 'Required';
+    if (!updateForm.availableroomcount || updateForm.availableroomcount < 0) errors.availableroomcount = 'Required';
+    if (!updateForm.type) errors.type = 'Required';
+    if (!updateForm.maxOccupancy || updateForm.maxOccupancy < 1) errors.maxOccupancy = 'Required';
+    if (!updateForm.pricePerNight || updateForm.pricePerNight < 1) errors.pricePerNight = 'Required';
+    if (!updateForm.pricePerDay || updateForm.pricePerDay < 1) errors.pricePerDay = 'Required';
+    setUpdateErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle update form submission
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateUpdateForm()) return;
+    
+    setUpdateLoading(true);
+    
+    try {
+      // Dummy API call - replace with your actual API endpoint
+      const response = await api.put(`accommodation/updateroom/${selectedRoom._id}`, {
+        ...updateForm,
+        roomcount: parseInt(updateForm.roomcount),
+        availableroomcount: parseInt(updateForm.availableroomcount),
+        maxOccupancy: parseInt(updateForm.maxOccupancy),
+        pricePerDay: parseInt(updateForm.pricePerDay),
+        pricePerNight: parseInt(updateForm.pricePerNight),
+        isAC: Boolean(updateForm.isAC),
+        isPetsAllowed: Boolean(updateForm.isPetsAllowed)
+      });
+      
+      console.log('Room updated successfully:', response.data);
+      
+      // Close modal and refresh data
+      closeUpdateModal();
+      await fetchRooms();
+      
+      // Show success message
+      alert('Room details updated successfully!');
+    } catch (err) {
+      console.error('Error updating room:', err);
+      setUpdateErrors({ form: 'Failed to update room. Please try again.' });
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  // Close update modal
+  const closeUpdateModal = () => {
+    setShowUpdateModal(false);
+    setUpdateErrors({});
+    setSelectedRoom(null);
+  };
+
+  // Add Room Modal Handlers
+  const openAddRoomModal = () => {
+    setAddRoomForm({
+      roomcount: '',
+      availableroomcount: '',
+      type: 'luxury',
+      isAC: false,
+      maxOccupancy: '',
+      isPetsAllowed: false,
+      pricePerNight: '',
+      pricePerDay: '',
+      description: '',
+      images: ['']
+    });
+    setAddRoomErrors({});
+    setShowAddRoomModal(true);
+  };
+  const closeAddRoomModal = () => {
+    setShowAddRoomModal(false);
+    setAddRoomErrors({});
+  };
+  const handleAddRoomInput = (e) => {
+    const { name, value, type, checked } = e.target;
+    setAddRoomForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    if (addRoomErrors[name]) {
+      setAddRoomErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+  // Only allow one image URL for now
+  const handleAddRoomImage = (e) => {
+    setAddRoomForm(prev => ({ ...prev, images: [e.target.value] }));
+    if (addRoomErrors.images) {
+      setAddRoomErrors(prev => ({ ...prev, images: '' }));
+    }
+  };
+  // Validate add room form
+  const validateAddRoomForm = () => {
+    const errors = {};
+    if (!addRoomForm.roomcount || addRoomForm.roomcount < 1) errors.roomcount = 'Required';
+    if (!addRoomForm.availableroomcount || addRoomForm.availableroomcount < 0) errors.availableroomcount = 'Required';
+    if (!addRoomForm.type) errors.type = 'Required';
+    if (!addRoomForm.maxOccupancy || addRoomForm.maxOccupancy < 1) errors.maxOccupancy = 'Required';
+    if (!addRoomForm.pricePerNight || addRoomForm.pricePerNight < 1) errors.pricePerNight = 'Required';
+    if (!addRoomForm.pricePerDay || addRoomForm.pricePerDay < 1) errors.pricePerDay = 'Required';
+    setAddRoomErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  // Dummy API call for add room
+  // Fixed handleAddRoomSubmit function
+const handleAddRoomSubmit = async (e) => {
+  e.preventDefault();
+  if (!validateAddRoomForm()) return;
+  
+  setAddRoomLoading(true);
+  
+  try {
+    const response = await api.post('/accommodation/addrooms', {
+      ...addRoomForm,
+      roomcount: parseInt(addRoomForm.roomcount),
+      availableroomcount: parseInt(addRoomForm.availableroomcount), 
+      maxOccupancy: parseInt(addRoomForm.maxOccupancy),
+      pricePerDay: parseInt(addRoomForm.pricePerDay),
+      pricePerNight: parseInt(addRoomForm.pricePerNight), // Fixed typo
+      isAC: Boolean(addRoomForm.isAC),
+      isPetsAllowed: Boolean(addRoomForm.isPetsAllowed),
+      hotel: hotelid
+    });
+    
+    if (response.status === 201) {
+      // Close modal first
+      closeAddRoomModal();
+      setError('');
+      
+      // Refresh the rooms data from the API
+      await fetchRooms();
+      
+      // Optional: Show success message
+      // setSuccessMessage('Room type added successfully!');
+    } else {
+      throw new Error('Failed to add room');
+    }
+  } catch (err) {
+    console.error('Error adding room:', err);
+    setAddRoomErrors({ form: 'Failed to add room. Please try again.' });
+  } finally {
+    setAddRoomLoading(false);
+  }
+};
 
   // Close room modal
   const closeRoomModal = () => {
@@ -161,19 +379,6 @@ const RoomsPage = () => {
 
   return (
     <div className="rooms-page">
-      {/* Debug Info - Remove this after fixing */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{ padding: '10px', background: '#f0f0f0', margin: '10px', fontSize: '12px' }}>
-          <strong>Debug Info:</strong><br/>
-          Hotel Data: {hotelData ? JSON.stringify(Object.keys(hotelData)) : 'null'}<br/>
-          Rooms Array Length: {rooms.length}<br/>
-          Filtered Rooms Length: {filteredRooms.length}<br/>
-          Selected Filter: {selectedFilter}<br/>
-          {rooms.length > 0 && (
-            <>First Room Keys: {JSON.stringify(Object.keys(rooms[0] || {}))}</>
-          )}
-        </div>
-      )}
 
       {/* Page Header */}
       <div className="page-header">
@@ -220,11 +425,83 @@ const RoomsPage = () => {
           <div className="filter-right">
             <button 
               className="add-room-btn"
-              onClick={() => console.log("Add room type - to be implemented")}
+              onClick={openAddRoomModal}
             >
               <span className="btn-icon">➕</span>
               Add Room Type
             </button>
+      {/* Add Room Modal */}
+      {showAddRoomModal && (
+        <div className="modal-overlay" onClick={closeAddRoomModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Add Room Type</h2>
+              <button className="modal-close" onClick={closeAddRoomModal}>✕</button>
+            </div>
+            <form className="room-form" onSubmit={handleAddRoomSubmit}>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Room Count *</label>
+                  <input type="number" name="roomcount" min="1" value={addRoomForm.roomcount} onChange={handleAddRoomInput} required className={addRoomErrors.roomcount ? 'error' : ''} />
+                  {addRoomErrors.roomcount && <span className="error-text">{addRoomErrors.roomcount}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Available Room Count *</label>
+                  <input type="number" name="availableroomcount" min="0" value={addRoomForm.availableroomcount} onChange={handleAddRoomInput} required className={addRoomErrors.availableroomcount ? 'error' : ''} />
+                  {addRoomErrors.availableroomcount && <span className="error-text">{addRoomErrors.availableroomcount}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Room Type *</label>
+                  <select name="type" value={addRoomForm.type} onChange={handleAddRoomInput} required className={addRoomErrors.type ? 'error' : ''}>
+                    <option value="luxury">Luxury</option>
+                    <option value="standard">Standard</option>
+                  </select>
+                  {addRoomErrors.type && <span className="error-text">{addRoomErrors.type}</span>}
+                </div>
+                <div className="form-group">
+                  <label>AC</label>
+                  <input type="checkbox" name="isAC" checked={addRoomForm.isAC} onChange={handleAddRoomInput} />
+                </div>
+                <div className="form-group">
+                  <label>Max Occupancy *</label>
+                  <input type="number" name="maxOccupancy" min="1" value={addRoomForm.maxOccupancy} onChange={handleAddRoomInput} required className={addRoomErrors.maxOccupancy ? 'error' : ''} />
+                  {addRoomErrors.maxOccupancy && <span className="error-text">{addRoomErrors.maxOccupancy}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Pet Friendly</label>
+                  <input type="checkbox" name="isPetsAllowed" checked={addRoomForm.isPetsAllowed} onChange={handleAddRoomInput} />
+                </div>
+                <div className="form-group">
+                  <label>Price Per Night *</label>
+                  <input type="number" name="pricePerNight" min="1" value={addRoomForm.pricePerNight} onChange={handleAddRoomInput} required className={addRoomErrors.pricePerNight ? 'error' : ''} />
+                  {addRoomErrors.pricePerNight && <span className="error-text">{addRoomErrors.pricePerNight}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Price Per Day *</label>
+                  <input type="number" name="pricePerDay" min="1" value={addRoomForm.pricePerDay} onChange={handleAddRoomInput} required className={addRoomErrors.pricePerDay ? 'error' : ''} />
+                  {addRoomErrors.pricePerDay && <span className="error-text">{addRoomErrors.pricePerDay}</span>}
+                </div>
+                <div className="form-group full-width">
+                  <label>Description</label>
+                  <textarea name="description" value={addRoomForm.description} onChange={handleAddRoomInput} />
+                </div>
+                <div className="form-group full-width">
+                  <label>Image URL</label>
+                  <input type="text" name="images" value={addRoomForm.images[0]} onChange={handleAddRoomImage} placeholder="https://..." />
+                  {addRoomErrors.images && <span className="error-text">{addRoomErrors.images}</span>}
+                </div>
+              </div>
+              {addRoomErrors.form && <div className="error-message">{addRoomErrors.form}</div>}
+              <div className="form-actions">
+                <button type="button" className="form-btn form-btn--cancel" onClick={closeAddRoomModal} disabled={addRoomLoading}>Cancel</button>
+                <button type="submit" className="form-btn form-btn--submit" disabled={addRoomLoading}>
+                  {addRoomLoading ? 'Adding...' : 'Add Room Type'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
           </div>
         </div>
       </div>
@@ -267,6 +544,8 @@ const RoomsPage = () => {
                       src={room.images && room.images[0] ? room.images[0] : 'https://via.placeholder.com/400x250?text=No+Image'} 
                       alt={getRoomTypeDisplay(room.type)}
                       className="room-image"
+                      onClick={(e) => handleRoomImageClick(room, e)}
+                      style={{ cursor: 'pointer' }}
                       onError={(e) => {
                         const placeholder = 'https://via.placeholder.com/400x250?text=No+Image';
                         if (e.target.src !== placeholder) {
@@ -275,7 +554,7 @@ const RoomsPage = () => {
                       }}
                     />
                     <div className="room-overlay">
-                      <span className="view-details">View Details</span>
+                      <span className="view-details">Click image for details</span>
                     </div>
                   </div>
 
@@ -465,31 +744,153 @@ const RoomsPage = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Single Action Button */}
               <div className="modal-actions">
                 <button 
                   className="action-btn action-btn--update"
-                  onClick={() => console.log("Edit room type - to be implemented")}
+                  onClick={handleUpdateDetails}
                 >
                   <span className="btn-icon">✏️</span>
-                  Edit Room Type
-                </button>
-                <button 
-                  className="action-btn action-btn--status"
-                  onClick={() => console.log("Manage availability - to be implemented")}
-                >
-                  <span className="btn-icon">📅</span>
-                  Manage Availability
-                </button>
-                <button 
-                  className="action-btn action-btn--pricing"
-                  onClick={() => console.log("Update pricing - to be implemented")}
-                >
-                  <span className="btn-icon">💰</span>
-                  Update Pricing
+                  Update Details
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Room Modal */}
+      {showUpdateModal && selectedRoom && (
+        <div className="modal-overlay" onClick={closeUpdateModal}>
+          <div className="modal-content update-room-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Update Room Details</h2>
+              <button className="modal-close" onClick={closeUpdateModal}>✕</button>
+            </div>
+            <form className="room-form" onSubmit={handleUpdateSubmit}>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Room Count *</label>
+                  <input 
+                    type="number" 
+                    name="roomcount" 
+                    min="1" 
+                    value={updateForm.roomcount} 
+                    onChange={handleUpdateInput} 
+                    required 
+                    className={updateErrors.roomcount ? 'error' : ''} 
+                  />
+                  {updateErrors.roomcount && <span className="error-text">{updateErrors.roomcount}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Available Room Count *</label>
+                  <input 
+                    type="number" 
+                    name="availableroomcount" 
+                    min="0" 
+                    value={updateForm.availableroomcount} 
+                    onChange={handleUpdateInput} 
+                    required 
+                    className={updateErrors.availableroomcount ? 'error' : ''} 
+                  />
+                  {updateErrors.availableroomcount && <span className="error-text">{updateErrors.availableroomcount}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Room Type *</label>
+                  <select 
+                    name="type" 
+                    value={updateForm.type} 
+                    onChange={handleUpdateInput} 
+                    required 
+                    className={updateErrors.type ? 'error' : ''}
+                  >
+                    <option value="">Select Type</option>
+                    <option value="luxury">Luxury</option>
+                    <option value="standard">Standard</option>
+                  </select>
+                  {updateErrors.type && <span className="error-text">{updateErrors.type}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Max Occupancy *</label>
+                  <input 
+                    type="number" 
+                    name="maxOccupancy" 
+                    min="1" 
+                    value={updateForm.maxOccupancy} 
+                    onChange={handleUpdateInput} 
+                    required 
+                    className={updateErrors.maxOccupancy ? 'error' : ''} 
+                  />
+                  {updateErrors.maxOccupancy && <span className="error-text">{updateErrors.maxOccupancy}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Price Per Night (LKR) *</label>
+                  <input 
+                    type="number" 
+                    name="pricePerNight" 
+                    min="1" 
+                    value={updateForm.pricePerNight} 
+                    onChange={handleUpdateInput} 
+                    required 
+                    className={updateErrors.pricePerNight ? 'error' : ''} 
+                  />
+                  {updateErrors.pricePerNight && <span className="error-text">{updateErrors.pricePerNight}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Price Per Day (LKR) *</label>
+                  <input 
+                    type="number" 
+                    name="pricePerDay" 
+                    min="1" 
+                    value={updateForm.pricePerDay} 
+                    onChange={handleUpdateInput} 
+                    required 
+                    className={updateErrors.pricePerDay ? 'error' : ''} 
+                  />
+                  {updateErrors.pricePerDay && <span className="error-text">{updateErrors.pricePerDay}</span>}
+                </div>
+                <div className="form-group checkbox-group">
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      name="isAC" 
+                      checked={updateForm.isAC} 
+                      onChange={handleUpdateInput} 
+                    />
+                    Air Conditioning
+                  </label>
+                </div>
+                <div className="form-group checkbox-group">
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      name="isPetsAllowed" 
+                      checked={updateForm.isPetsAllowed} 
+                      onChange={handleUpdateInput} 
+                    />
+                    Pets Allowed
+                  </label>
+                </div>
+              </div>
+              {updateErrors.form && <div className="error-message">{updateErrors.form}</div>}
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  className="form-btn form-btn--cancel" 
+                  onClick={closeUpdateModal} 
+                  disabled={updateLoading}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="form-btn form-btn--submit" 
+                  disabled={updateLoading}
+                >
+                  {updateLoading ? 'Updating...' : 'Update Room'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
