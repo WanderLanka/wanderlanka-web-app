@@ -1,31 +1,38 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import Home from './Home.jsx'
-import Auth from './Auth.jsx'
 
-import ProtectedRoute from './ProtectedRoute.jsx'
+// Import from organized folders
+import { 
+  Home, 
+  Auth,
+  TransportDashboard,
+  VehiclesPage,
+  AccommodationDashboard,
+  AccommodationPayments,
+  HotelsPage,
+  Rooms,
+  Bookings,
+  AdminDashboard,
+  AdminPayment,
+  AdminRequests,
+  AdminComplains
+} from './pages';
+
+import { ProtectedRoute } from './components';
+
+import {
+  TransportLayout,
+  AccommodationLayout,
+  AdminLayout
+} from './layouts';
 
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate // ✅ Make sure to import this
+  Navigate
 } from 'react-router-dom';
-import TransportLayout from './TransportLayout.jsx'
-import TransportDashboard from './TransportDashboard.jsx'
-import VehiclesPage from './VehiclesPage.jsx'
-import AccommodationLayout from './AccommodationLayout.jsx'
-import AccommodationDashboard from './AccommodationDashboard.jsx'
-import AccommodationPayments from './AccommodationPayments.jsx'
-import HotelsPage from './HotelsPage.jsx'
-import Rooms from './Rooms.jsx'
-import Bookings from './Bookings.jsx'
-import AdminLayout from './AdminLayout.jsx'
-import AdminDashboard from './AdminDashboard.jsx'
-import AdminPayment from './AdminPayment.jsx'
-import AdminRequests from './AdminRequests.jsx'
-import AdminComplains from './AdminComplains.jsx'
 // import TransportDetailsPage from './TransportDetailsPage.jsx'
 // HotelDetailsPage from './HotelDetailsPage.jsx'
 
