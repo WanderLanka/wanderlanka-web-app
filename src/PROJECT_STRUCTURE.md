@@ -4,15 +4,19 @@
 
 ```
 src/
-├── components/          # Reusable UI components
+├── components/          # Reusable UI components (using Tailwind CSS)
 │   ├── AccommodationNavbar.jsx
 │   ├── AdminNavBar.jsx
 │   ├── TransportNavBar.jsx
 │   ├── ProtectedRoute.jsx
+│   ├── Button.jsx      # Styled with Tailwind CSS
+│   ├── Card.jsx        # Styled with Tailwind CSS
 │   └── index.js        # Barrel exports
-├── pages/              # Route/Page components
+├── pages/              # Route/Page components (using Tailwind CSS)
 │   ├── Auth.jsx
 │   ├── Home.jsx
+│   ├── LandingPage.jsx # Styled with Tailwind CSS
+│   ├── NotFound.jsx    # Styled with Tailwind CSS
 │   ├── AccommodationDashboard.jsx
 │   ├── AccommodationPayments.jsx
 │   ├── AdminComplains.jsx
@@ -34,7 +38,7 @@ src/
 │   ├── auth.js
 │   ├── axiosConfig.js
 │   └── index.js        # Barrel exports
-├── styles/             # CSS files
+├── styles/             # Legacy CSS files
 │   ├── AccommodationNavbar.css
 │   ├── AccommodationPayments.css
 │   ├── AccomodationDashboard.css
@@ -52,38 +56,69 @@ src/
 │   └── VehiclesPage.css
 ├── hooks/              # Custom React hooks (empty for now)
 ├── utils/              # Utility functions (empty for now)
-├── index.css           # Main CSS file
+├── index.css           # Main CSS file with Tailwind imports
 └── main.jsx            # App entry point
 ```
 
-## 📝 Import Guidelines
+## 🎨 Styling Approach
 
-### Using Barrel Exports
-You can now import multiple components from the same folder using barrel exports:
+### Tailwind CSS Integration
+The project now uses **Tailwind CSS** for styling modern components:
 
-```jsx
-// Instead of multiple imports
-import Home from './pages/Home.jsx';
-import Auth from './pages/Auth.jsx';
+- **LandingPage**: Fully styled with Tailwind CSS classes
+- **Button Component**: Custom button with multiple variants using Tailwind
+- **Card Component**: Flexible card component with Tailwind styling  
+- **NotFound Page**: 404 error page with Tailwind styling
 
-// Use barrel exports
-import { Home, Auth } from './pages';
+### Tailwind Configuration
+Custom colors and utilities defined in `tailwind.config.js`:
+```js
+colors: {
+  wanderlanka: {
+    blue: '#2c5aa0',
+    darkblue: '#1e3d6f', 
+    coral: '#ff6b6b',
+    lightcoral: '#ff5252',
+  }
+}
 ```
 
-### CSS Imports
-CSS files are now organized in the `styles/` folder:
+### Legacy CSS
+Existing components still use traditional CSS files in the `styles/` folder. These will be gradually migrated to Tailwind CSS.
 
+## 📝 Import Guidelines
+
+### Using Tailwind Classes
 ```jsx
-// In components folder
-import '../styles/ComponentName.css';
+// Tailwind CSS example
+<div className="bg-wanderlanka-blue text-white px-6 py-3 rounded-full">
+  WanderLanka Button
+</div>
+```
 
-// In pages folder  
-import '../styles/PageName.css';
+### Using New Components
+```jsx
+// Import modern components
+import { Button, Card } from '../components';
+
+// Usage
+<Button variant="primary" size="large">Click Me</Button>
+<Card hover={true} padding="large">Card Content</Card>
+```
+
+### Using Barrel Exports
+```jsx
+// Import multiple components from the same folder
+import { LandingPage, NotFound, Auth } from './pages';
+```
+
+### Legacy CSS Imports
+```jsx
+// For components still using CSS files
+import '../styles/ComponentName.css';
 ```
 
 ### Service Imports
-Service files like API configurations are in the `services/` folder:
-
 ```jsx
 import api from '../services/axiosConfig';
 import { getRoleFromToken } from '../services/auth';
@@ -108,8 +143,19 @@ import { getRoleFromToken } from '../services/auth';
 
 ## 📋 Benefits of This Structure
 
+- **Modern Styling**: Tailwind CSS for rapid, responsive design
+- **Component Reusability**: Flexible Button and Card components
+- **Responsive Design**: Mobile-first approach with Tailwind breakpoints
+- **Consistent Design System**: Custom color palette and utilities
 - **Modularity**: Easy to find and maintain specific types of files
 - **Scalability**: Clear separation of concerns for future growth
-- **Reusability**: Components can be easily reused across pages
 - **Import Organization**: Cleaner imports with barrel exports
 - **Team Collaboration**: Consistent structure for multiple developers
+
+## 🎯 Future Migration
+
+Legacy components will be gradually migrated from CSS to Tailwind CSS for:
+- Better performance
+- Smaller bundle sizes  
+- Consistent design system
+- Easier maintenance

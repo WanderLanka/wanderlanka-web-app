@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "../styles/AdminComplains.css";
+// import "../styles/AdminComplains.css"; // Converted to Tailwind CSS
 
 const AdminComplains = () => {
   // State management

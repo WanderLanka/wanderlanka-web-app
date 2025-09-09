@@ -1,52 +1,62 @@
-import "../styles/TransportDashboard.css";
+// import "../styles/TransportDashboard.css"; // Converted to Tailwind CSS
 
 const AccommodationDashboard = () => {
   return (
-    <div className="dashboard">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-content">
-          <div className="hero-text">
-            <h1 className="hero-title">Accommodation Operations Center</h1>
-            <p className="hero-subtitle">
+      <section className="bg-gradient-to-b from-slate-950 to-slate-900 relative py-20 overflow-hidden">
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 via-transparent to-indigo-500/10 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+        
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[1.618fr,1fr] gap-16 items-center relative z-10">
+          <div className="text-white">
+            <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight mb-6 bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent tracking-tight">
+              Accommodation Operations Center
+            </h1>
+            <p className="text-xl text-slate-300 leading-relaxed max-w-xl">
               Streamline your property management, optimize bookings, and enhance guest experiences with WanderLanka's 
               comprehensive accommodation management platform.
             </p>
           </div>
-          <div className="hero-stats">
-            <div className="stat-card">
-              <div className="stat-number">24/7</div>
-              <div className="stat-label">Guest Support</div>
+          
+          <div className="grid gap-6">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 hover:border-blue-500/30 transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-4xl font-extrabold text-blue-200 mb-2 leading-none">24/7</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">Guest Support</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">99.9%</div>
-              <div className="stat-label">Platform Uptime</div>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 hover:border-blue-500/30 transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-4xl font-extrabold text-blue-200 mb-2 leading-none">99.9%</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">Platform Uptime</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">750+</div>
-              <div className="stat-label">Partner Properties</div>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 hover:border-blue-500/30 transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-4xl font-extrabold text-blue-200 mb-2 leading-none">750+</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">Partner Properties</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Quick Overview Cards */}
-      <section className="overview-section">
-        <div className="section-header">
-          <h2 className="section-title">Business Overview</h2>
-          <p className="section-subtitle">Real-time insights into your accommodation operations</p>
+      {/* Overview Cards Section */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">Business Overview</h2>
+          <p className="text-xl text-slate-600">Real-time insights into your accommodation operations</p>
         </div>
         
-        <div className="overview-grid">
-          <div className="overview-card">
-            <div className="card-icon card-icon--primary">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow duration-150">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-blue-600">
                 <path d="M19 7H16V6A4 4 0 0 0 8 6V7H5A1 1 0 0 0 4 8V19A3 3 0 0 0 7 22H17A3 3 0 0 0 20 19V8A1 1 0 0 0 19 7ZM10 6A2 2 0 0 1 14 6V7H10V6ZM18 19A1 1 0 0 1 17 20H7A1 1 0 0 1 6 19V9H8V10A1 1 0 0 0 10 10A1 1 0 0 0 10 10V9H14V10A1 1 0 0 0 16 10A1 1 0 0 0 14 10V9H18V19Z" fill="currentColor"/>
               </svg>
             </div>
-            <div className="card-content">
-              <h3 className="card-title">Property Management</h3>
-              <p className="card-description">
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-slate-900">Property Management</h3>
+              <p className="text-slate-600">
                 Manage room inventory, pricing strategies, and property amenities 
                 with intelligent automation and real-time updates.
               </p>

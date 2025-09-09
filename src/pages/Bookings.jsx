@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "../styles/Bookings.css";
+// import "../styles/Bookings.css"; // Converted to Tailwind CSS
 import api from "../services/axiosConfig";
 
 const Bookings = () => {
@@ -146,10 +146,10 @@ const Bookings = () => {
 
   if (loading) {
     return (
-      <div className="bookings-page">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <div className="loading-text">Loading bookings data...</div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <div className="text-slate-600 font-medium">Loading bookings data...</div>
         </div>
       </div>
     );
@@ -157,13 +157,18 @@ const Bookings = () => {
 
   if (errors) {
     return (
-      <div className="bookings-page">
-        <div className="error-message">
-          <span className="error-icon">⚠️</span>
-          <span>{errors}</span>
-        </div>
-        <div className="error-actions">
-          <button className="retry-btn" onClick={fetchBookings}>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center space-x-2 text-red-700">
+              <span className="text-lg">⚠️</span>
+              <span>{errors}</span>
+            </div>
+          </div>
+          <button 
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-150"
+            onClick={fetchBookings}
+          >
             Retry
           </button>
         </div>
@@ -172,26 +177,26 @@ const Bookings = () => {
   }
 
   return (
-    <div className="bookings-page">
+    <div className="min-h-screen bg-slate-50">
       {/* Executive Page Header */}
-      <div className="page-header">
-        <div className="header-content">
-          <div className="header-text">
-            <h1 className="page-title">Bookings Management</h1>
-            <p className="page-subtitle">
-              Monitor and manage all hotel bookings with real-time status tracking and comprehensive analytics.
-            </p>
-          </div>
+      <div className="bg-white border-b border-slate-200 px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+            <div className="flex-1 mb-6 lg:mb-0">
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">Bookings Management</h1>
+              <p className="text-xl text-slate-600">
+                Monitor and manage all hotel bookings with real-time status tracking and comprehensive analytics.
+              </p>
+            </div>
           
-          <div className="header-stats">
-            <div className="stats-grid">
-              <div className="stat-item">
-                <div className="stat-number">{stats.total}</div>
-                <div className="stat-label">Total Bookings</div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
+                <div className="text-sm text-slate-500 uppercase tracking-wider font-medium">Total Bookings</div>
               </div>
-              <div className="stat-item">
-                <div className="stat-number">LKR {stats.totalRevenue.toLocaleString()}</div>
-                <div className="stat-label">Total Revenue</div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-emerald-600">LKR {stats.totalRevenue.toLocaleString()}</div>
+                <div className="text-sm text-slate-500 uppercase tracking-wider font-medium">Total Revenue</div>
               </div>
             </div>
           </div>
@@ -199,9 +204,9 @@ const Bookings = () => {
       </div>
 
       {/* Filter Section */}
-      <div className="filter-section">
-        <div className="filter-container">
-          <div className="filter-left">
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
             <span className="filter-label">Status Filter:</span>
             <select 
               className="filter-dropdown"

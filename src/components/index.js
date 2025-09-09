@@ -1,5 +1,26 @@
 // Components barrel exports
-export { default as AccommodationNavbar } from './AccommodationNavbar.jsx';
-export { default as AdminNavBar } from './AdminNavBar.jsx';
-export { default as TransportNavBar } from './TransportNavBar.jsx';
+
+// Domain-specific components
+export { AdminNavbar } from './admin';
+export { TransportNavbar } from './transport';
+export { AccommodationNavbar } from './accommodation';
+
+// Landing page components
+export { default as LandingNavbar } from './landing/Navbar';
+
+// Common Components
+export { 
+  Button, 
+  Logo, 
+  NavButton, 
+  Card, 
+  Avatar, 
+  NavLink, 
+  Container, 
+  Header, 
+  Input, 
+  Modal 
+} from './common';
+
+// Other Components
 export { default as ProtectedRoute } from './ProtectedRoute.jsx';

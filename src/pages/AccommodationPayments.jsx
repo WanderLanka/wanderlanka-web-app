@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "../styles/AccommodationPayments.css";
+// import "../styles/AccommodationPayments.css"; // Converted to Tailwind CSS
 // import api from "../services/axiosConfig"; // You'll uncomment this when using real API
 
 const AccommodationPayments = () => {

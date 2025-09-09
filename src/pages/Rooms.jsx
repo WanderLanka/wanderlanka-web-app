@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/axiosConfig.js"; // Use your existing axios config
-import "../styles/Rooms.css";
+// import "../styles/Rooms.css"; // Converted to Tailwind CSS
 
 const RoomsPage = () => {
   const navigate=useNavigate();

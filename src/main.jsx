@@ -6,6 +6,8 @@ import './index.css'
 import { 
   Home, 
   Auth,
+  LandingPage,
+  NotFound,
   TransportDashboard,
   VehiclesPage,
   AccommodationDashboard,
@@ -40,6 +42,9 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Router>
       <Routes>
+        {/* Landing Page - Default Route */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/auth" element={<Auth />} />
       
 
@@ -70,7 +75,8 @@ createRoot(document.getElementById('root')).render(
       </Route>
     </Route>
 
-       
+        {/* Catch all route for 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   </StrictMode>,

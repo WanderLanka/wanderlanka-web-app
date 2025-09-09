@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../services/axiosConfig.js"; // Use your existing axios config
-import "../styles/VehiclesPage.css";
+// import "../styles/VehiclesPage.css"; // Converted to Tailwind CSS
 
 const VehiclesPage = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -400,77 +400,83 @@ const VehiclesPage = () => {
   }
 
   return (
-    <div className="vehicles-page">
+    <div className="min-h-screen bg-slate-50">
       {/* Page Header */}
-      <div className="page-header">
-        <div className="header-content">
-          <div className="header-text">
-            <h1 className="page-title">Fleet Management</h1>
-            <p className="page-subtitle">
-              Manage your vehicle fleet, track availability, and monitor performance
-            </p>
-          </div>
-          <div className="header-stats">
-            <div className="stat-item">
-              <span className="stat-number">{vehicles.length}</span>
-              <span className="stat-label">Total Vehicles</span>
+      <div className="bg-white border-b border-slate-200 px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">Fleet Management</h1>
+              <p className="text-slate-600 text-lg">
+                Manage your vehicle fleet, track availability, and monitor performance
+              </p>
             </div>
-            <div className="stat-item">
-              <span className="stat-number">
-                {vehicles.filter(v => v.availability === "available").length}
-              </span>
-              <span className="stat-label">Available</span>
+            <div className="flex space-x-8 ml-8">
+              <div className="text-center">
+                <span className="block text-3xl font-bold text-emerald-600">{vehicles.length}</span>
+                <span className="text-sm text-slate-500 uppercase tracking-wider font-medium">Total Vehicles</span>
+              </div>
+              <div className="text-center">
+                <span className="block text-3xl font-bold text-emerald-600">
+                  {vehicles.filter(v => v.availability === "available").length}
+                </span>
+                <span className="text-sm text-slate-500 uppercase tracking-wider font-medium">Available</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filter Section */}
-      <div className="filter-section">
-        <div className="filter-container">
-          <div className="filter-left">
-            <label className="filter-label">Filter by Vehicle Type:</label>
-            <select 
-              className="filter-dropdown"
-              value={selectedFilter}
-              onChange={(e) => handleFilterChange(e.target.value)}
-            >
-              <option value="all">All Vehicles</option>
-              <option value="car">Cars</option>
-              <option value="van">Vans</option>
-              <option value="bus">Buses</option>
-            </select>
-            <div className="results-count">
-              {filteredVehicles.length} vehicle{filteredVehicles.length !== 1 ? 's' : ''} found
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <label className="text-sm font-medium text-slate-700">Filter by Vehicle Type:</label>
+              <select 
+                className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                value={selectedFilter}
+                onChange={(e) => handleFilterChange(e.target.value)}
+              >
+                <option value="all">All Vehicles</option>
+                <option value="car">Cars</option>
+                <option value="van">Vans</option>
+                <option value="bus">Buses</option>
+              </select>
+              <div className="text-sm text-slate-500">
+                {filteredVehicles.length} vehicle{filteredVehicles.length !== 1 ? 's' : ''} found
+              </div>
             </div>
-          </div>
-          <div className="filter-right">
-            <button 
-              className="add-vehicle-btn"
-              onClick={() => setShowAddModal(true)}
-            >
-              <span className="btn-icon">➕</span>
-              Add Vehicle
-            </button>
+            <div className="flex space-x-3">
+              <button 
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 flex items-center space-x-2"
+                onClick={() => setShowAddModal(true)}
+              >
+                <span className="text-lg">➕</span>
+                Add Vehicle
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="error-message">
-          <span className="error-icon">⚠️</span>
-          {error}
+        <div className="mx-6 mb-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center space-x-2 text-red-700">
+            <span className="text-lg">⚠️</span>
+            <span>{error}</span>
+          </div>
         </div>
       )}
 
       {/* Vehicles Grid */}
-      <div className="vehicles-container">
+      <div className="max-w-7xl mx-auto px-6 pb-8">
         {filteredVehicles.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">🚗</div>
-            <h3 className="empty-title">No vehicles found</h3>
-            <p className="empty-description">
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🚗</div>
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No vehicles found</h3>
+            <p className="text-slate-600">
               {selectedFilter === "all" 
                 ? "No vehicles are currently registered in your fleet."
                 : `No ${selectedFilter}s found in your fleet.`
@@ -478,14 +484,14 @@ const VehiclesPage = () => {
             </p>
           </div>
         ) : (
-          <div className="vehicles-grid">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVehicles.map((vehicle) => (
-              <div key={vehicle._id || vehicle.id} className="vehicle-card">
+              <div key={vehicle._id || vehicle.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-150">
                 {/* Card Header */}
-                <div className="card-header">
-                  <div className="vehicle-type">
-                    <span className="vehicle-icon">{getVehicleIcon(vehicle.vehicleType)}</span>
-                    <span className="vehicle-type-text">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl">{getVehicleIcon(vehicle.vehicleType)}</span>
+                    <span className="font-medium text-slate-800">
                       {vehicle.vehicleType.charAt(0).toUpperCase() + vehicle.vehicleType.slice(1)}
                     </span>
                   </div>
@@ -495,55 +501,55 @@ const VehiclesPage = () => {
                 </div>
 
                 {/* Vehicle Info */}
-                <div className="vehicle-info">
-                  <h3 className="vehicle-brand">{vehicle.brand}</h3>
-                  <div className="vehicle-details">
-                    <div className="detail-row">
-                      <span className="detail-label">License Plate:</span>
-                      <span className="detail-value">{vehicle.licensePlate}</span>
+                <div className="px-6 py-4">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">{vehicle.brand}</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">License Plate:</span>
+                      <span className="text-sm font-medium text-slate-900">{vehicle.licensePlate}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Year:</span>
-                      <span className="detail-value">{vehicle.year}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Year:</span>
+                      <span className="text-sm font-medium text-slate-900">{vehicle.year}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Seats:</span>
-                      <span className="detail-value">{vehicle.seats} passengers</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Seats:</span>
+                      <span className="text-sm font-medium text-slate-900">{vehicle.seats} passengers</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Air Conditioning:</span>
-                      <span className={`detail-value ${vehicle.ac ? 'text-success' : 'text-warning'}`}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Air Conditioning:</span>
+                      <span className={`text-sm font-medium ${vehicle.ac ? 'text-emerald-600' : 'text-amber-600'}`}>
                         {vehicle.ac ? "Yes" : "No"}
                       </span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Fuel Type:</span>
-                      <span className="detail-value">{vehicle.fuelType}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Fuel Type:</span>
+                      <span className="text-sm font-medium text-slate-900">{vehicle.fuelType}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Pricing */}
-                <div className="pricing-section">
-                  <div className="price-label">Rate per Kilometer</div>
-                  <div className="price-value">LKR {vehicle.pricingPerKm.toFixed(2)}</div>
+                <div className="px-6 py-3 bg-slate-50 border-t border-slate-100">
+                  <div className="text-xs text-slate-600 mb-1">Rate per Kilometer</div>
+                  <div className="text-lg font-bold text-emerald-600">LKR {vehicle.pricingPerKm.toFixed(2)}</div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="card-actions">
+                <div className="px-6 py-4 border-t border-slate-100 flex space-x-2">
                   <button 
-                    className="action-btn action-btn--update"
+                    className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 flex items-center justify-center space-x-1"
                     onClick={() => handleUpdateVehicle(vehicle._id || vehicle.id)}
                   >
-                    <span className="btn-icon">✏️</span>
-                    Update
+                    <span>✏️</span>
+                    <span>Update</span>
                   </button>
                   <button 
-                    className="action-btn action-btn--remove"
+                    className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 flex items-center justify-center space-x-1"
                     onClick={() => handleRemoveVehicle(vehicle._id || vehicle.id)}
                   >
-                    <span className="btn-icon">🗑️</span>
-                    Remove
+                    <span>🗑️</span>
+                    <span>Remove</span>
                   </button>
                 </div>
               </div>
@@ -554,14 +560,14 @@ const VehiclesPage = () => {
 
       {/* Add Vehicle Modal */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Add New Vehicle</h2>
-              <button className="modal-close" onClick={closeModal}>✕</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={closeModal}>
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-6 border-b border-slate-200">
+              <h2 className="text-xl font-semibold text-slate-900">Add New Vehicle</h2>
+              <button className="text-slate-400 hover:text-slate-600 text-2xl" onClick={closeModal}>✕</button>
             </div>
 
-            <form onSubmit={handleAddVehicle} className="vehicle-form">
+            <form onSubmit={handleAddVehicle} className="p-6">
               <div className="form-grid">
                 {/* Vehicle Type */}
                 <div className="form-group">

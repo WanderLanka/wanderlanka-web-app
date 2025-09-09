@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import TransportNavbar from "../components/TransportNavBar.jsx";
+import TransportNavbar from "../components/transport/TransportNavBar.jsx";
 
 const TransportLayout = () => {
   return (

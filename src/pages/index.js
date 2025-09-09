@@ -1,6 +1,8 @@
 // Pages barrel exports
 export { default as Home } from './Home.jsx';
 export { default as Auth } from './Auth.jsx';
+export { default as LandingPage } from './LandingPage.jsx';
+export { default as NotFound } from './NotFound.jsx';
 export { default as AccommodationDashboard } from './AccommodationDashboard.jsx';
 export { default as AccommodationPayments } from './AccommodationPayments.jsx';
 export { default as AdminComplains } from './AdminComplains.jsx';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../services/axiosConfig.js";
-import "../styles/HotelsPage.css";
+// import "../styles/HotelsPage.css"; // Converted to Tailwind CSS
 import { Navigate, useNavigate } from "react-router-dom";
 
 const HotelsPage = () => {
