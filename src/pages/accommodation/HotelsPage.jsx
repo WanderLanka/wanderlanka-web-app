@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../services/axiosConfig.js";
+import api from "../../services/axiosConfig.js";
 // import "../styles/HotelsPage.css"; // Converted to Tailwind CSS
 import { Navigate, useNavigate } from "react-router-dom";
 
@@ -227,7 +227,7 @@ const HotelsPage = () => {
     }
     setUpdateLoading(true);
     try {
-      const response = await api.put(`/accommodation/updatehotel/${selectedHotel._id || selectedHotel.id}`, {
+      await api.put(`/accommodation/updatehotel/${selectedHotel._id || selectedHotel.id}`, {
         totalRooms: parseInt(updateFormData.totalRooms),
         phone: updateFormData.phone,
         checkInTime: updateFormData.checkInTime,

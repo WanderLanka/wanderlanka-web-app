@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import api from "../services/axiosConfig.js"; // Use your existing axios config
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "react-router-dom";
+import api from "../../services/axiosConfig.js"; // Use your existing axios config
 // import "../styles/Rooms.css"; // Converted to Tailwind CSS
 
 const RoomsPage = () => {
-  const navigate=useNavigate();
   const { hotelid } = useParams();
   const [rooms, setRooms] = useState([]);
   const [filteredRooms, setFilteredRooms] = useState([]);
@@ -48,7 +47,7 @@ const RoomsPage = () => {
   const [updateErrors, setUpdateErrors] = useState({});
 
   // API call using your existing axios configuration
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -100,7 +99,7 @@ const RoomsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [hotelid]);
 
   // Filter rooms based on selected type
   const handleFilterChange = (filterType) => {
@@ -364,7 +363,7 @@ const handleAddRoomSubmit = async (e) => {
       setError("Hotel ID is required");
       setLoading(false);
     }
-  }, [hotelid]);
+  }, [hotelid, fetchRooms]);
 
   if (loading) {
     return (

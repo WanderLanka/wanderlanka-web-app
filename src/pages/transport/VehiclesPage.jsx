@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../services/axiosConfig.js"; // Use your existing axios config
+import api from "../../services/axiosConfig.js"; // Use your existing axios config
 // import "../styles/VehiclesPage.css"; // Converted to Tailwind CSS
 
 const VehiclesPage = () => {
@@ -303,7 +303,7 @@ const VehiclesPage = () => {
     try {
       // Dummy API call - replace with your actual endpoint
       
-      const response = await api.post('/transport/addvehicles', {
+      await api.post('/transport/addvehicles', {
         ...formData,
         seats: parseInt(formData.seats),
         pricingPerKm: parseFloat(formData.pricingPerKm),

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 // import "../styles/Auth.css"; // Commented out to avoid conflicts with Tailwind CSS
-import api from "../services/axiosConfig"; // Adjust the import path as necessary
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);

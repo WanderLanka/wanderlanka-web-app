@@ -43,8 +43,7 @@ const HeroSection = ({ sriLankanDestinations, onStartJourney }) => {
                 size="lg"
                 className="group bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 hover:from-green-600 hover:via-emerald-600 hover:to-teal-700 transform hover:scale-105 transition-all duration-300 shadow-2xl px-10 py-5 text-lg font-bold rounded-2xl"
               >
-                Start Your Sri Lankan Journey
-                <ChevronRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />
+                Start Your Journey
               </Button>
             </div>
 

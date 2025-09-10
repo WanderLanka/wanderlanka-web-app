@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Logo from '../common/Logo';
 import NavButton from '../common/NavButton';
@@ -6,10 +7,9 @@ import NavButton from '../common/NavButton';
 const Navbar = ({ 
   isMenuOpen, 
   setIsMenuOpen, 
-  scrollToSection, 
-  setShowLogin, 
-  setShowSignup 
+  scrollToSection
 }) => {
+  const navigate = useNavigate();
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md shadow-xl border-b border-green-100/50 animate-slide-down">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,12 +34,12 @@ const Navbar = ({
             </NavButton>
             <NavButton 
               variant="secondary"
-              onClick={() => setShowLogin(true)}>
+              onClick={() => navigate('/auth')}>
               Login
             </NavButton>
             <NavButton 
               variant="primary"
-              onClick={() => setShowSignup(true)}
+              onClick={() => navigate('/auth')}
             >
               Sign Up
             </NavButton>
@@ -98,7 +98,7 @@ const Navbar = ({
               <NavButton 
                 variant="mobileSecondary"
                 onClick={() => {
-                  setShowLogin(true);
+                  navigate('/auth');
                   setIsMenuOpen(false);
                 }}
               >
@@ -107,7 +107,7 @@ const Navbar = ({
               <NavButton 
                 variant="mobilePrimary"
                 onClick={() => {
-                  setShowSignup(true);
+                  navigate('/auth');
                   setIsMenuOpen(false);
                 }}
               >

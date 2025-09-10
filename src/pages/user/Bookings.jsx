@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 // import "../styles/Bookings.css"; // Converted to Tailwind CSS
-import api from "../services/axiosConfig";
+import api from "../../services/axiosConfig";
 
 const Bookings = () => {
   const [bookings, setBookings] = useState([]);

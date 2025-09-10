@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-// import "../styles/AccommodationPayments.css"; // Converted to Tailwind CSS
-// import api from "../services/axiosConfig"; // You'll uncomment this when using real API
+import { useState, useEffect, useCallback, useMemo } from "react";
+// import "../../styles/AccommodationPayments.css"; // Converted to Tailwind CSS
+// import api from "../../services/axiosConfig"; // You'll uncomment this when using real API
 
 const AccommodationPayments = () => {
   const [payments, setPayments] = useState([]);
@@ -13,7 +13,7 @@ const AccommodationPayments = () => {
   const [filterHotel, setFilterHotel] = useState("all"); // New hotel filter state
 
   // Dummy data - only successful payments
-  const dummyPayments = [
+  const dummyPayments = useMemo(() => [
     {
       _id: "payment001",
       bookingId: "booking123",
@@ -164,7 +164,7 @@ const AccommodationPayments = () => {
       checkOut: "2025-07-25T11:00:00Z",
       nights: 3
     }
-  ];
+  ], []);
 
   // Function to generate and download PDF receipt
   const downloadReceipt = (payment) => {
@@ -392,7 +392,7 @@ const AccommodationPayments = () => {
     });
   };
 
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     setLoading(true);
     setError("");
     
@@ -425,11 +425,11 @@ const AccommodationPayments = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dummyPayments]);
 
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, [fetchPayments]);
 
   // Filter payments based on status, method, and hotel
   const filteredPayments = payments.filter(payment => {

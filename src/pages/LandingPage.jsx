@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 // Import components
 import Navbar from '../components/landing/Navbar';
-import AuthModal from '../components/landing/AuthModal';
 import HeroSection from '../components/landing/HeroSection';
 import DestinationsSection from '../components/landing/DestinationsSection';
 import ExperiencesSection from '../components/landing/ExperiencesSection';
@@ -13,18 +13,20 @@ import BackgroundElements from '../components/landing/BackgroundElements';
 
 const LandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
+  const navigate = useNavigate();
 
   const sriLankanDestinations = [
     "Sigiriya", "Kandy", "Galle", "Ella", "Nuwara Eliya", "Anuradhapura", "Polonnaruwa", "Yala",
     "Arugam Bay", "Mirissa", "Hikkaduwa", "Bentota", "Trincomalee", "Dambulla", "Horton Plains"
   ];
 
-  const handleStartJourney = () => setShowSignup(true);
-  const handleAuthToggle = () => {
-    setShowLogin(!showLogin);
-    setShowSignup(!showSignup);
+  const handleStartJourney = () => navigate('/auth');
+
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -34,40 +36,23 @@ const LandingPage = () => {
       <Navbar 
         isMenuOpen={isMenuOpen}
         setIsMenuOpen={setIsMenuOpen}
-        setShowLogin={setShowLogin}
-        setShowSignup={setShowSignup}
+        scrollToSection={scrollToSection}
       />
 
-      {showLogin && (
-        <AuthModal 
-          isLogin={true} 
-          onClose={() => setShowLogin(false)}
-          onToggleMode={handleAuthToggle}
-        />
-      )}
+      <HeroSection 
+        sriLankanDestinations={sriLankanDestinations}
+        onStartJourney={handleStartJourney}
+      />
 
-        {showSignup && (
-            <AuthModal 
-            isLogin={false} 
-            onClose={() => setShowSignup(false)}
-            onToggleMode={handleAuthToggle}
-            />
-        )}
+      <DestinationsSection />
 
-        <HeroSection 
-            sriLankanDestinations={sriLankanDestinations}
-            onStartJourney={handleStartJourney}
-        />
+      <ExperiencesSection />
 
-        <DestinationsSection />
+      <CultureSection />
 
-        <ExperiencesSection />
-
-        <CultureSection />
-
-        <TestimonialsSection />      
-        
-        <PlanningSection onStartPlanning={handleStartJourney} />
+      <TestimonialsSection />      
+      
+      <PlanningSection onStartPlanning={handleStartJourney} />
 
       <Footer onStartJourney={handleStartJourney} />
     </div>
