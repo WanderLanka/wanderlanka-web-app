@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { authAPI } from "../../services/api";
 // import "../styles/Auth.css"; // Commented out to avoid conflicts with Tailwind CSS
 
 const Auth = () => {
@@ -32,25 +32,28 @@ const Auth = () => {
     setError("");
 
     try {
-      const endpoint = isLogin ? "/auth/login" : "/auth/register";
-      const payload = isLogin 
-        ? { username: formData.username, password: formData.password }
-        : formData;
+      let response;
+      
+      if (isLogin) {
+        // Use authAPI login method
+        response = await authAPI.login({ 
+          username: formData.username, 
+          password: formData.password 
+        });
+      } else {
+        // Use authAPI register method
+        response = await authAPI.register(formData);
+      }
 
-      const response = await axios.post(`http://localhost:3000${endpoint}`, payload);
+      // Store token and user data (authAPI already handles this, but keeping for consistency)
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
 
-      // Store token and user data
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-
-      // Set default authorization header for future requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-
-      console.log(`${isLogin ? 'Login' : 'Registration'} successful:`, response.data);
-      console.log("User data:", response.data.user.role);
+      console.log(`${isLogin ? 'Login' : 'Registration'} successful:`, response);
+      console.log("User data:", response.user.role);
       
       if(isLogin) {
-        switch (response.data.user.role) {
+        switch (response.user.role) {
           case 'tourist':
             navigate('/tourist');
             break;
@@ -64,14 +67,14 @@ const Auth = () => {
             navigate('/guide');
             break;
           case 'Sysadmin':
-            navigate('/Admin');
+            navigate('/admin');
             break;
           default:
             navigate('/');
             break;
         }
       } else {
-        navigate('/Auth');
+        navigate('/auth');
       }
       
     } catch (error) {

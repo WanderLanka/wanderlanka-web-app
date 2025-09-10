@@ -1,10 +1,11 @@
 // axiosConfig.js - Updated with debug logging
 import axios from 'axios';
+import config from '../config/config.js';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
-  timeout: 10000,
+  baseURL: config.API_BASE_URL,
+  timeout: config.API_TIMEOUT,
 });
 
 // Request interceptor to add token to headers
