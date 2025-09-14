@@ -14,7 +14,8 @@ const Input = ({
   required = false,
   size = 'md',
   variant = 'default',
-  icon,
+  leftIcon,
+  rightIcon,
   className = '',
   labelClassName = '',
   ...props 
@@ -54,9 +55,9 @@ const Input = ({
         </label>
       )}
       <div className="relative">
-        {icon && (
+        {leftIcon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            {icon}
+            {leftIcon}
           </div>
         )}
         <input
@@ -68,9 +69,14 @@ const Input = ({
           onFocus={onFocus}
           disabled={disabled}
           required={required}
-          className={icon ? `pl-10 ${inputClasses}` : inputClasses}
+          className={leftIcon ? `pl-10 ${inputClasses}` : inputClasses}
           {...props}
         />
+        {rightIcon && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            {rightIcon}
+          </div>
+        )}
       </div>
       {error && (
         <p className="mt-2 text-sm text-red-600">{error}</p>

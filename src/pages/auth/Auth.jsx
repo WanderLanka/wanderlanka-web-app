@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { authAPI } from "../../services/api";
-// import "../styles/Auth.css"; // Commented out to avoid conflicts with Tailwind CSS
+import { useState, useEffect } from "react";
+import { User, Mail, Lock } from "lucide-react";
+import Input from "../../components/common/Input";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,12 +8,30 @@ const Auth = () => {
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
     role: "tourist"
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const navigate = useNavigate();
+   const sriLankaImages = [
+    "https://images.unsplash.com/photo-1522310193626-604c5ef8be43?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // beach
+    "https://images.unsplash.com/photo-1642498041677-d26b9dfc5e61?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // temple
+    "https://images.unsplash.com/photo-1653151106419-b91300e4be19?q=80&w=1173&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // wildlife
+    "https://images.unsplash.com/photo-1525849306000-cc26ceb5c1d7?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",  // mountains
+    "https://images.unsplash.com/photo-1566650576880-6740b03eaad1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+  ];
+
+  const [currentImage, setCurrentImage] = useState(0);
+
+   // Change image every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage(prev => (prev + 1) % sriLankaImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [sriLankaImages.length]);
+
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -22,7 +39,6 @@ const Auth = () => {
       ...prev,
       [id]: value
     }));
-    // Clear error when user starts typing
     if (error) setError("");
   };
 
@@ -32,54 +48,40 @@ const Auth = () => {
     setError("");
 
     try {
-      let response;
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      if (isLogin) {
-        // Use authAPI login method
-        response = await authAPI.login({ 
-          username: formData.username, 
-          password: formData.password 
-        });
-      } else {
-        // Use authAPI register method
-        response = await authAPI.register(formData);
-      }
-
-      // Store token and user data (authAPI already handles this, but keeping for consistency)
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
-
-      console.log(`${isLogin ? 'Login' : 'Registration'} successful:`, response);
-      console.log("User data:", response.user.role);
-      
-      if(isLogin) {
-        switch (response.user.role) {
-          case 'tourist':
-            navigate('/tourist');
-            break;
-          case 'transport':
-            navigate('/transport');
-            break;
-          case 'accommodation':
-            navigate('/accommodation');
-            break;
-          case 'guide':
-            navigate('/guide');
-            break;
-          case 'Sysadmin':
-            navigate('/admin');
-            break;
-          default:
-            navigate('/');
-            break;
+      // Mock successful response
+      const mockResponse = {
+        token: "mock-token-123",
+        user: {
+          id: 1,
+          username: formData.username,
+          email: formData.email || "user@example.com",
+          role: formData.role || "tourist"
         }
-      } else {
-        navigate('/auth');
+      };
+
+      console.log(`${isLogin ? 'Login' : 'Registration'} successful:`, mockResponse);
+      
+      // Show success message
+      setError("");
+      alert(`${isLogin ? 'Login' : 'Registration'} successful! Welcome ${mockResponse.user.username}!`);
+      
+      // Reset form if registration
+      if (!isLogin) {
+        setFormData({
+          username: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          role: "tourist"
+        });
       }
       
     } catch (error) {
-      console.error(`${isLogin ? 'Login' : 'Registration'} failed:`, error.response?.data || error.message);
-      setError(error.response?.data?.error || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
+      console.error(`${isLogin ? 'Login' : 'Registration'} failed:`, error);
+      setError(`${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -91,136 +93,187 @@ const Auth = () => {
       username: "",
       email: "",
       password: "",
+      confirmPassword: "",
       role: "tourist"
     });
     setError("");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5 font-sans">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-green-600 to-green-700 p-10 text-center text-white">
-          <h1 className="text-4xl font-bold mb-2 font-serif">WanderLanka</h1>
-          <p className="text-lg opacity-90 font-normal">
-            {isLogin ? "Welcome back! Please log in." : "Create your account to get started."}
-          </p>
-        </div>
+    <div className="min-h-screen flex bg-white">
+     
+     <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        {sriLankaImages.map((img, index) => (
+          <img
+            key={index}
+            src={img}
+            alt="Sri Lanka"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+              index === currentImage ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))}
+      </div>
 
-        {/* Form Container */}
-        <div className="p-10">
+      {/* Right Side - Form Section */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">🏝️</span>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">WanderLanka</h1>
+            <p className="text-gray-600">Your gateway to Sri Lanka</p>
+          </div>
+
+          {/* Form Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">
+              {isLogin ? "Welcome back!" : "Join WanderLanka"}
+            </h2>
+            <p className="text-gray-600">
+              {isLogin ? "Sign in to your account" : "Create your account to get started"}
+            </p>
+          </div>
+
           {/* Error Alert */}
           {error && (
-            <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm font-medium">
-              {error}
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <span className="text-red-400 text-xl">⚠️</span>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              </div>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {/* Form */}
+          <div className="space-y-6">
             {/* Username Field */}
-            <div className="flex flex-col">
-              <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="username">
-                Username
-              </label>
-              <input
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base transition-all duration-150 outline-none font-sans bg-white focus:border-green-600 focus:shadow-[0_0_0_3px_rgba(5,150,105,0.1)] placeholder:text-gray-400"
-                type="text"
-                id="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                placeholder="Enter your username"
-              />
-            </div>
+            <Input
+              type="text"
+              id="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              placeholder="Username"
+              leftIcon={<User className="w-5 h-5 text-gray-400" />}
+            />
 
             {/* Email Field (Register only) */}
             {!isLogin && (
-              <div className="flex flex-col">
-                <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="email">
-                  Email
-                </label>
-                <input
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base transition-all duration-150 outline-none font-sans bg-white focus:border-green-600 focus:shadow-[0_0_0_3px_rgba(5,150,105,0.1)] placeholder:text-gray-400"
-                  type="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter your email"
-                />
-              </div>
+              <Input
+                type="email"
+                id="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                placeholder="Email"
+                leftIcon={<Mail className="w-5 h-5 text-gray-400" />}
+              />
             )}
 
             {/* Password Field */}
-            <div className="flex flex-col">
-              <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="password">
-                Password
-              </label>
-              <input
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base transition-all duration-150 outline-none font-sans bg-white focus:border-green-600 focus:shadow-[0_0_0_3px_rgba(5,150,105,0.1)] placeholder:text-gray-400"
+            <Input
+              type="password"
+              id="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              placeholder="Password"
+              minLength={6}
+              leftIcon={<Lock className="w-5 h-5 text-gray-400" />}
+            />
+            {/* Confirm Password Field (Register only) */}
+            {!isLogin && (
+              <Input
                 type="password"
-                id="password"
-                value={formData.password}
+                id="confirmPassword"
+                value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                placeholder="Enter your password"
+                placeholder="Confirm Password"
                 minLength={6}
+                leftIcon={<Lock className="w-5 h-5 text-gray-400" />}
+                error={formData.confirmPassword && formData.confirmPassword !== formData.password ? "Passwords do not match" : undefined}
               />
-            </div>
-
+            )}
             {/* Role Field (Register only) */}
             {!isLogin && (
-              <div className="flex flex-col">
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="role">
-                  Role
+                  I am a...
                 </label>
-                <select
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base transition-all duration-150 outline-none font-sans bg-white focus:border-green-600 focus:shadow-[0_0_0_3px_rgba(5,150,105,0.1)]"
-                  id="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="tourist">🏖️ Tourist</option>
-                  <option value="transport">🚗 Transport Provider</option>
-                  <option value="accommodation">🏨 Accommodation Provider</option>
-                  <option value="guide">🗺️ Guide</option>
-                </select>
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl text-base transition-all duration-200 outline-none bg-gray-50 focus:bg-white focus:border-emerald-500 focus:shadow-lg focus:shadow-emerald-500/20 appearance-none cursor-pointer"
+                    id="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="tourist">🏖️ Tourist</option>
+                    <option value="transport">🚗 Transport Provider</option>
+                    <option value="accommodation">🏨 Accommodation Provider</option>
+                    <option value="guide">🗺️ Tour Guide</option>
+                  </select>
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <span>👥</span>
+                  </div>
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <span>▼</span>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Submit Button */}
             <button
-              className={`px-6 py-4 rounded-lg font-semibold text-base border-none cursor-pointer transition-all duration-200 text-center no-underline inline-flex items-center justify-center gap-2 font-sans mt-2 w-full ${
+              className={`w-full py-2 px-2 rounded-xl font-semibold text-lg transition-all duration-300 ${
                 loading 
-                  ? 'bg-gray-400 text-white cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 hover:shadow-lg transform hover:-translate-y-0.5'
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 hover:shadow-xl hover:shadow-emerald-500/25'
               }`}
-              type="submit"
+              variant = "primary"
+              type="button"
               disabled={loading}
+              onClick={handleSubmit}
             >
               {loading ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  {isLogin ? "Logging in..." : "Creating account..."}
-                </span>
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>{isLogin ? "Signing you in..." : "Creating your account..."}</span>
+                </div>
               ) : (
-                isLogin ? "Log In" : "Create Account"
+                <span className="flex items-center justify-center gap-2">
+                  {isLogin ? "Sign In" : "Create Account"}
+                  <span>{isLogin ? "→" : "✨"}</span>
+                </span>
               )}
             </button>
-          </form>
+          </div>
 
           {/* Toggle between Login and Register */}
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <div className="h-px bg-gray-300 flex-1"></div>
+              <span className="text-gray-500 text-sm">or</span>
+              <div className="h-px bg-gray-300 flex-1"></div>
+            </div>
+            
             <p className="text-gray-600">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}
-              <button
-                onClick={toggleMode}
-                className="ml-1 text-green-600 hover:text-green-700 font-semibold bg-none border-none cursor-pointer transition-colors duration-150"
-              >
-                {isLogin ? "Create one" : "Log in"}
-              </button>
+              {isLogin ? "New to WanderLanka?" : "Already have an account?"}
             </p>
+            <button
+              onClick={toggleMode}
+              className="mt-2 text-emerald-600 hover:text-emerald-700 font-semibold text-lg transition-colors duration-200 underline-offset-4 hover:underline"
+            >
+              {isLogin ? "Create an account" : "Sign in instead"}
+            </button>
           </div>
         </div>
       </div>
