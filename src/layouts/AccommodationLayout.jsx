@@ -5,7 +5,7 @@ const AccommodationLayout = () => {
   return (
     <div>
       <AccommodationNavbar />
-      <main className="p-4">
+      <main className="p-2">
         <Outlet />
       </main>
     </div>

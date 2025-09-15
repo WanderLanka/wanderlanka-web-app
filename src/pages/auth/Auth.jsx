@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Mail, Lock } from "lucide-react";
+import { toast } from 'react-toastify';
 import Input from "../../components/common/Input";
 import { validateLogin, validateSignup } from "../../utils/validation";
 import { authAPI } from "../../services/api";
@@ -97,7 +98,7 @@ const Auth = () => {
         }
         
         setError("");
-        alert(`Login successful! Welcome ${response.user?.username || formData.username}!`);
+        toast.success(`Login successful! Welcome ${response.user?.username || formData.username}!`);
         
         // Navigate to dashboard based on role
         const userRole = response.user?.role || formData.role;
@@ -113,9 +114,13 @@ const Auth = () => {
         setError("");
         // Registration successful - no tokens returned, user needs to login
         if (response.user?.role === 'guide' && response.user?.status === 'pending') {
-          alert(`Registration successful! ${response.user?.username}, your guide application is under review. You will be notified when approved.`);
+          toast.info(
+                `Registration successful! ${response.user?.username}, your guide application is under review. You will be notified when approved.`
+              );        
         } else {
-          alert(`Registration successful! Welcome ${response.user?.username || formData.username}! Please login to access your account.`);
+           toast.success(
+              `Registration successful! Welcome ${response.user?.username || formData.username}! Please login to access your account.`
+            );
         }
         
         // Switch to login mode after successful registration
@@ -138,7 +143,7 @@ const Auth = () => {
         });
       }
     } catch (error) {
-      setError(error.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
+      setError(error.response?.data?.error || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`); //ERROR MESSAGE FIXES HERE  (.error instead of .message)
     } finally {
       setLoading(false);
     }

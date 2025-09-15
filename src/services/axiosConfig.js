@@ -13,10 +13,14 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     
+    // Setting the header to identify the platfrom in the backend
+    config.headers['X-Client-Type'] = 'web';
+
     // Debug logging
     console.log('🔍 Axios Request Interceptor:');
     console.log('Token from localStorage:', token ? 'Found' : 'Not found');
     console.log('Request URL:', config.baseURL + config.url);
+    // console.log('X-Client-Type:', config.headers['X-Client-Type']); // DEBUGGING
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import api from "../../services/axiosConfig.js";
-// import "../styles/HotelsPage.css"; // Converted to Tailwind CSS
 import { Navigate, useNavigate } from "react-router-dom";
 
 const HotelsPage = () => {
@@ -290,13 +289,13 @@ const HotelsPage = () => {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case "active":
-        return "status-badge status-badge--available";
+        return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800";
       case "inactive":
-        return "status-badge status-badge--unavailable";
+        return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800";
       case "under_maintenance":
-        return "status-badge status-badge--maintenance";
+        return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800";
       default:
-        return "status-badge";
+        return "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800";
     }
   };
 
@@ -328,67 +327,73 @@ const HotelsPage = () => {
 
   if (loading) {
     return (
-      <div className="hotels-page">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p className="loading-text">Loading hotels...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent mb-4"></div>
+            <p className="text-lg font-medium text-slate-600">Loading hotels...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="hotels-page">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       {/* Page Header */}
-      <div className="page-header">
-        <div className="header-content">
-          <div className="header-text">
-            <h1 className="page-title">Hotel Management</h1>
-            <p className="page-subtitle">
-              Manage your accommodation properties, track availability, and monitor performance
-            </p>
-          </div>
-          <div className="header-stats">
-            <div className="stat-item">
-              <span className="stat-number">{hotels.length}</span>
-              <span className="stat-label">Total Hotels</span>
+      <div className="bg-gradient-to-b from-slate-950 to-slate-900 border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Hotel Management</h1>
+              <p className="text-lg text-slate-300">
+                Manage your accommodation properties, track availability, and monitor performance
+              </p>
             </div>
-            <div className="stat-item">
-              <span className="stat-number">
-                {hotels.filter(h => h.status === "active").length}
-              </span>
-              <span className="stat-label">Active</span>
+            <div className="flex gap-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-slate-400">{hotels.length}</div>
+                <div className="text-sm font-medium text-slate-200">Total Hotels</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-teal-600">
+                  {hotels.filter(h => h.status === "active").length}
+                </div>
+                <div className="text-sm font-medium text-slate-200">Active</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filter Section */}
-      <div className="filter-section">
-        <div className="filter-container">
-          <div className="filter-left">
-            <label className="filter-label">Filter by Hotel Type:</label>
-            <select 
-              className="filter-dropdown"
-              value={selectedFilter}
-              onChange={(e) => handleFilterChange(e.target.value)}
-            >
-              <option value="all">All Hotels</option>
-              <option value="hotel">Hotels</option>
-              <option value="resort">Resorts</option>
-              <option value="guesthouse">Guesthouses</option>
-              <option value="homestay">Homestays</option>
-            </select>
-            <div className="results-count">
-              {filteredHotels.length} hotel{filteredHotels.length !== 1 ? 's' : ''} found
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <label className="text-sm font-medium text-slate-700">Filter by Hotel Type:</label>
+              <select 
+                className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white text-slate-900"
+                value={selectedFilter}
+                onChange={(e) => handleFilterChange(e.target.value)}
+              >
+                <option value="all">All Hotels</option>
+                <option value="hotel">Hotels</option>
+                <option value="resort">Resorts</option>
+                <option value="guesthouse">Guesthouses</option>
+                <option value="homestay">Homestays</option>
+              </select>
+              <div className="text-sm text-slate-500">
+                {filteredHotels.length} hotel{filteredHotels.length !== 1 ? 's' : ''} found
+              </div>
             </div>
-          </div>
-          <div className="filter-right">
             <button 
-              className="add-hotel-btn"
+              className="inline-flex items-center px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm"
               onClick={() => setShowAddModal(true)}
             >
-              <span className="btn-icon">➕</span>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
               Add Hotel
             </button>
           </div>
@@ -397,19 +402,25 @@ const HotelsPage = () => {
 
       {/* Error Message */}
       {error && (
-        <div className="error-message">
-          <span className="error-icon">⚠️</span>
-          {error}
+        <div className="max-w-7xl mx-auto px-6 mb-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-red-800 font-medium">{error}</span>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Hotels Grid */}
-      <div className="hotels-container">
+      <div className="max-w-7xl mx-auto px-6 pb-12">
         {filteredHotels.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">🏨</div>
-            <h3 className="empty-title">No hotels found</h3>
-            <p className="empty-description">
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🏨</div>
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No hotels found</h3>
+            <p className="text-slate-600">
               {selectedFilter === "all" 
                 ? "No hotels are currently registered in your system."
                 : `No ${selectedFilter}s found in your system.`
@@ -417,79 +428,86 @@ const HotelsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="hotels-grid">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredHotels.map((hotel) => (
-              <div key={hotel._id || hotel.id} className="hotel-card">
+              <div key={hotel._id || hotel.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
                 {/* Card Header */}
-                <div className="card-header">
-                  <div className="hotel-type">
-                    <span className="hotel-icon">{getAccommodationIcon(hotel.accommodationType)}</span>
-                    <span className="hotel-type-text">
-                      {hotel.accommodationType.charAt(0).toUpperCase() + hotel.accommodationType.slice(1)}
-                    </span>
+                <div className="p-6 border-b border-slate-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{getAccommodationIcon(hotel.accommodationType)}</span>
+                      <span className="text-sm font-medium text-slate-600 capitalize">
+                        {hotel.accommodationType}
+                      </span>
+                    </div>
+                    <div className={getStatusBadgeClass(hotel.status)}>
+                      {hotel.status ? hotel.status.charAt(0).toUpperCase() + hotel.status.slice(1) : 'Unknown'}
+                    </div>
                   </div>
-                  <div className={getStatusBadgeClass(hotel.status)}>
-                    {hotel.status ? hotel.status.charAt(0).toUpperCase() + hotel.status.slice(1) : 'Unknown'}
-                  </div>
-                </div>
 
-                {/* Hotel Info */}
-                <div className="hotel-info">
-                  <h3 className="hotel-name">{hotel.name}</h3>
-                  <div className="hotel-details">
-                    <div className="detail-row">
-                      <span className="detail-label">Location:</span>
-                      <span className="detail-value">{hotel.location}</span>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4 line-clamp-2">{hotel.name}</h3>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Location:</span>
+                      <span className="text-slate-900 font-medium text-right">{hotel.location}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Star Rating:</span>
-                      <span className="detail-value">{formatStarRating(hotel.starRating)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Star Rating:</span>
+                      <span className="text-slate-900">{formatStarRating(hotel.starRating)}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Total Rooms:</span>
-                      <span className="detail-value">{hotel.totalRooms} rooms</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Total Rooms:</span>
+                      <span className="text-slate-900 font-medium">{hotel.totalRooms}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Phone:</span>
-                      <span className="detail-value">{hotel.phone}</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Phone:</span>
+                      <span className="text-slate-900 font-medium">{hotel.phone}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Check-in:</span>
-                      <span className="detail-value">{hotel.checkInTime}</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Check-in:</span>
+                      <span className="text-slate-900 font-medium">{hotel.checkInTime}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Check-out:</span>
-                      <span className="detail-value">{hotel.checkOutTime}</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Check-out:</span>
+                      <span className="text-slate-900 font-medium">{hotel.checkOutTime}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Hotel Stats */}
-                <div className="hotel-stats">
-                  <div className="stat-item-small">
-                    <span className="stat-number-small">{hotel.totalRooms}</span>
-                    <span className="stat-label-small">Rooms</span>
-                  </div>
-                  <div className="stat-item-small">
-                    <span className="stat-number-small">{hotel.starRating}</span>
-                    <span className="stat-label-small">Stars</span>
+                <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-lg font-bold text-slate-900">{hotel.totalRooms}</div>
+                      <div className="text-xs text-slate-500">Rooms</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold text-slate-900">{hotel.starRating}</div>
+                      <div className="text-xs text-slate-500">Stars</div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="card-actions">
+                <div className="p-4 grid grid-cols-2 gap-2">
                   <button 
-                    className="action-btn action-btn--details"
+                    className="flex items-center justify-center px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg transition-colors duration-200 text-sm"
                     onClick={() => handleViewHotelDetails(hotel._id || hotel.id)}
                   >
-                    <span className="btn-icon">👁️</span>
-                    View Details
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View
                   </button>
                   <button 
-                    className="action-btn action-btn--update"
+                    className="flex items-center justify-center px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 font-medium rounded-lg transition-colors duration-200 text-sm"
                     onClick={() => handleUpdateHotel(hotel._id || hotel.id)}
                   >
-                    <span className="btn-icon">✏️</span>
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
                     Update
                   </button>
                 </div>
@@ -501,53 +519,57 @@ const HotelsPage = () => {
 
       {/* Add Hotel Modal */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Add New Hotel</h2>
-              <button className="modal-close" onClick={closeModal}>✕</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={closeModal}>
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <h2 className="text-xl font-semibold text-slate-900">Add New Hotel</h2>
+              <button className="text-slate-400 hover:text-slate-600" onClick={closeModal}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            <form onSubmit={handleAddHotel} className="hotel-form">
-              <div className="form-grid">
+            <form onSubmit={handleAddHotel} className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Hotel Name */}
-                <div className="form-group">
-                  <label className="form-label">Hotel Name *</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Hotel Name *</label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleFormChange}
-                    className={`form-input ${formErrors.name ? 'error' : ''}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${formErrors.name ? 'border-red-500' : 'border-slate-300'}`}
                     placeholder="e.g., Grand Hotel Kandy"
                     required
                   />
-                  {formErrors.name && <span className="error-text">{formErrors.name}</span>}
+                  {formErrors.name && <span className="text-red-500 text-sm mt-1">{formErrors.name}</span>}
                 </div>
 
                 {/* Location */}
-                <div className="form-group">
-                  <label className="form-label">Location *</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Location *</label>
                   <input
                     type="text"
                     name="location"
                     value={formData.location}
                     onChange={handleFormChange}
-                    className={`form-input ${formErrors.location ? 'error' : ''}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${formErrors.location ? 'border-red-500' : 'border-slate-300'}`}
                     placeholder="e.g., Kandy, Sri Lanka"
                     required
                   />
-                  {formErrors.location && <span className="error-text">{formErrors.location}</span>}
+                  {formErrors.location && <span className="text-red-500 text-sm mt-1">{formErrors.location}</span>}
                 </div>
 
                 {/* Accommodation Type */}
-                <div className="form-group">
-                  <label className="form-label">Accommodation Type *</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Accommodation Type *</label>
                   <select
                     name="accommodationType"
                     value={formData.accommodationType}
                     onChange={handleFormChange}
-                    className="form-input"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     required
                   >
                     <option value="hotel">🏨 Hotel</option>
@@ -558,68 +580,68 @@ const HotelsPage = () => {
                 </div>
 
                 {/* Total Rooms */}
-                <div className="form-group">
-                  <label className="form-label">Total Rooms *</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Total Rooms *</label>
                   <input
                     type="number"
                     name="totalRooms"
                     value={formData.totalRooms}
                     onChange={handleFormChange}
-                    className={`form-input ${formErrors.totalRooms ? 'error' : ''}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${formErrors.totalRooms ? 'border-red-500' : 'border-slate-300'}`}
                     placeholder="e.g., 50"
                     min="1"
                     required
                   />
-                  {formErrors.totalRooms && <span className="error-text">{formErrors.totalRooms}</span>}
+                  {formErrors.totalRooms && <span className="text-red-500 text-sm mt-1">{formErrors.totalRooms}</span>}
                 </div>
 
                 {/* Phone */}
-                <div className="form-group">
-                  <label className="form-label">Phone Number *</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number *</label>
                   <input
                     type="text"
                     name="phone"
                     value={formData.phone}
                     onChange={handleFormChange}
-                    className={`form-input ${formErrors.phone ? 'error' : ''}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${formErrors.phone ? 'border-red-500' : 'border-slate-300'}`}
                     placeholder="e.g., +94 81 223 4567"
                     required
                   />
-                  {formErrors.phone && <span className="error-text">{formErrors.phone}</span>}
+                  {formErrors.phone && <span className="text-red-500 text-sm mt-1">{formErrors.phone}</span>}
                 </div>
 
                 {/* Check-in Time */}
-                <div className="form-group">
-                  <label className="form-label">Check-in Time</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Check-in Time</label>
                   <input
                     type="time"
                     name="checkInTime"
                     value={formData.checkInTime}
                     onChange={handleFormChange}
-                    className="form-input"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Check-out Time */}
-                <div className="form-group">
-                  <label className="form-label">Check-out Time</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Check-out Time</label>
                   <input
                     type="time"
                     name="checkOutTime"
                     value={formData.checkOutTime}
                     onChange={handleFormChange}
-                    className="form-input"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Status */}
-                <div className="form-group">
-                  <label className="form-label">Status</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
                   <select
                     name="status"
                     value={formData.status}
                     onChange={handleFormChange}
-                    className="form-input"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -628,28 +650,30 @@ const HotelsPage = () => {
               </div>
 
               {/* Form Actions */}
-              <div className="form-actions">
+              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="form-btn form-btn--cancel"
+                  className="px-4 py-2 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium transition-colors duration-200"
                   disabled={addLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="form-btn form-btn--submit"
+                  className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   disabled={addLoading}
                 >
                   {addLoading ? (
                     <>
-                      <div className="btn-spinner"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
                       Adding Hotel...
                     </>
                   ) : (
                     <>
-                      <span className="btn-icon">✓</span>
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
                       Add Hotel
                     </>
                   )}
@@ -662,124 +686,138 @@ const HotelsPage = () => {
 
       {/* Update Hotel Modal */}
       {showUpdateModal && selectedHotel && (
-        <div className="modal-overlay" onClick={closeUpdateModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Update Hotel - {selectedHotel.name}</h2>
-              <button className="modal-close" onClick={closeUpdateModal}>✕</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={closeUpdateModal}>
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <h2 className="text-xl font-semibold text-slate-900">Update Hotel: {selectedHotel.name}</h2>
+              <button className="text-slate-400 hover:text-slate-600" onClick={closeUpdateModal}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            <form onSubmit={handleUpdateSubmit} className="hotel-form">
-              {/* Hotel Info Display */}
-              <div className="hotel-info-display">
-                <div className="info-row">
-                  <span className="info-label">Hotel Name:</span>
-                  <span className="info-value">{selectedHotel.name}</span>
+            <form onSubmit={handleUpdateSubmit} className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Hotel Info (Read Only) */}
+                <div className="md:col-span-2 bg-slate-50 rounded-lg p-4 mb-4">
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">Hotel Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-slate-500">Name:</span>
+                      <span className="ml-2 font-medium text-slate-900">{selectedHotel.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Location:</span>
+                      <span className="ml-2 font-medium text-slate-900">{selectedHotel.location}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Type:</span>
+                      <span className="ml-2 font-medium text-slate-900 capitalize">{selectedHotel.accommodationType}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Star Rating:</span>
+                      <span className="ml-2 font-medium text-slate-900">{selectedHotel.starRating} ⭐</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Location:</span>
-                  <span className="info-value">{selectedHotel.location}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Type:</span>
-                  <span className="info-value">{selectedHotel.accommodationType.charAt(0).toUpperCase() + selectedHotel.accommodationType.slice(1)}</span>
-                </div>
-              </div>
 
-              <div className="form-grid update-form-grid">
                 {/* Total Rooms */}
-                <div className="form-group">
-                  <label className="form-label">Total Rooms *</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Total Rooms *</label>
                   <input
                     type="number"
                     name="totalRooms"
                     value={updateFormData.totalRooms}
                     onChange={handleUpdateFormChange}
-                    className={`form-input ${updateErrors.totalRooms ? 'error' : ''}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${updateErrors.totalRooms ? 'border-red-500' : 'border-slate-300'}`}
                     placeholder="e.g., 50"
                     min="1"
                     required
                   />
-                  {updateErrors.totalRooms && <span className="error-text">{updateErrors.totalRooms}</span>}
+                  {updateErrors.totalRooms && <span className="text-red-500 text-sm mt-1">{updateErrors.totalRooms}</span>}
                 </div>
 
                 {/* Phone */}
-                <div className="form-group">
-                  <label className="form-label">Phone Number *</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number *</label>
                   <input
                     type="text"
                     name="phone"
                     value={updateFormData.phone}
                     onChange={handleUpdateFormChange}
-                    className={`form-input ${updateErrors.phone ? 'error' : ''}`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${updateErrors.phone ? 'border-red-500' : 'border-slate-300'}`}
                     placeholder="e.g., +94 81 223 4567"
                     required
                   />
-                  {updateErrors.phone && <span className="error-text">{updateErrors.phone}</span>}
+                  {updateErrors.phone && <span className="text-red-500 text-sm mt-1">{updateErrors.phone}</span>}
                 </div>
 
                 {/* Check-in Time */}
-                <div className="form-group">
-                  <label className="form-label">Check-in Time</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Check-in Time</label>
                   <input
                     type="time"
                     name="checkInTime"
                     value={updateFormData.checkInTime}
                     onChange={handleUpdateFormChange}
-                    className="form-input"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Check-out Time */}
-                <div className="form-group">
-                  <label className="form-label">Check-out Time</label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Check-out Time</label>
                   <input
                     type="time"
                     name="checkOutTime"
                     value={updateFormData.checkOutTime}
                     onChange={handleUpdateFormChange}
-                    className="form-input"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
 
                 {/* Status */}
-                <div className="form-group full-width">
-                  <label className="form-label">Status</label>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
                   <select
                     name="status"
                     value={updateFormData.status}
                     onChange={handleUpdateFormChange}
-                    className="form-input"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
+                    <option value="under_maintenance">Under Maintenance</option>
                   </select>
                 </div>
               </div>
 
               {/* Form Actions */}
-              <div className="form-actions">
+              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={closeUpdateModal}
-                  className="form-btn form-btn--cancel"
+                  className="px-4 py-2 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium transition-colors duration-200"
                   disabled={updateLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="form-btn form-btn--submit"
+                  className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   disabled={updateLoading}
                 >
                   {updateLoading ? (
                     <>
-                      <div className="btn-spinner"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
                       Updating Hotel...
                     </>
                   ) : (
                     <>
-                      <span className="btn-icon">✓</span>
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
                       Update Hotel
                     </>
                   )}
@@ -791,5 +829,6 @@ const HotelsPage = () => {
       )}
     </div>
   );
-}
-export default HotelsPage;
+};
+
+export default HotelsPage;  

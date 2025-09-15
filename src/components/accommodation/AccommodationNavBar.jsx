@@ -1,16 +1,47 @@
 import { Link } from "react-router-dom";
 import { Button, Logo, NavLink, Container, Avatar } from "../common";
+import { toast } from 'react-toastify';
 
 const AccommodationNavbar = () => {
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = "/auth";
+const handleLogout = () => {
+    toast.info(
+  <div className="flex flex-col items-center justify-center text-center p-8 bg-white rounded-2xl max-w-md mx-auto">
+    {/* Custom icon on top */}
+    <span className="text-4xl mb-4">⚠️</span> 
+    <p className="text-lg font-medium mb-6">Are you sure you want to logout?</p>
+    <div className="flex justify-center gap-4">
+      <button
+        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+        onClick={() => {
+          localStorage.clear();
+          window.location.href = "/auth";
+        }}
+      >
+        Yes
+      </button>
+      <button
+        className="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300"
+        onClick={() => toast.dismiss()}
+      >
+        No
+      </button>
+    </div>
+  </div>,
+  {
+    autoClose: false,
+    closeOnClick: false,
+    hideProgressBar: true,
+    closeButton: false,
+    icon: false,  // DISABLE default icon
+    className: "toast-center",
+  }
+);
   };
 
   const navItems = [
-    { path: '/accommodation', label: 'Overview' },
+    { path: '/accommodation', label: 'Dashboard' },
     { path: '/accommodation/hotels', label: 'My Hotels' },
-    { path: '/accommodation/bookings', label: 'Current Bookings' },
+    { path: '/accommodation/bookings', label: 'Bookings' },
     { path: '/accommodation/payments', label: 'Payments' },
     { path: '/accommodation/profile', label: 'Profile' }
   ];
@@ -65,12 +96,26 @@ const AccommodationNavbar = () => {
                 onClick={handleLogout}
                 className="focus:ring-red-500 focus:ring-offset-2"
               >
-                Sign Out
+                Log Out
               </Button>
             </div>
           </div>
         </div>
       </Container>
+
+      <style>{`
+        .toast-center {
+          position: fixed !important;
+          top: 50% !important;
+          left: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          z-index: 9999 !important;
+          width: auto !important;
+          max-width: 90% !important;
+          text-align: center;
+        }
+      `}</style>
+
     </header>
   );
 };
