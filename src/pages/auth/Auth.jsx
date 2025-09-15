@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { User, Mail, Lock } from "lucide-react";
 import Input from "../../components/common/Input";
+import { validateLogin, validateSignup } from "../../utils/validation";
+import { authAPI } from "../../services/api";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -42,33 +46,88 @@ const Auth = () => {
     if (error) setError("");
   };
 
+  // Navigate to dashboard based on user role
+  const navigateToDashboard = (role) => {
+    if (role === "tourist") {
+      navigate("/user/bookings");
+    } else if (role === "accommodation") {
+      navigate("/accommodation");
+    } else if (role === "transport") {
+      navigate("/transport");
+    } else if (role === "guide") {
+      // Guide routes not yet implemented, redirect to home for now
+      navigate("/");
+    } else if (role === "Sysadmin" || role === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
     setError("");
+    let validationError = isLogin
+      ? validateLogin(formData)
+      : validateSignup(formData);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
 
+    setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock successful response
-      const mockResponse = {
-        token: "mock-token-123",
-        user: {
-          id: 1,
+      let response;
+      if (isLogin) {
+        response = await authAPI.login({
           username: formData.username,
-          email: formData.email || "user@example.com",
-          role: formData.role || "tourist"
+          password: formData.password
+        });
+        
+        // Store authentication data for login
+        if (response.token) {
+          localStorage.setItem("token", response.token);
         }
-      };
-
-      console.log(`${isLogin ? 'Login' : 'Registration'} successful:`, mockResponse);
-      
-      // Show success message
-      setError("");
-      alert(`${isLogin ? 'Login' : 'Registration'} successful! Welcome ${mockResponse.user.username}!`);
-      
-      // Reset form if registration
+        if (response.refreshToken) {
+          localStorage.setItem("refreshToken", response.refreshToken);
+        }
+        if (response.user) {
+          localStorage.setItem("user", JSON.stringify(response.user));
+        }
+        
+        setError("");
+        alert(`Login successful! Welcome ${response.user?.username || formData.username}!`);
+        
+        // Navigate to dashboard based on role
+        const userRole = response.user?.role || formData.role;
+        navigateToDashboard(userRole);
+      } else {
+        response = await authAPI.register({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role
+        });
+        
+        setError("");
+        // Registration successful - no tokens returned, user needs to login
+        if (response.user?.role === 'guide' && response.user?.status === 'pending') {
+          alert(`Registration successful! ${response.user?.username}, your guide application is under review. You will be notified when approved.`);
+        } else {
+          alert(`Registration successful! Welcome ${response.user?.username || formData.username}! Please login to access your account.`);
+        }
+        
+        // Switch to login mode after successful registration
+        setIsLogin(true);
+        setFormData({
+          username: formData.username, // Keep username for easy login
+          email: "",
+          password: "",
+          confirmPassword: "",
+          role: "tourist"
+        });
+      }
       if (!isLogin) {
         setFormData({
           username: "",
@@ -78,10 +137,8 @@ const Auth = () => {
           role: "tourist"
         });
       }
-      
     } catch (error) {
-      console.error(`${isLogin ? 'Login' : 'Registration'} failed:`, error);
-      setError(`${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
+      setError(error.response?.data?.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -142,7 +199,7 @@ const Auth = () => {
             <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <span className="text-red-400 text-xl">⚠️</span>
+                  <span className="text-red-400 text-xl"></span>
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-red-700">{error}</p>
@@ -216,13 +273,13 @@ const Auth = () => {
                     onChange={handleChange}
                     required
                   >
-                    <option value="tourist">🏖️ Tourist</option>
-                    <option value="transport">🚗 Transport Provider</option>
-                    <option value="accommodation">🏨 Accommodation Provider</option>
-                    <option value="guide">🗺️ Tour Guide</option>
+                    <option value="tourist">Tourist</option>
+                    <option value="transport">Transport Provider</option>
+                    <option value="accommodation">Accommodation Provider</option>
+                    <option value="guide">Tour Guide</option>
                   </select>
                   <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    <span>👥</span>
+                    <span><User className="w-5 h-5 text-gray-400" /></span>
                   </div>
                   <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
                     <span>▼</span>
@@ -250,8 +307,8 @@ const Auth = () => {
                 </div>
               ) : (
                 <span className="flex items-center justify-center gap-2">
-                  {isLogin ? "Sign In" : "Create Account"}
-                  <span>{isLogin ? "→" : "✨"}</span>
+                  {isLogin ? "Log In" : "Create Account"}
+                  <span>{isLogin ? "→" : ""}</span>
                 </span>
               )}
             </button>

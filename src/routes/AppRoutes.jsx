@@ -60,6 +60,13 @@ const AppRoutes = () => {
           <Route path="complains" element={<AdminComplains />} />
         </Route>
       </Route>
+
+      {/* Protected User/Tourist Routes */}
+      <Route element={<ProtectedRoute allowedRoles={["tourist"]} />}>
+        <Route path="/user">
+          <Route path="bookings" element={<Bookings />} />
+        </Route>
+      </Route>
       
       {/* Catch all route for 404 */}
       <Route path="*" element={<NotFound />} />

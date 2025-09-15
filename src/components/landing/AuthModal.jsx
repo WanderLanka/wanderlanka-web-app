@@ -31,26 +31,38 @@ const AuthModal = ({ isLogin, onClose, onToggleMode }) => {
           password: formData.password
         });
         
-        // Store token and user data
+        // Store authentication data for login only
         if (response.token) {
           localStorage.setItem('token', response.token);
+        }
+        if (response.refreshToken) {
+          localStorage.setItem('refreshToken', response.refreshToken);
+        }
+        if (response.user) {
           localStorage.setItem('user', JSON.stringify(response.user));
-          
-          // Redirect based on user role
-          const userRole = response.user?.role;
-          switch (userRole) {
-            case 'admin':
-              window.location.href = '/admin';
-              break;
-            case 'transport':
-              window.location.href = '/transport';
-              break;
-            case 'accommodation':
-              window.location.href = '/accommodation';
-              break;
-            default:
-              window.location.href = '/dashboard';
-          }
+        }
+        
+        // Redirect based on user role
+        const userRole = response.user?.role;
+        switch (userRole) {
+          case 'Sysadmin':
+          case 'admin':
+            window.location.href = '/admin';
+            break;
+          case 'transport':
+            window.location.href = '/transport';
+            break;
+          case 'accommodation':
+            window.location.href = '/accommodation';
+            break;
+          case 'tourist':
+            window.location.href = '/user';
+            break;
+          case 'guide':
+            window.location.href = '/guide';
+            break;
+          default:
+            window.location.href = '/dashboard';
         }
       } else {
         const response = await authAPI.register({
@@ -59,11 +71,12 @@ const AuthModal = ({ isLogin, onClose, onToggleMode }) => {
           password: formData.password
         });
         
-        if (response.token) {
-          localStorage.setItem('token', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-          window.location.href = '/dashboard';
-        }
+        // Registration successful - no tokens, switch to login mode
+        const message = response.user?.role === 'guide' && response.user?.status === 'pending' 
+          ? `Registration successful! Your guide application is under review.` 
+          : `Registration successful! Please login to access your account.`;
+        alert(message);
+        onToggleMode(); // Switch to login mode
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Authentication failed. Please try again.');
