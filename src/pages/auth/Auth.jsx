@@ -14,7 +14,7 @@ const Auth = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "tourist"
+    role: "traveler"
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -49,8 +49,8 @@ const Auth = () => {
 
   // Navigate to dashboard based on user role
   const navigateToDashboard = (role) => {
-    if (role === "tourist") {
-      navigate("/user/bookings");
+    if (role === "traveler") {
+      navigate("/user");
     } else if (role === "accommodation") {
       navigate("/accommodation");
     } else if (role === "transport") {
@@ -130,7 +130,7 @@ const Auth = () => {
           email: "",
           password: "",
           confirmPassword: "",
-          role: "tourist"
+          role: "traveler"
         });
       }
       if (!isLogin) {
@@ -139,7 +139,7 @@ const Auth = () => {
           email: "",
           password: "",
           confirmPassword: "",
-          role: "tourist"
+          role: "traveler"
         });
       }
     } catch (error) {
@@ -156,7 +156,7 @@ const Auth = () => {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "tourist"
+      role: "traveler"
     });
     setError("");
   };
@@ -278,7 +278,7 @@ const Auth = () => {
                     onChange={handleChange}
                     required
                   >
-                    <option value="tourist">Tourist</option>
+                    <option value="traveler">Traveler</option>
                     <option value="transport">Transport Provider</option>
                     <option value="accommodation">Accommodation Provider</option>
                     <option value="guide">Tour Guide</option>

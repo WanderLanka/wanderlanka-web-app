@@ -15,13 +15,15 @@ import {
   AdminDashboard,
   AdminPayment,
   AdminRequests,
-  AdminComplains
+  AdminComplains,
+  TravelerDashboard
 } from '../pages';
 import { ProtectedRoute } from '../components';
 import {
   TransportLayout,
   AccommodationLayout,
-  AdminLayout
+  AdminLayout,
+  TravelerLayout
 } from '../layouts';
 
 const AppRoutes = () => {
@@ -62,9 +64,10 @@ const AppRoutes = () => {
       </Route>
 
       {/* Protected User/Tourist Routes */}
-      <Route element={<ProtectedRoute allowedRoles={["tourist"]} />}>
-        <Route path="/user">
-          <Route path="bookings" element={<Bookings />} />
+      <Route element={<ProtectedRoute allowedRoles={["traveler"]} />}>
+        <Route path="/user" element={<TravelerLayout />}>
+          <Route index element={<TravelerDashboard />} />
+          <Route path="dashboard" element={<TravelerDashboard />} />
         </Route>
       </Route>
       
