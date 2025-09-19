@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, MapPin, Plane, Camera, Heart, Star, Clock, Users, Search, ArrowRight, Hotel, Car, Utensils, Plus, Zap } from 'lucide-react';
 import { Button, Card, Input } from '../../components/common';
+import { TravelerFooter } from '../../components/traveler';
 
 const TravelerDashboard = () => {
     const [startDate, setStartDate] = useState('');
@@ -402,6 +403,7 @@ const TravelerDashboard = () => {
                     </div>
                 </div>
             </div>
+            <TravelerFooter />
         </div>
     );
 };

@@ -16,7 +16,12 @@ import {
   AdminPayment,
   AdminRequests,
   AdminComplains,
-  TravelerDashboard
+  TravelerDashboard,
+  MyBookings,
+  MyTrips,
+  Payments,
+  Services,
+  Profile
 } from '../pages';
 import { ProtectedRoute } from '../components';
 import {
@@ -68,6 +73,11 @@ const AppRoutes = () => {
         <Route path="/user" element={<TravelerLayout />}>
           <Route index element={<TravelerDashboard />} />
           <Route path="dashboard" element={<TravelerDashboard />} />
+          <Route path="mybookings" element={<MyBookings />} />
+          <Route path="mytrips" element={<MyTrips />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="services" element={<Services />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
       
