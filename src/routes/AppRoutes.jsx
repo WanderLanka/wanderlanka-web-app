@@ -22,7 +22,13 @@ import {
   Payments,
   Services,
   ServiceDetails,
-  Profile
+  Profile,
+  Accommodations,
+  Transportation,
+  TourGuides,
+  AccommodationDetails,
+  TransportationDetails,
+  TourGuideDetails
 } from '../pages';
 import { ProtectedRoute } from '../components';
 import {
@@ -79,6 +85,12 @@ const AppRoutes = () => {
           <Route path="payments" element={<Payments />} />
           <Route path="services" element={<Services />} />
           <Route path="services/:id" element={<ServiceDetails />} />
+          <Route path="accommodations" element={<Accommodations />} />
+          <Route path="accommodations/:id" element={<AccommodationDetails />} />
+          <Route path="transportation" element={<Transportation />} />
+          <Route path="transportation/:id" element={<TransportationDetails />} />
+          <Route path="tour-guides" element={<TourGuides />} />
+          <Route path="tour-guides/:id" element={<TourGuideDetails />} />
           <Route path="profile" element={<Profile />} />
         </Route>
       </Route>

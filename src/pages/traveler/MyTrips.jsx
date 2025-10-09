@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Calendar, MapPin, Clock, Users, Camera, Star, Plus } from 'lucide-react';
-import { Button, Card } from '../../components/common';
+import { Button, Card, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 
 const MyTrips = () => {
@@ -89,6 +89,16 @@ const MyTrips = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Breadcrumb */}
+                <div className="mb-6">
+                    <Breadcrumb 
+                        items={[
+                            { label: 'Dashboard', path: '/user/dashboard', isHome: true },
+                            { label: 'My Trips', isActive: true }
+                        ]} 
+                    />
+                </div>
+
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">My Trips</h1>

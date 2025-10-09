@@ -6,7 +6,11 @@ import {
   MyTrips,
   Payments,
   Services,
-  Profile
+  ServiceDetails,
+  Profile,
+  Accommodations,
+  Transportation,
+  TourGuides
 } from '../pages';
 
 const TravelerRoutes = () => {
@@ -26,6 +30,12 @@ const TravelerRoutes = () => {
       
       {/* Services */}
       <Route path="services" element={<Services />} />
+      <Route path="services/:id" element={<ServiceDetails />} />
+      
+      {/* Dedicated Service Category Pages */}
+      <Route path="accommodations" element={<Accommodations />} />
+      <Route path="transportation" element={<Transportation />} />
+      <Route path="tour-guides" element={<TourGuides />} />
       
       {/* Profile */}
       <Route path="profile" element={<Profile />} />

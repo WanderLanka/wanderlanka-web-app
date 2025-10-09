@@ -8,9 +8,20 @@ import {
     Plus,
     Minus,
     Heart,
-    Share2
+    Share2,
+    Users,
+    Clock,
+    Calendar,
+    Car,
+    Home,
+    Award,
+    Languages,
+    Globe,
+    Wifi,
+    Coffee,
+    Camera
 } from 'lucide-react';
-import { Button, Card, Input } from '../../components/common';
+import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 
 const ServiceDetails = () => {
@@ -25,8 +36,9 @@ const ServiceDetails = () => {
         rooms: 1
     });
 
-    // Mock service data - in real app, this would come from API
+    // Enhanced mock service data combining all three service types
     const mockServices = [
+        // Accommodations
         {
             id: 1,
             category: 'accommodation',
@@ -44,14 +56,19 @@ const ServiceDetails = () => {
             ],
             features: ['Pool', 'Spa', 'Beach Access', 'WiFi', 'Restaurant', 'Fitness Center'],
             availability: 'Available',
-            description: 'Experience the ultimate in relaxation and luxury at our beachfront resort. Enjoy spacious rooms, stunning ocean views, and world-class amenities including a pool, spa, and gourmet dining. Perfect for families, couples, and solo travelers seeking a memorable getaway.',
+            description: 'Experience the ultimate in relaxation and luxury at our beachfront resort. Enjoy spacious rooms, stunning ocean views, and world-class amenities.',
             amenities: ['Free WiFi', 'Swimming Pool', 'Breakfast Included', 'Spa', 'Beach Access', 'Fitness Center', '24/7 Room Service', 'Laundry Service'],
+            type: 'Resort',
+            checkIn: '3:00 PM',
+            checkOut: '11:00 AM',
+            roomTypes: ['Deluxe Ocean View', 'Junior Suite', 'Presidential Suite'],
+            policies: ['Free cancellation up to 24 hours', 'Pet-friendly', 'Non-smoking rooms available'],
             userReviews: [
                 {
                     id: 1,
                     name: 'John Doe',
                     rating: 4.8,
-                    review: 'Amazing stay! Highly recommended. The beach access was incredible.',
+                    review: 'Amazing stay! The beach access was incredible and staff was very friendly.',
                     profileImage: 'https://randomuser.me/api/portraits/men/1.jpg',
                     date: '2024-01-15'
                 },
@@ -59,44 +76,124 @@ const ServiceDetails = () => {
                     id: 2,
                     name: 'Jane Smith',
                     rating: 4.7,
-                    review: 'Beautiful location and friendly staff. The spa was fantastic.',
+                    review: 'Beautiful location and excellent spa services. Highly recommended!',
                     profileImage: 'https://randomuser.me/api/portraits/women/2.jpg',
                     date: '2024-01-10'
                 }
             ]
         },
+        // Transportation
         {
-            id: 2,
+            id: 7,
             category: 'transport',
-            name: 'Private Car with Driver',
-            provider: 'Island Tours',
+            name: 'Luxury SUV with Driver',
+            provider: 'Elite Transport',
             location: 'Colombo, Sri Lanka',
-            rating: 4.6,
-            reviews: 156,
-            price: 45,
+            rating: 4.7,
+            reviews: 189,
+            price: 75,
             priceUnit: 'day',
             images: [
                 'https://images.unsplash.com/photo-1494905998402-395d579af36f?w=800',
-                'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800'
+                'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800',
+                'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800'
             ],
-            features: ['A/C', 'English Speaking', 'Fuel Included'],
+            features: ['A/C', 'English Speaking', 'Fuel Included', 'WiFi', 'Water Bottles'],
             availability: 'Available',
-            description: 'Comfortable private transportation with experienced driver. Explore Sri Lanka at your own pace with our reliable and professional drivers.',
-            amenities: ['Air Conditioning', 'English Speaking Driver', 'Fuel Included', 'Insurance Covered', 'Local Knowledge', 'Flexible Itinerary'],
+            description: 'Travel in comfort with our luxury SUV and professional driver. Perfect for families or groups exploring Sri Lanka.',
+            amenities: ['Air Conditioning', 'English Speaking Driver', 'Fuel Included', 'Insurance Covered', 'Local Knowledge', 'Flexible Itinerary', 'Free WiFi', 'Complimentary Water'],
+            vehicleType: 'SUV',
+            capacity: 7,
+            luggage: '3 large bags',
+            driverExperience: '8 years',
+            languages: ['English', 'Sinhala', 'Tamil'],
+            policies: ['Free cancellation up to 2 hours', 'Pick-up from any location', 'Waiting time included'],
             userReviews: [
                 {
                     id: 1,
                     name: 'Mike Johnson',
                     rating: 4.9,
-                    review: 'Excellent service! The driver was very knowledgeable about local attractions.',
+                    review: 'Excellent service! Driver was punctual and very knowledgeable about local attractions.',
                     profileImage: 'https://randomuser.me/api/portraits/men/3.jpg',
                     date: '2024-01-12'
+                },
+                {
+                    id: 2,
+                    name: 'Sarah Wilson',
+                    rating: 4.6,
+                    review: 'Comfortable ride and great value for money. Highly recommend for families.',
+                    profileImage: 'https://randomuser.me/api/portraits/women/4.jpg',
+                    date: '2024-01-08'
+                }
+            ]
+        },
+        // Tour Guides
+        {
+            id: 12,
+            category: 'guide',
+            name: 'Cultural Heritage Tour Guide',
+            provider: 'Heritage Walks',
+            guideName: 'Pradeep Silva',
+            location: 'Kandy, Sri Lanka',
+            rating: 4.7,
+            reviews: 203,
+            price: 35,
+            priceUnit: 'hour',
+            images: [
+                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
+                'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800',
+                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800'
+            ],
+            features: ['Multi-lingual', 'Licensed', 'Historical Expert', 'Cultural Stories'],
+            availability: 'Available',
+            description: 'Expert guide for cultural sites and historical landmarks. Discover the rich heritage of Sri Lanka with personalized tours.',
+            amenities: ['Licensed Guide', 'Historical Knowledge', 'Cultural Expertise', 'Flexible Timing', 'Group Discounts', 'Photography Tips'],
+            specialty: 'Cultural Heritage',
+            languages: ['English', 'Sinhala', 'Tamil'],
+            experience: '8 years',
+            certifications: ['Licensed Tour Guide', 'Cultural Heritage Specialist', 'First Aid Certified'],
+            tourTypes: ['Temple Tours', 'Historical Sites', 'Cultural Experiences', 'Photography Tours'],
+            policies: ['Free consultation', 'Customizable itineraries', 'Group rates available'],
+            userReviews: [
+                {
+                    id: 1,
+                    name: 'David Brown',
+                    rating: 4.8,
+                    review: 'Pradeep was fantastic! Very knowledgeable about Sri Lankan history and culture.',
+                    profileImage: 'https://randomuser.me/api/portraits/men/5.jpg',
+                    date: '2024-01-14'
+                },
+                {
+                    id: 2,
+                    name: 'Emma Davis',
+                    rating: 4.6,
+                    review: 'Great guide with excellent English. Made our temple visits truly memorable.',
+                    profileImage: 'https://randomuser.me/api/portraits/women/6.jpg',
+                    date: '2024-01-09'
                 }
             ]
         }
     ];
 
     const service = mockServices.find(s => s.id === parseInt(id)) || mockServices[0];
+
+    // Get breadcrumb items based on service category
+    const getBreadcrumbItems = () => {
+        const categoryMap = {
+            'accommodation': { label: 'Accommodations', path: '/user/accommodations' },
+            'transport': { label: 'Transportation', path: '/user/transportation' },
+            'guide': { label: 'Tour Guides', path: '/user/tour-guides' }
+        };
+
+        const category = categoryMap[service.category] || { label: 'Services', path: '/user/services' };
+        
+        return [
+            { label: 'Dashboard', path: '/user/dashboard', isHome: true },
+            { label: 'Services', path: '/user/services' },
+            { label: category.label, path: category.path },
+            { label: service.name, isActive: true }
+        ];
+    };
 
     const handlePrevImage = () => {
         setCurrentImage(prev => prev === 0 ? service.images.length - 1 : prev - 1);
@@ -137,6 +234,13 @@ const ServiceDetails = () => {
                             </Button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Breadcrumb */}
+            <div className="bg-white border-b border-slate-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <Breadcrumb items={getBreadcrumbItems()} />
                 </div>
             </div>
 
@@ -218,14 +322,162 @@ const ServiceDetails = () => {
                             <p className="text-slate-600 leading-relaxed">{service.description}</p>
                         </Card>
 
-                        {/* Amenities */}
+                        {/* Service-Specific Details */}
                         <Card className="p-6">
-                            <h2 className="text-2xl font-bold text-slate-800 mb-4">What's Included</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {service.amenities.map((amenity, index) => (
-                                    <div key={index} className="flex items-center space-x-3">
-                                        <CheckCircle className="w-5 h-5 text-green-500" />
-                                        <span className="text-slate-700">{amenity}</span>
+                            <h2 className="text-2xl font-bold text-slate-800 mb-4">
+                                {service.category === 'accommodation' && 'What\'s Included'}
+                                {service.category === 'transport' && 'Vehicle Details'}
+                                {service.category === 'guide' && 'Guide Information'}
+                            </h2>
+                            
+                            {service.category === 'accommodation' && (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {service.amenities.map((amenity, index) => (
+                                            <div key={index} className="flex items-center space-x-3">
+                                                <CheckCircle className="w-5 h-5 text-green-500" />
+                                                <span className="text-slate-700">{amenity}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-200">
+                                        <div className="text-center">
+                                            <Clock className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                                            <p className="text-sm font-medium text-slate-700">Check-in</p>
+                                            <p className="text-sm text-slate-500">{service.checkIn}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <Clock className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                                            <p className="text-sm font-medium text-slate-700">Check-out</p>
+                                            <p className="text-sm text-slate-500">{service.checkOut}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <Home className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                                            <p className="text-sm font-medium text-slate-700">Type</p>
+                                            <p className="text-sm text-slate-500">{service.type}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {service.category === 'transport' && (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center space-x-3">
+                                                <Car className="w-5 h-5 text-blue-500" />
+                                                <span className="text-slate-700">Vehicle: {service.vehicleType}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                <Users className="w-5 h-5 text-blue-500" />
+                                                <span className="text-slate-700">Capacity: {service.capacity} passengers</span>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                <Clock className="w-5 h-5 text-blue-500" />
+                                                <span className="text-slate-700">Driver Experience: {service.driverExperience}</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center space-x-3">
+                                                <Camera className="w-5 h-5 text-blue-500" />
+                                                <span className="text-slate-700">Luggage: {service.luggage}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                <Languages className="w-5 h-5 text-blue-500" />
+                                                <span className="text-slate-700">Languages: {service.languages.join(', ')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="pt-4 border-t border-slate-200">
+                                        <h4 className="font-semibold text-slate-800 mb-3">Included Services</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {service.amenities.map((amenity, index) => (
+                                                <div key={index} className="flex items-center space-x-3">
+                                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                                    <span className="text-slate-700">{amenity}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {service.category === 'guide' && (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center space-x-3">
+                                                <Users className="w-5 h-5 text-blue-500" />
+                                                <span className="text-slate-700">Guide: {service.guideName}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                <Award className="w-5 h-5 text-blue-500" />
+                                                <span className="text-slate-700">Experience: {service.experience}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                <Camera className="w-5 h-5 text-blue-500" />
+                                                <span className="text-slate-700">Specialty: {service.specialty}</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center space-x-2">
+                                                    <Languages className="w-5 h-5 text-blue-500" />
+                                                    <span className="font-medium text-slate-700">Languages:</span>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2 ml-7">
+                                                    {service.languages.map((language, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="px-2 py-1 bg-green-50 text-green-700 text-sm rounded-full"
+                                                        >
+                                                            {language}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        <div className="pt-4 border-t border-slate-200">
+                                            <h4 className="font-semibold text-slate-800 mb-3">Certifications</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                {service.certifications.map((cert, index) => (
+                                                    <div key={index} className="flex items-center space-x-3">
+                                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                                        <span className="text-slate-700">{cert}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="pt-4 border-t border-slate-200">
+                                            <h4 className="font-semibold text-slate-800 mb-3">Tour Types</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {service.tourTypes.map((type, index) => (
+                                                    <span
+                                                        key={index}
+                                                        className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full"
+                                                    >
+                                                        {type}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
+
+                        {/* Policies */}
+                        <Card className="p-6">
+                            <h2 className="text-2xl font-bold text-slate-800 mb-4">Policies & Terms</h2>
+                            <div className="space-y-3">
+                                {service.policies.map((policy, index) => (
+                                    <div key={index} className="flex items-start space-x-3">
+                                        <CheckCircle className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                                        <span className="text-slate-700">{policy}</span>
                                     </div>
                                 ))}
                             </div>
@@ -384,17 +636,51 @@ const ServiceDetails = () => {
                                 </div>
 
                                 <div className="border-t border-slate-200 pt-4">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-slate-600">
-                                            ${service.price} x {bookingData.adults + bookingData.children} {service.priceUnit}s
-                                        </span>
-                                        <span className="font-semibold">
-                                            ${service.price * (bookingData.adults + bookingData.children)}
-                                        </span>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-600">
+                                                ${service.price} x {
+                                                    service.category === 'accommodation' ? 
+                                                        `${bookingData.rooms} room(s)` :
+                                                    service.category === 'transport' ? 
+                                                        `${bookingData.days || 1} day(s)` :
+                                                        `${bookingData.duration || 4} hour(s)`
+                                                }
+                                            </span>
+                                            <span className="text-slate-800">
+                                                ${service.price * (
+                                                    service.category === 'accommodation' ? bookingData.rooms :
+                                                    service.category === 'transport' ? (bookingData.days || 1) :
+                                                    (bookingData.duration || 4)
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-600">Service fee</span>
+                                            <span className="text-slate-800">$10</span>
+                                        </div>
+                                        {bookingData.adults > 1 && service.category === 'guide' && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-slate-600">Group discount (10%)</span>
+                                                <span className="text-green-600">-${Math.round(service.price * (bookingData.duration || 4) * 0.1)}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="flex justify-between items-center font-bold text-lg">
+                                    <div className="flex justify-between font-bold text-lg pt-2 border-t border-slate-200">
                                         <span>Total</span>
-                                        <span>${service.price * (bookingData.adults + bookingData.children)}</span>
+                                        <span className="text-blue-600">
+                                            ${(() => {
+                                                let basePrice = service.price * (
+                                                    service.category === 'accommodation' ? bookingData.rooms :
+                                                    service.category === 'transport' ? (bookingData.days || 1) :
+                                                    (bookingData.duration || 4)
+                                                );
+                                                let serviceFee = 10;
+                                                let discount = (bookingData.adults > 1 && service.category === 'guide') ? 
+                                                    Math.round(basePrice * 0.1) : 0;
+                                                return basePrice + serviceFee - discount;
+                                            })()}
+                                        </span>
                                     </div>
                                 </div>
 

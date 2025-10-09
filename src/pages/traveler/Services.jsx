@@ -1,13 +1,23 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, MapPin, Star, Users, Clock, Camera, Car, Home, Compass } from 'lucide-react';
-import { Button, Card, Input } from '../../components/common';
+import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 
 const Services = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeCategory, setActiveCategory] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Get category from URL params
+    useEffect(() => {
+        const urlParams = new URLSearchParams(location.search);
+        const categoryParam = urlParams.get('category');
+        if (categoryParam && ['accommodation', 'transport', 'guide'].includes(categoryParam)) {
+            setActiveCategory(categoryParam);
+        }
+    }, [location.search]);
 
     // Mock data for services
     const mockServices = useMemo(() => [
@@ -129,6 +139,33 @@ const Services = () => {
         return filtered;
     }, [mockServices, activeCategory, searchTerm]);
 
+    const getCategoryInfo = () => {
+        switch (activeCategory) {
+            case 'accommodation':
+                return {
+                    title: 'Accommodation Services',
+                    description: 'Find the perfect hotels, resorts, and stays for your Sri Lankan adventure'
+                };
+            case 'transport':
+                return {
+                    title: 'Transportation Services', 
+                    description: 'Comfortable and reliable transportation options across Sri Lanka'
+                };
+            case 'guide':
+                return {
+                    title: 'Tour Guide Services',
+                    description: 'Expert local guides to enhance your travel experience'
+                };
+            default:
+                return {
+                    title: 'Services',
+                    description: 'Discover amazing travel services and experiences'
+                };
+        }
+    };
+
+    const categoryInfo = getCategoryInfo();
+
     const getAvailabilityColor = (availability) => {
         switch (availability.toLowerCase()) {
             case 'available': return 'bg-green-100 text-green-700';
@@ -141,10 +178,20 @@ const Services = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Breadcrumb */}
+                <div className="mb-6">
+                    <Breadcrumb 
+                        items={[
+                            { label: 'Dashboard', path: '/user/dashboard', isHome: true },
+                            { label: 'Services', isActive: true }
+                        ]} 
+                    />
+                </div>
+
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Services</h1>
-                    <p className="text-lg text-slate-600">Discover amazing travel services and experiences</p>
+                    <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">{categoryInfo.title}</h1>
+                    <p className="text-lg text-slate-600">{categoryInfo.description}</p>
                 </div>
 
                 {/* Search Bar */}
@@ -168,7 +215,15 @@ const Services = () => {
                         return (
                             <Button
                                 key={category.key}
-                                onClick={() => setActiveCategory(category.key)}
+                                onClick={() => {
+                                    setActiveCategory(category.key);
+                                    // Update URL without page reload
+                                    if (category.key === 'all') {
+                                        navigate('/user/services', { replace: true });
+                                    } else {
+                                        navigate(`/user/services?category=${category.key}`, { replace: true });
+                                    }
+                                }}
                                 variant={activeCategory === category.key ? 'primary' : 'outline'}
                                 size="md"
                                 className="flex items-center"
@@ -304,6 +359,7 @@ const Services = () => {
                             onClick={() => {
                                 setSearchTerm('');
                                 setActiveCategory('all');
+                                navigate('/user/services', { replace: true });
                             }}
                         >
                             Clear Filters

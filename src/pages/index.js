@@ -28,6 +28,12 @@ export { default as Payments } from './traveler/Payments.jsx';
 export { default as Services } from './traveler/Services.jsx';
 export { default as ServiceDetails } from './traveler/ServiceDetails.jsx';
 export { default as Profile } from './traveler/Profile.jsx';
+export { default as Accommodations } from './traveler/Accommodations.jsx';
+export { default as Transportation } from './traveler/Transportation.jsx';
+export { default as TourGuides } from './traveler/TourGuides.jsx';
+export { default as AccommodationDetails } from './traveler/AccommodationDetails.jsx';
+export { default as TransportationDetails } from './traveler/TransportationDetails.jsx';
+export { default as TourGuideDetails } from './traveler/TourGuideDetails.jsx';
 
 
 export { default as Bookings } from './user/Bookings.jsx';
