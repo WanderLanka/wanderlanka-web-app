@@ -154,7 +154,7 @@ const TravelerDashboard = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-900/70 via-slate-800/50 to-slate-900/70"></div>
                 
                 <div className="relative max-w-7xl mx-auto px-6 py-12">
-                    <div className="text-center mb-8">
+                    <div className="text-center mb-4">
                         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
                             Plan Your Next Adventure
                         </h2>
@@ -163,8 +163,8 @@ const TravelerDashboard = () => {
                         </p>
                     </div>
 
-                    <form onSubmit={handlePlanTrip} className="max-w-4xl mx-auto flex flex-col items-center">
-                        <div className="flex flex-col md:flex-row gap-4 mb-8">
+                    <form onSubmit={handlePlanTrip} className="max-w-4xl mx-auto flex flex-col items-center mb-2">
+                        <div className="flex flex-col md:flex-row gap-4 mb-3">
                             <div className="relative flex-1">
                                 
                                 <div className="relative p-4">
@@ -224,32 +224,34 @@ const TravelerDashboard = () => {
                             </span>
                         </Button>
                     </form>
-                </div>
 
-                 <div className="relative bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 overflow-hidden">
-                <div className="relative max-w-7xl mx-auto px-6 py-12 text-center">
-                    <div className="max-w-4xl mx-auto">
-                        <h1
-                            className={`text-xl md:text-2xl lg:text-2xl font-bold text-white mb-4 leading-tight transition-all duration-500 transform ${
-                                fade ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-                            }`}
-                        >
-                            {quoteText}
-                        </h1>
-                        <p
-                            className={`text-lg md:text-m text-slate-300 transition-all duration-500 transform ${
-                                fade ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-                            }`}
-                        >
-                            - {quoteAuthor}
-                        </p>
+                    <div className="relative overflow-hidden">
+                        <div className="relative max-w-4xl mx-auto px-6 py-8 text-center">
+                            <div className="max-w-4xl mx-auto">
+                                <h1
+                                    className={`text-xl md:text-2xl lg:text-2xl font-bold text-white mb-4 leading-tight transition-all duration-500 transform ${
+                                        fade ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                                    }`}
+                                >
+                                    {quoteText}
+                                </h1>
+                                <p
+                                    className={`text-lg md:text-m text-slate-300 transition-all duration-500 transform ${
+                                        fade ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                                    }`}
+                                >
+                                    - {quoteAuthor}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+               
 
             </div>
            
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8"> {/* Change the width of the contianer here (7xl)*/}
 
                 {/* Grid Layout for Upcoming Trip and Bookings */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Star, Users, Clock, Camera, Car, Home, Compass } from 'lucide-react';
 import { Button, Card, Input } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 
 const Services = () => {
+    const navigate = useNavigate();
     const [activeCategory, setActiveCategory] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -264,7 +266,11 @@ const Services = () => {
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button variant="outline" size="sm">
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => navigate(`/user/services/${service.id}`)}
+                                        >
                                             Details
                                         </Button>
                                         <Button 

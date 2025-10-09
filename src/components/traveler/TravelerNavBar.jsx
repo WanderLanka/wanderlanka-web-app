@@ -81,7 +81,7 @@ const handleLogout = () => {
                 <li key={item.path}>
                   <NavLink 
                     to={item.path}
-                    activeClass="bg-blue-50 text-blue-700 shadow-sm"
+                    activeClass="bg-green-200 text-green-700 shadow-sm"
                     inactiveClass="text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   >
                     {item.label}

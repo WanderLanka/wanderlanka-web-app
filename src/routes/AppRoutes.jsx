@@ -21,6 +21,7 @@ import {
   MyTrips,
   Payments,
   Services,
+  ServiceDetails,
   Profile
 } from '../pages';
 import { ProtectedRoute } from '../components';
@@ -77,6 +78,7 @@ const AppRoutes = () => {
           <Route path="mytrips" element={<MyTrips />} />
           <Route path="payments" element={<Payments />} />
           <Route path="services" element={<Services />} />
+          <Route path="services/:id" element={<ServiceDetails />} />
           <Route path="profile" element={<Profile />} />
         </Route>
       </Route>

@@ -26,6 +26,7 @@ export { default as MyBookings } from './traveler/MyBookings.jsx';
 export { default as MyTrips } from './traveler/MyTrips.jsx';
 export { default as Payments } from './traveler/Payments.jsx';
 export { default as Services } from './traveler/Services.jsx';
+export { default as ServiceDetails } from './traveler/ServiceDetails.jsx';
 export { default as Profile } from './traveler/Profile.jsx';
 
 
