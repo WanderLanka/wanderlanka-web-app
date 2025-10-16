@@ -1,5 +1,6 @@
 // Traveler pages barrel exports
 export { default as TravelerDashboard } from './TravelerDashboard';
+export { default as TripPlanning } from './TripPlanning';
 export { default as MyBookings } from './MyBookings';
 export { default as MyTrips } from './MyTrips';
 export { default as Payments } from './Payments';

@@ -22,6 +22,7 @@ export { default as VehiclesPage } from './transport/VehiclesPage.jsx';
 
 // User pages
 export { default as TravelerDashboard } from './traveler/TravelerDashboard.jsx';
+export { default as TripPlanning } from './traveler/TripPlanning.jsx';
 export { default as MyBookings } from './traveler/MyBookings.jsx';
 export { default as MyTrips } from './traveler/MyTrips.jsx';
 export { default as Payments } from './traveler/Payments.jsx';
