@@ -68,6 +68,9 @@ const Auth = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Prevent multiple submissions
+    if (loading) return;
+
     setError("");
     let validationError = isLogin
       ? validateLogin(formData)
@@ -78,6 +81,13 @@ const Auth = () => {
     }
 
     setLoading(true);
+    
+    // Add a safety timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      setError("Request timed out. Please try again.");
+      toast.error("Request timed out. Please try again.");
+    }, 15000); // 15 seconds timeout
     try {
       let response;
       if (isLogin) {
@@ -87,8 +97,8 @@ const Auth = () => {
         });
         
         // Store authentication data for login
-        if (response.token) {
-          localStorage.setItem("token", response.token);
+        if (response.accessToken) {
+          localStorage.setItem("token", response.accessToken);
         }
         if (response.refreshToken) {
           localStorage.setItem("refreshToken", response.refreshToken);
@@ -143,8 +153,39 @@ const Auth = () => {
         });
       }
     } catch (error) {
-      setError(error.response?.data?.error || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`); //ERROR MESSAGE FIXES HERE  (.error instead of .message)
+      console.error('Auth error:', error);
+      
+      // Extract error message from response
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Show user-friendly error messages
+      if (errorMessage.includes('Invalid credentials')) {
+        errorMessage = 'Invalid username or password. Please check your credentials and try again.';
+      } else if (errorMessage.includes('pending')) {
+        errorMessage = 'Your account is still under review. Please wait for admin approval.';
+      } else if (errorMessage.includes('suspended')) {
+        errorMessage = 'Your account has been suspended. Please contact support.';
+      } else if (errorMessage.includes('rejected')) {
+        errorMessage = 'Your account application was rejected. Please contact support for more information.';
+      } else if (errorMessage.includes('Network Error') || errorMessage.includes('timeout')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (errorMessage.includes('500')) {
+        errorMessage = 'Server error. Please try again later.';
+      }
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
+      // Clear the timeout and ensure loading is always set to false
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };

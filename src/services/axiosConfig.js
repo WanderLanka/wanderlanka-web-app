@@ -13,8 +13,8 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     
-    // Setting the header to identify the platfrom in the backend
-    config.headers['X-Client-Type'] = 'web';
+    // Setting the header to identify the platform in the backend
+    config.headers['x-platform'] = 'web';
 
     // Debug logging
     console.log('🔍 Axios Request Interceptor:');
