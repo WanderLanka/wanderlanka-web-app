@@ -1,11 +1,21 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { getRoleFromToken } from "../services/auth.js";
 
 const ProtectedRoute = ({ allowedRoles }) => {
   const token = localStorage.getItem("token");
-  const role = getRoleFromToken();
+  
+  // Get role from stored user data instead of decoding token
+  let role = null;
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      role = user.role;
+    }
+  } catch (error) {
+    console.error("Error parsing stored user data:", error);
+  }
 
-  if (!token || !allowedRoles.includes(role)) {
+  if (!token || !role || !allowedRoles.includes(role)) {
     return <Navigate to="/auth" replace />;
   }
 

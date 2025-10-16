@@ -55,21 +55,33 @@ const Auth = () => {
       navigate("/accommodation");
     } else if (role === "transport") {
       navigate("/transport");
-    } else if (role === "guide") {
-      // Guide routes not yet implemented, redirect to home for now
-      navigate("/");
     } else if (role === "Sysadmin" || role === "admin") {
       navigate("/admin");
+    } else if (role === "guide") {
+      // Guides should not access web app - this is a platform violation
+      toast.error("Guides can only access the mobile application. Please use the mobile app to login.");
+      // Clear any stored tokens and redirect to login
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      navigate("/auth");
+      return;
     } else {
+      // Unknown role - redirect to home page
       navigate("/");
     }
   };
 
   const handleSubmit = async (e) => {
+    // Prevent default form submission behavior
     e.preventDefault();
+    e.stopPropagation();
 
     // Prevent multiple submissions
-    if (loading) return;
+    if (loading) {
+      e.preventDefault();
+      return false;
+    }
 
     setError("");
     let validationError = isLogin
@@ -77,7 +89,8 @@ const Auth = () => {
       : validateSignup(formData);
     if (validationError) {
       setError(validationError);
-      return;
+      e.preventDefault();
+      return false;
     }
 
     setLoading(true);
@@ -97,8 +110,8 @@ const Auth = () => {
         });
         
         // Store authentication data for login
-        if (response.accessToken) {
-          localStorage.setItem("token", response.accessToken);
+        if (response.token) {
+          localStorage.setItem("token", response.token);
         }
         if (response.refreshToken) {
           localStorage.setItem("refreshToken", response.refreshToken);
@@ -110,9 +123,11 @@ const Auth = () => {
         setError("");
         toast.success(`Login successful! Welcome ${response.user?.username || formData.username}!`);
         
-        // Navigate to dashboard based on role
+        // Navigate to dashboard based on role with a small delay to ensure localStorage is set
         const userRole = response.user?.role || formData.role;
-        navigateToDashboard(userRole);
+        setTimeout(() => {
+          navigateToDashboard(userRole);
+        }, 100); // Small delay to ensure localStorage is properly set
       } else {
         response = await authAPI.register({
           username: formData.username,
@@ -153,6 +168,10 @@ const Auth = () => {
         });
       }
     } catch (error) {
+      // Prevent any potential page reload
+      e.preventDefault();
+      e.stopPropagation();
+      
       console.error('Auth error:', error);
       
       // Extract error message from response
@@ -183,6 +202,7 @@ const Auth = () => {
       
       setError(errorMessage);
       toast.error(errorMessage);
+      return false;
     } finally {
       // Clear the timeout and ensure loading is always set to false
       clearTimeout(timeoutId);
@@ -255,7 +275,7 @@ const Auth = () => {
           )}
 
           {/* Form */}
-          <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username Field */}
             <Input
               type="text"
@@ -322,7 +342,6 @@ const Auth = () => {
                     <option value="traveler">Traveler</option>
                     <option value="transport">Transport Provider</option>
                     <option value="accommodation">Accommodation Provider</option>
-                    <option value="guide">Tour Guide</option>
                   </select>
                   <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                     <span><User className="w-5 h-5 text-gray-400" /></span>
@@ -342,9 +361,8 @@ const Auth = () => {
                   : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 hover:shadow-xl hover:shadow-emerald-500/25'
               }`}
               variant = "primary"
-              type="button"
+              type="submit"
               disabled={loading}
-              onClick={handleSubmit}
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-3">
@@ -358,7 +376,7 @@ const Auth = () => {
                 </span>
               )}
             </button>
-          </div>
+          </form>
 
           {/* Toggle between Login and Register */}
           <div className="mt-8 text-center">
