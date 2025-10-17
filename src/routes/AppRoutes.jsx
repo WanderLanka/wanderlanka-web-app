@@ -18,7 +18,6 @@ import {
   AdminComplains,
   TravelerDashboard,
   TripPlanning,
-  TripPlanSummary,
   MyBookings,
   MyTrips,
   Payments,
@@ -82,7 +81,6 @@ const AppRoutes = () => {
           <Route index element={<TravelerDashboard />} />
           <Route path="dashboard" element={<TravelerDashboard />} />
           <Route path="trip-planning" element={<TripPlanning />} />
-          <Route path="trip-summary" element={<TripPlanSummary />} />
           <Route path="mybookings" element={<MyBookings />} />
           <Route path="mytrips" element={<MyTrips />} />
           <Route path="payments" element={<Payments />} />

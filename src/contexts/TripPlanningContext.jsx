@@ -5,7 +5,8 @@ export const TripPlanningProvider = ({ children }) => {
     const [planningBookings, setPlanningBookings] = useState({
         accommodations: [],
         transportation: [],
-        guides: []
+        guides: [],
+        destinations: []
     });
     const [isInPlanningMode, setIsInPlanningMode] = useState(false);
 
@@ -44,16 +45,19 @@ export const TripPlanningProvider = ({ children }) => {
         setPlanningBookings({
             accommodations: [],
             transportation: [],
-            guides: []
+            guides: [],
+            destinations: []
         });
         localStorage.removeItem('tripPlanningBookings');
     };
 
     const getTotalAmount = () => {
         let total = 0;
-        Object.values(planningBookings).forEach(bookingType => {
-            bookingType.forEach(booking => {
-                total += booking.totalPrice || booking.price || 0;
+        Object.values(planningBookings).forEach(bookings => {
+            bookings.forEach(booking => {
+                // Try different price fields that might exist
+                const price = booking.totalPrice || booking.price || booking.cost || 0;
+                total += Number(price) || 0;
             });
         });
         return total;

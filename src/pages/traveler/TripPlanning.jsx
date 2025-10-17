@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   MapPin, 
@@ -13,12 +13,15 @@ import {
   Plus,
   Filter,
   Grid,
-  List
+  List,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button, Card } from '../../components/common';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import NavigationWarningModal from '../../components/NavigationWarningModal';
 import Toast from '../../components/Toast';
+import TripSummaryModal from '../../components/TripSummaryModal';
 
 const TripPlanning = () => {
   const location = useLocation();
@@ -28,22 +31,41 @@ const TripPlanning = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [selectedCategory, setSelectedCategory] = useState('destinations');
   const [selectedDay, setSelectedDay] = useState(1);
+  const [selectedDate, setSelectedDate] = useState(null);
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const [hasUnsavedProgress, setHasUnsavedProgress] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   
   // Get trip data from navigation state or default values
-  const tripData = location.state || {
-    destination: '',
-    startDate: '',
-    endDate: '',
-    travelers: 2
-  };
+  const defaultDates = useMemo(() => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const dayAfter = new Date(today);
+    dayAfter.setDate(today.getDate() + 3);
+    
+    return {
+      startDate: tomorrow.toISOString().split('T')[0],
+      endDate: dayAfter.toISOString().split('T')[0]
+    };
+  }, []);
+  
+  const tripData = useMemo(() => {
+    return location.state || {
+      destination: 'Sri Lanka',
+      startDate: defaultDates.startDate,
+      endDate: defaultDates.endDate,
+      travelers: 2
+    };
+  }, [location.state, defaultDates]);
 
-  // Calculate trip days
-  const getTripDays = () => {
+  // Calculate trip days with memoization to prevent infinite re-renders
+  const tripDays = useMemo(() => {
     if (!tripData.startDate || !tripData.endDate) return [];
     
     const start = new Date(tripData.startDate);
@@ -55,9 +77,14 @@ const TripPlanning = () => {
     }
     
     return days;
-  };
+  }, [tripData.startDate, tripData.endDate]);
 
-  const tripDays = getTripDays();
+  // Update selected date when selectedDay changes
+  useEffect(() => {
+    if (tripDays.length > 0 && selectedDay <= tripDays.length) {
+      setSelectedDate(tripDays[selectedDay - 1]);
+    }
+  }, [selectedDay, tripDays]);
 
   // Track user activity to detect unsaved progress
   useEffect(() => {
@@ -127,6 +154,50 @@ const TripPlanning = () => {
     setToastMessage('');
   };
 
+  const scrollDestinations = (direction) => {
+    const container = document.getElementById('destinations-container');
+    if (container) {
+      const scrollAmount = 200;
+      const newScrollLeft = direction === 'left' 
+        ? container.scrollLeft - scrollAmount 
+        : container.scrollLeft + scrollAmount;
+      
+      container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+      
+      // Update scroll button states
+      setTimeout(() => {
+        setCanScrollLeft(container.scrollLeft > 0);
+        setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth);
+      }, 300);
+    }
+  };
+
+  const handleDestinationScroll = () => {
+    const container = document.getElementById('destinations-container');
+    if (container) {
+      setCanScrollLeft(container.scrollLeft > 0);
+      setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth);
+    }
+  };
+
+  // Initialize scroll state for destinations
+  useEffect(() => {
+    const container = document.getElementById('destinations-container');
+    if (container && selectedCategory === 'destinations') {
+      const checkScrollability = () => {
+        setCanScrollLeft(container.scrollLeft > 0);
+        setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth);
+      };
+      
+      checkScrollability();
+      container.addEventListener('scroll', handleDestinationScroll);
+      
+      return () => {
+        container.removeEventListener('scroll', handleDestinationScroll);
+      };
+    }
+  }, [selectedCategory]);
+
   const handleNavigateToDetails = (item) => {
     let path = '';
     
@@ -146,7 +217,17 @@ const TripPlanning = () => {
     
     // Navigate with state indicating this came from trip planning
     // This is part of the planning workflow, so navigate directly
-    navigate(path, { state: { fromTripPlanning: true, selectedDay } });
+    navigate(path, { 
+      state: { 
+        fromTripPlanning: true, 
+        selectedDay,
+        selectedDate: selectedDate ? selectedDate.toISOString() : null,
+        tripDates: {
+          start: tripData.startDate,
+          end: tripData.endDate
+        }
+      } 
+    });
   };
 
   const handleAddToTrip = (item) => {
@@ -161,16 +242,49 @@ const TripPlanning = () => {
     const serviceType = serviceTypeMap[selectedCategory];
     
     if (serviceType && serviceType !== 'destinations') {
-      // Add to trip planning context
-      addToTripPlanning(item, serviceType);
+      // Add to trip planning context with date information
+      const bookingData = {
+        ...item,
+        selectedDay,
+        selectedDate: selectedDate ? selectedDate.toISOString() : null,
+        tripDate: selectedDate ? selectedDate.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }) : null
+      };
+      
+      addToTripPlanning(bookingData, serviceType);
       setHasUnsavedProgress(true);
       
-      // Show success toast
-      showSuccessToast(`${item.name} added to your trip planning!`);
+      // Show success toast with date information
+      const dateText = selectedDate 
+        ? ` for ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` 
+        : '';
+      showSuccessToast(`${item.name} added to your trip${dateText}!`);
     } else if (selectedCategory === 'destinations') {
-      // For destinations, just show a message for now
-      console.log('Adding destination to trip:', item);
-      showSuccessToast(`${item.name} added to your trip planning!`);
+      // Add destinations to trip planning context with date information
+      const bookingData = {
+        ...item,
+        selectedDay,
+        selectedDate: selectedDate ? selectedDate.toISOString() : null,
+        tripDate: selectedDate ? selectedDate.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }) : null
+      };
+      
+      addToTripPlanning(bookingData, 'destinations');
+      setHasUnsavedProgress(true);
+      
+      // Show success toast with date information
+      const dateText = selectedDate 
+        ? ` for ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` 
+        : '';
+      showSuccessToast(`${item.name} added to your trip${dateText}!`);
     }
   };
 
@@ -185,7 +299,7 @@ const TripPlanning = () => {
       image: "https://images.unsplash.com/photo-1580910527739-556eb89f9d65?q=80&w=1074&auto=format&fit=crop",
       price: "LKR 2,500",
       duration: "2-3 hours",
-      description: "Ancient rock fortress and palace ruins"
+      description: "Ancient rock fortress and palace ruins with stunning views"
     },
     {
       id: 2,
@@ -208,6 +322,39 @@ const TripPlanning = () => {
       price: "LKR 8,000",
       duration: "4-6 hours",
       description: "Wildlife safari with leopards and elephants"
+    },
+    {
+      id: 4,
+      name: "Ella Nine Arch Bridge",
+      location: "Ella",
+      type: "Scenic Spot",
+      rating: 4.5,
+      image: "https://images.unsplash.com/photo-1586500036706-41963de24d8b?q=80&w=1172&auto=format&fit=crop",
+      price: "Free",
+      duration: "1 hour",
+      description: "Iconic railway bridge in the hill country"
+    },
+    {
+      id: 5,
+      name: "Galle Fort",
+      location: "Galle",
+      type: "Historical Site",
+      rating: 4.6,
+      image: "https://images.unsplash.com/photo-1588237135815-87da467cea3b?q=80&w=1170&auto=format&fit=crop",
+      price: "Free",
+      duration: "2-3 hours",
+      description: "UNESCO World Heritage Dutch colonial fortress"
+    },
+    {
+      id: 6,
+      name: "Adam's Peak",
+      location: "Dalhousie",
+      type: "Adventure",
+      rating: 4.4,
+      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 500",
+      duration: "6-8 hours",
+      description: "Sacred mountain pilgrimage with sunrise views"
     }
   ];
 
@@ -284,12 +431,51 @@ const TripPlanning = () => {
     { id: 'guides', name: 'Guides', icon: Users }
   ];
 
+  // Mock data for transportation
+  const transportation = [
+    {
+      id: 1,
+      name: "Private Car with Driver",
+      location: "Colombo to Kandy",
+      type: "Private Transfer",
+      rating: 4.8,
+      image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 15,000",
+      duration: "3 hours",
+      description: "Comfortable air-conditioned car with experienced driver"
+    },
+    {
+      id: 2,
+      name: "Train Journey",
+      location: "Colombo to Ella",
+      type: "Scenic Railway",
+      rating: 4.9,
+      image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=1169&auto=format&fit=crop",
+      price: "LKR 2,000",
+      duration: "7 hours",
+      description: "Most scenic train ride in the world through tea plantations"
+    },
+    {
+      id: 3,
+      name: "Airport Transfer",
+      location: "BIA to Colombo Hotels",
+      type: "Airport Transfer",
+      rating: 4.7,
+      image: "https://images.unsplash.com/photo-1590736969955-71cc94901144?q=80&w=1074&auto=format&fit=crop",
+      price: "LKR 8,000",
+      duration: "1 hour",
+      description: "Reliable airport pickup and drop-off service"
+    }
+  ];
+
   const getCurrentData = () => {
     switch (selectedCategory) {
       case 'destinations':
         return destinations;
       case 'accommodations':
         return accommodations;
+      case 'transport':
+        return transportation;
       case 'guides':
         return guides;
       default:
@@ -312,41 +498,77 @@ const TripPlanning = () => {
           </button>
           
           <div className="mb-4">
-            <h1 className="text-2xl font-bold mb-2">Plan Your Trip</h1>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 text-sm text-white/90">
+            {/* Title and Date Selection in Same Line */}
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-bold">Plan Your Trip</h1>
+              
+              {/* Day/Date Dropdown */}
+              {tripDays.length > 0 && (
+                <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                  <Calendar className="h-4 w-4 text-white/90" />
+                  <div className="flex items-center space-x-2">
+                    <span className="text-white/90 text-sm font-medium">Select Date:</span>
+                    <select
+                      value={selectedDay}
+                      onChange={(e) => setSelectedDay(parseInt(e.target.value))}
+                      className="bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer min-w-[180px] font-medium"
+                    >
+                      {tripDays.map((day, index) => {
+                        const dayNum = index + 1;
+                        const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
+                        const dayDate = day.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: day.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                        });
+                        return (
+                          <option key={index} value={dayNum} className="bg-white text-gray-900">
+                            Day {dayNum}: {dayName}, {dayDate}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                  {selectedDate && (
+                    <div className="text-white/90 text-xs bg-white/20 px-2 py-1 rounded">
+                      {selectedDate.toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Trip Information */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-white/90">
                 <div className="flex items-center">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {tripData.destination || 'Sri Lanka'}
+                  <MapPin className="w-4 h-4 mr-2 text-green-400" />
+                  <span className="font-medium">{tripData.destination || 'Sri Lanka'}</span>
                 </div>
                 <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {tripData.startDate && tripData.endDate 
-                    ? `${tripData.startDate} - ${tripData.endDate}`
-                    : 'Select dates'
-                  }
+                  <Calendar className="w-4 h-4 mr-2 text-blue-400" />
+                  <span className="font-medium">
+                    {tripData.startDate && tripData.endDate 
+                      ? `${new Date(tripData.startDate).toLocaleDateString()} - ${new Date(tripData.endDate).toLocaleDateString()}`
+                      : 'Select dates'
+                    }
+                  </span>
                 </div>
                 <div className="flex items-center">
-                  <Users className="w-4 h-4 mr-1" />
-                  {tripData.travelers || 2} travelers
+                  <Users className="w-4 h-4 mr-2 text-purple-400" />
+                  <span className="font-medium">{tripData.travelers || 2} travelers</span>
                 </div>
               </div>
               
-              {/* Day Dropdown */}
+              {/* Trip Duration Info */}
               {tripDays.length > 0 && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-white/90 text-sm">Planning for:</span>
-                  <select
-                    value={selectedDay}
-                    onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-                    className="bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer"
-                  >
-                    {tripDays.map((day, index) => (
-                      <option key={index} value={index + 1} className="bg-white text-gray-900">
-                        Day {index + 1} - {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </option>
-                    ))}
-                  </select>
+                <div className="mt-2 text-xs text-white/70">
+                  Trip Duration: {tripDays.length} day{tripDays.length !== 1 ? 's' : ''} • 
+                  {selectedDate && ` Currently planning: ${selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`}
                 </div>
               )}
             </div>
@@ -399,111 +621,178 @@ const TripPlanning = () => {
                 </button>
               </div>
             </div>
-            <span className="text-sm text-gray-500">
-              {getCurrentData().length} {selectedCategory} found
-            </span>
+            {selectedCategory === 'destinations' ? (
+              <h2 className="text-lg font-bold text-gray-800 mb-2">POPULAR DESTINATIONS</h2>
+            ) : (
+              <span className="text-sm text-gray-500">
+                {getCurrentData().length} {selectedCategory} found
+              </span>
+            )}
           </div>
 
           {/* Items Grid/List */}
-          <div className={`space-y-4 ${viewMode === 'grid' ? 'grid grid-cols-1 gap-4' : ''}`}>
-            {getCurrentData().map((item) => (
-              <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                <div className={`${viewMode === 'list' ? 'flex' : ''}`}>
-                  <div className={`${viewMode === 'list' ? 'w-48 h-32' : 'h-48'} relative`}>
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <button className="absolute top-2 right-2 p-2 bg-white/90 rounded-full hover:bg-white transition-colors">
-                      <Heart className="w-4 h-4 text-gray-600" />
-                    </button>
-                  </div>
-                  
-                  <div className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-600">{item.location}</p>
+          {selectedCategory === 'destinations' ? (
+            <div className="relative">
+              {/* Left Arrow */}
+              {canScrollLeft && (
+                <button
+                  onClick={() => scrollDestinations('left')}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                </button>
+              )}
+              
+              {/* Right Arrow */}
+              {canScrollRight && (
+                <button
+                  onClick={() => scrollDestinations('right')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                </button>
+              )}
+              
+              <div className="overflow-x-auto" id="destinations-container">
+                <div className="flex gap-3 pb-4">
+                  {getCurrentData().map((item) => (
+                    <div key={item.id} className="flex-shrink-0 w-40 bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                      <div className="h-24 relative">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <button className="absolute top-1 right-1 p-1 bg-white/90 rounded-full hover:bg-white transition-colors">
+                          <Heart className="w-3 h-3 text-gray-600" />
+                        </button>
                       </div>
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium ml-1">{item.rating}</span>
+                      <div className="p-2">
+                        <div className="mb-2">
+                          <h3 className="font-medium text-gray-900 text-xs leading-tight truncate">{item.name}</h3>
+                          <p className="text-xs text-gray-500 truncate">{item.location}</p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                            <span className="text-xs font-medium ml-1">{item.rating}</span>
+                          </div>
+                          <button 
+                            onClick={() => handleAddToTrip(item)}
+                            className="w-6 h-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Regular grid/list for other categories
+            <div className={`space-y-4 ${viewMode === 'grid' ? 'grid grid-cols-1 gap-4' : ''}`}>
+              {getCurrentData().map((item) => (
+                <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                  <div className={`${viewMode === 'list' ? 'flex' : ''}`}>
+                    <div className={`${viewMode === 'list' ? 'w-48 h-32' : 'h-48'} relative`}>
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <button className="absolute top-2 right-2 p-2 bg-white/90 rounded-full hover:bg-white transition-colors">
+                        <Heart className="w-4 h-4 text-gray-600" />
+                      </button>
+                    </div>
                     
-                    <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                    
-                    {/* Additional info for guides */}
-                    {selectedCategory === 'guides' && (
-                      <div className="mb-3 space-y-1">
-                        <div className="flex items-center text-xs text-gray-500">
-                          <span className="font-medium mr-2">Experience:</span>
-                          {item.experience}
+                    <div className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                          <p className="text-sm text-gray-600">{item.location}</p>
                         </div>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <span className="font-medium mr-2">Languages:</span>
-                          {item.languages?.join(', ')}
+                        <div className="flex items-center">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <span className="text-sm font-medium ml-1">{item.rating}</span>
                         </div>
                       </div>
-                    )}
-                    
-                    {/* Additional info for accommodations */}
-                    {selectedCategory === 'accommodations' && item.amenities && (
-                      <div className="mb-3">
-                        <div className="flex flex-wrap gap-1">
-                          {item.amenities.slice(0, 3).map((amenity, index) => (
-                            <span key={index} className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded">
-                              {amenity}
-                            </span>
-                          ))}
-                          {item.amenities.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                              +{item.amenities.length - 3} more
-                            </span>
+                      
+                      <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+                      
+                      {/* Additional info for transportation */}
+                      {selectedCategory === 'transport' && (
+                        <div className="mb-3">
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded font-medium">
+                            {item.type}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Additional info for guides */}
+                      {selectedCategory === 'guides' && (
+                        <div className="mb-3 space-y-1">
+                          <div className="flex items-center text-xs text-gray-500">
+                            <span className="font-medium mr-2">Experience:</span>
+                            {item.experience}
+                          </div>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <span className="font-medium mr-2">Languages:</span>
+                            {item.languages?.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Additional info for accommodations */}
+                      {selectedCategory === 'accommodations' && item.amenities && (
+                        <div className="mb-3">
+                          <div className="flex flex-wrap gap-1">
+                            {item.amenities.slice(0, 3).map((amenity, index) => (
+                              <span key={index} className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded">
+                                {amenity}
+                              </span>
+                            ))}
+                            {item.amenities.length > 3 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                                +{item.amenities.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-semibold text-emerald-600">{item.price}</span>
+                          {item.duration && (
+                            <span className="text-sm text-gray-500 ml-1">/ {item.duration}</span>
+                          )}
+                          {selectedCategory === 'guides' && (
+                            <span className="text-sm text-gray-500 ml-1">/ day</span>
+                          )}
+                          {selectedCategory === 'accommodations' && (
+                            <span className="text-sm text-gray-500 ml-1">/ night</span>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          {selectedCategory !== 'destinations' && (
+                            <Button 
+                              size="sm" 
+                              variant="primary"
+                              onClick={() => handleNavigateToDetails(item)}
+                            >
+                              View Details
+                            </Button>
                           )}
                         </div>
                       </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-semibold text-emerald-600">{item.price}</span>
-                        {item.duration && (
-                          <span className="text-sm text-gray-500 ml-1">/ {item.duration}</span>
-                        )}
-                        {selectedCategory === 'guides' && (
-                          <span className="text-sm text-gray-500 ml-1">/ day</span>
-                        )}
-                        {selectedCategory === 'accommodations' && (
-                          <span className="text-sm text-gray-500 ml-1">/ night</span>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        {selectedCategory !== 'destinations' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleNavigateToDetails(item)}
-                          >
-                            View Details
-                          </Button>
-                        )}
-                        <Button 
-                          size="sm" 
-                          variant="primary"
-                          onClick={() => handleAddToTrip(item)}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          {tripDays.length > 0 ? `Add to Day ${selectedDay}` : 'Add to Trip'}
-                        </Button>
-                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -527,11 +816,11 @@ const TripPlanning = () => {
 
       {/* Floating Trip Summary Button */}
       {getTotalItemsCount() > 0 && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 right-6 z-40">
           <Button
             variant="primary"
             size="lg"
-            onClick={() => handleSafeNavigation(() => navigate('/user/trip-summary'))}
+            onClick={() => setShowSummaryModal(true)}
             className="shadow-lg hover:shadow-xl transition-shadow flex items-center"
           >
             <span className="bg-white text-emerald-600 rounded-full px-2 py-1 text-sm font-bold mr-2">
@@ -554,6 +843,13 @@ const TripPlanning = () => {
         message={toastMessage}
         isVisible={showToast}
         onClose={hideToast}
+      />
+
+      {/* Trip Summary Modal */}
+      <TripSummaryModal
+        isOpen={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        tripData={tripData}
       />
     </div>
   );
