@@ -12,16 +12,17 @@ import {
   HotelsPage,
   Rooms,
   Bookings,
+  AddNewAccommodation,
   AdminDashboard,
   AdminPayment,
   AdminRequests,
   AdminComplains,
   TravelerDashboard,
+  TripPlanning,
   MyBookings,
   MyTrips,
   Payments,
   Services,
-  ServiceDetails,
   Profile,
   Accommodations,
   Transportation,
@@ -30,6 +31,7 @@ import {
   TransportationDetails,
   TourGuideDetails
 } from '../pages';
+import AddNewTransport from '../pages/transport/AddNewTransport';
 import { ProtectedRoute } from '../components';
 import {
   TransportLayout,
@@ -51,6 +53,7 @@ const AppRoutes = () => {
         <Route path="/transport" element={<TransportLayout />} >
           <Route index element={<TransportDashboard />} />
           <Route path="vehicles" element={<VehiclesPage />} />
+          <Route path="add-new" element={<AddNewTransport />} />
         </Route>
       </Route>
 
@@ -59,6 +62,7 @@ const AppRoutes = () => {
         <Route path="/accommodation" element={<AccommodationLayout />}>
           <Route index element={<AccommodationDashboard />} />
           <Route path="hotels" element={<HotelsPage />} />
+          <Route path="add-new" element={<AddNewAccommodation />} />
           <Route path="hotels/:hotelid" element={<Rooms />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="payments" element={<AccommodationPayments />} />
@@ -80,11 +84,11 @@ const AppRoutes = () => {
         <Route path="/user" element={<TravelerLayout />}>
           <Route index element={<TravelerDashboard />} />
           <Route path="dashboard" element={<TravelerDashboard />} />
+          <Route path="trip-planning" element={<TripPlanning />} />
           <Route path="mybookings" element={<MyBookings />} />
           <Route path="mytrips" element={<MyTrips />} />
           <Route path="payments" element={<Payments />} />
           <Route path="services" element={<Services />} />
-          <Route path="services/:id" element={<ServiceDetails />} />
           <Route path="accommodations" element={<Accommodations />} />
           <Route path="accommodations/:id" element={<AccommodationDetails />} />
           <Route path="transportation" element={<Transportation />} />

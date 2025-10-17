@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ArrowLeft, 
     Star, 
@@ -20,11 +20,17 @@ import {
 } from 'lucide-react';
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
+import PaymentModal from '../../components/PaymentModal';
+import { useTripPlanning } from '../../hooks/useTripPlanning';
 
 const TourGuideDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { addToTripPlanning } = useTripPlanning();
+    
     const [currentImage, setCurrentImage] = useState(0);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [bookingData, setBookingData] = useState({
         tourDate: '',
         duration: 4,
@@ -171,6 +177,9 @@ const TourGuideDetails = () => {
 
     const guide = mockTourGuides.find(g => g.id === parseInt(id)) || mockTourGuides[0];
 
+    // Check if user came from trip planning page
+    const isFromTripPlanning = location.state?.fromTripPlanning === true;
+
     const handlePrevImage = () => {
         setCurrentImage(prev => prev === 0 ? guide.images.length - 1 : prev - 1);
     };
@@ -180,8 +189,30 @@ const TourGuideDetails = () => {
     };
 
     const handleBookingSubmit = () => {
-        console.log('Booking submitted:', bookingData);
-        alert('Tour booking confirmed! Your guide will contact you to finalize details.');
+        if (isFromTripPlanning) {
+            // Add to trip planning summary
+            const planningBooking = {
+                id: `guide_${guide.id}_${Date.now()}`,
+                serviceId: guide.id,
+                name: guide.name,
+                location: guide.location,
+                type: 'guide',
+                tourDate: bookingData.tourDate,
+                duration: bookingData.duration,
+                groupSize: bookingData.groupSize,
+                pricePerHour: guide.price,
+                totalPrice: calculateTotal(),
+                image: guide.images[0],
+                specialties: guide.specialties,
+                languages: guide.languages
+            };
+            
+            addToTripPlanning(planningBooking, 'guides');
+            alert('Added to your trip planning! Continue adding more services or review your summary.');
+        } else {
+            // Open payment modal for direct booking
+            setShowPaymentModal(true);
+        }
     };
 
     const calculateTotal = () => {
@@ -605,11 +636,14 @@ const TourGuideDetails = () => {
                                     onClick={handleBookingSubmit}
                                     disabled={!bookingData.tourDate}
                                 >
-                                    Book Tour
+                                    {isFromTripPlanning ? 'Add to Trip' : 'Book Tour'}
                                 </Button>
                                 
                                 <p className="text-xs text-slate-500 text-center">
-                                    Guide will contact you to finalize details
+                                    {isFromTripPlanning 
+                                        ? 'Add to your trip planning summary' 
+                                        : 'Guide will contact you to finalize details'
+                                    }
                                 </p>
                             </div>
                         </Card>
@@ -618,6 +652,14 @@ const TourGuideDetails = () => {
             </div>
 
             <TravelerFooter />
+
+            {/* Payment Modal */}
+            <PaymentModal 
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                bookingData={guide}
+                totalAmount={calculateTotal()}
+            />
         </div>
     );
 };

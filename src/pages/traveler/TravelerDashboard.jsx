@@ -1,12 +1,38 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Plane, Camera, Heart, Star, Clock, Users, Search, ArrowRight, Hotel, Car, Utensils, Plus, Zap } from 'lucide-react';
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 
 const TravelerDashboard = () => {
+    const navigate = useNavigate();
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [selectedDestination, setSelectedDestination] = useState('');
+
+    // Handle start date change and validate end date
+    const handleStartDateChange = (newStartDate) => {
+        setStartDate(newStartDate);
+        // If end date is before the new start date, clear it
+        if (endDate && newStartDate && new Date(endDate) < new Date(newStartDate)) {
+            setEndDate('');
+        }
+    };
+
+    // Handle trip planning form submission
+    const handleTripPlanningSubmit = (e) => {
+        e.preventDefault();
+        
+        // Navigate to trip planning page with form data
+        navigate('/user/trip-planning', {
+            state: {
+                destination: selectedDestination,
+                startDate,
+                endDate,
+                travelers: 2 // Default value, can be made dynamic
+            }
+        });
+    };
 
     const images = [
         'https://plus.unsplash.com/premium_photo-1666254114402-cd16bc302aea?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
@@ -18,6 +44,7 @@ const TravelerDashboard = () => {
 
     // Get current date and user info
     const currentDate = new Date();
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD for input min attribute
 
     // Mock data for upcoming trip
     const upcomingTrip = {
@@ -133,11 +160,6 @@ const TravelerDashboard = () => {
         return () => clearInterval(interval);
     }, [images.length]);
 
-    const handlePlanTrip = (e) => {
-        e.preventDefault();
-        console.log('Planning trip to:', selectedDestination, 'from', startDate, 'to', endDate);
-    };
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
             {/* Plan a Trip Section */}
@@ -163,7 +185,7 @@ const TravelerDashboard = () => {
                         </p>
                     </div>
 
-                    <form onSubmit={handlePlanTrip} className="max-w-4xl mx-auto flex flex-col items-center mb-2">
+                    <form onSubmit={handleTripPlanningSubmit} className="max-w-4xl mx-auto flex flex-col items-center mb-2">
                         <div className="flex flex-col md:flex-row gap-4 mb-3">
                             <div className="relative flex-1">
                                 
@@ -191,7 +213,8 @@ const TravelerDashboard = () => {
                                     <input
                                         type="date"
                                         value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
+                                        onChange={(e) => handleStartDateChange(e.target.value)}
+                                        min={today}
                                         className="w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-0 rounded-xl text-slate-800 focus:ring-2 focus:ring-white/50 focus:outline-none transition-all duration-200"
                                     />
                                 </div>
@@ -207,6 +230,7 @@ const TravelerDashboard = () => {
                                         type="date"
                                         value={endDate}
                                         onChange={(e) => setEndDate(e.target.value)}
+                                        min={startDate || today}
                                         className="w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-0 rounded-xl text-slate-800 focus:ring-2 focus:ring-white/50 focus:outline-none transition-all duration-200"
                                     />
                                 </div>

@@ -4,25 +4,27 @@ import './index.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AppRoutes } from './routes';
+import { TripPlanningProvider } from './contexts/TripPlanningContext.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Router>
-      <ToastContainer 
-        position="top-right" 
-        autoClose={5000} 
-        hideProgressBar={false} 
-        newestOnTop={false} 
-        closeOnClick 
-        rtl={false} 
-        pauseOnFocusLoss 
-        draggable 
-        pauseOnHover 
-      />
-      <AppRoutes />
-    </Router>
+    <TripPlanningProvider>
+      <Router>
+        <ToastContainer 
+          position="top-right" 
+          autoClose={5000} 
+          hideProgressBar={false} 
+          newestOnTop={false} 
+          closeOnClick 
+          rtl={false} 
+          pauseOnFocusLoss 
+          draggable 
+          pauseOnHover 
+        />
+        <AppRoutes />
+      </Router>
+    </TripPlanningProvider>
   </StrictMode>,
 )

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ArrowLeft, 
     Star, 
@@ -19,11 +19,17 @@ import {
 } from 'lucide-react';
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
+import PaymentModal from '../../components/PaymentModal';
+import { useTripPlanning } from '../../hooks/useTripPlanning';
 
 const TransportationDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { addToTripPlanning } = useTripPlanning();
+    
     const [currentImage, setCurrentImage] = useState(0);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [bookingData, setBookingData] = useState({
         startDate: '',
         days: 1,
@@ -164,6 +170,9 @@ const TransportationDetails = () => {
 
     const vehicle = mockTransportation.find(v => v.id === parseInt(id)) || mockTransportation[0];
 
+    // Check if user came from trip planning page
+    const isFromTripPlanning = location.state?.fromTripPlanning === true;
+
     const handlePrevImage = () => {
         setCurrentImage(prev => prev === 0 ? vehicle.images.length - 1 : prev - 1);
     };
@@ -173,8 +182,29 @@ const TransportationDetails = () => {
     };
 
     const handleBookingSubmit = () => {
-        console.log('Booking submitted:', bookingData);
-        alert('Booking confirmed! Your driver will contact you 30 minutes before pickup.');
+        if (isFromTripPlanning) {
+            // Add to trip planning summary
+            const planningBooking = {
+                id: `trans_${vehicle.id}_${Date.now()}`,
+                serviceId: vehicle.id,
+                name: vehicle.name,
+                provider: vehicle.provider,
+                location: vehicle.location,
+                type: 'transportation',
+                startDate: bookingData.startDate,
+                days: bookingData.days,
+                passengers: bookingData.passengers,
+                pricePerDay: vehicle.price,
+                totalPrice: calculateTotal(),
+                image: vehicle.images[0]
+            };
+            
+            addToTripPlanning(planningBooking, 'transportation');
+            alert('Added to your trip planning! Continue adding more services or review your summary.');
+        } else {
+            // Open payment modal for direct booking
+            setShowPaymentModal(true);
+        }
     };
 
     const calculateTotal = () => {
@@ -584,11 +614,14 @@ const TransportationDetails = () => {
                                     onClick={handleBookingSubmit}
                                     disabled={!bookingData.startDate || !bookingData.pickupLocation}
                                 >
-                                    Book Now
+                                    {isFromTripPlanning ? 'Add to Trip' : 'Book Now'}
                                 </Button>
                                 
                                 <p className="text-xs text-slate-500 text-center">
-                                    Driver will contact you 30 minutes before pickup
+                                    {isFromTripPlanning 
+                                        ? 'Add to your trip planning summary' 
+                                        : 'Driver will contact you 30 minutes before pickup'
+                                    }
                                 </p>
                             </div>
                         </Card>
@@ -597,6 +630,14 @@ const TransportationDetails = () => {
             </div>
 
             <TravelerFooter />
+
+            {/* Payment Modal */}
+            <PaymentModal 
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                bookingData={vehicle}
+                totalAmount={calculateTotal()}
+            />
         </div>
     );
 };

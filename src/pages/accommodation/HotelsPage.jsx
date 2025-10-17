@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import api from "../../services/axiosConfig.js";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { MapPin, Star, CheckCircle } from 'lucide-react';
+import { Card } from '../../components/common';
 
 const HotelsPage = () => {
   const Navigate = useNavigate();
+  const location = useLocation();
   const [hotels, setHotels] = useState([]);
   const [filteredHotels, setFilteredHotels] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
@@ -315,15 +319,31 @@ const HotelsPage = () => {
     }
   };
 
-  // Format star rating
-  const formatStarRating = (rating) => {
-    return "⭐".repeat(rating) + "☆".repeat(5 - rating);
-  };
-
   // useEffect to fetch hotels on component mount
   useEffect(() => {
     fetchHotels();
-  }, []);
+    
+    // Check for success message from navigation state
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the message after 5 seconds
+      setTimeout(() => setSuccessMessage(''), 5000);
+      
+      // Clear navigation state to prevent message on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // Handle success message from navigation state
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the message after 5 seconds
+      setTimeout(() => setSuccessMessage(""), 5000);
+      // Clear the navigation state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   if (loading) {
     return (
@@ -366,6 +386,18 @@ const HotelsPage = () => {
         </div>
       </div>
 
+      {/* Success Message */}
+      {successMessage && (
+        <div className="max-w-7xl mx-auto px-6 pt-6">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+              <p className="text-green-800 font-medium">{successMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filter Section */}
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
@@ -389,7 +421,7 @@ const HotelsPage = () => {
             </div>
             <button 
               className="inline-flex items-center px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm"
-              onClick={() => setShowAddModal(true)}
+              onClick={() => Navigate('/accommodation/add-new')}
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -428,34 +460,55 @@ const HotelsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredHotels.map((hotel) => (
-              <div key={hotel._id || hotel.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
-                {/* Card Header */}
-                <div className="p-6 border-b border-slate-100">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{getAccommodationIcon(hotel.accommodationType)}</span>
-                      <span className="text-sm font-medium text-slate-600 capitalize">
-                        {hotel.accommodationType}
-                      </span>
-                    </div>
-                    <div className={getStatusBadgeClass(hotel.status)}>
+              <Card
+                key={hotel._id || hotel.id}
+                className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                hover={true}
+                padding="none"
+              >
+                <div className="relative">
+                  <img
+                    src={hotel.image || `https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800`}
+                    alt={hotel.name}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute top-4 right-4">
+                    <span className={getStatusBadgeClass(hotel.status)}>
                       {hotel.status ? hotel.status.charAt(0).toUpperCase() + hotel.status.slice(1) : 'Unknown'}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg px-3 py-1">
+                    <span className="text-sm font-medium text-slate-700 capitalize">
+                      {hotel.accommodationType}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">{hotel.name}</h3>
+                  <p className="text-sm text-slate-600 mb-3">Provider Hotel</p>
+                  
+                  <div className="flex items-center text-slate-600 mb-3">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    <span className="text-sm">{hotel.location}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
+                      <span className="text-sm font-medium text-slate-700">
+                        {hotel.starRating || '4.0'}
+                      </span>
+                      <span className="text-sm text-slate-500 ml-1">
+                        (Reviews)
+                      </span>
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-semibold text-slate-900 mb-4 line-clamp-2">{hotel.name}</h3>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Location:</span>
-                      <span className="text-slate-900 font-medium text-right">{hotel.location}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Star Rating:</span>
-                      <span className="text-slate-900">{formatStarRating(hotel.starRating)}</span>
-                    </div>
+                  {/* Hotel Details */}
+                  <div className="mb-4 space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-slate-500">Total Rooms:</span>
                       <span className="text-slate-900 font-medium">{hotel.totalRooms}</span>
@@ -465,53 +518,52 @@ const HotelsPage = () => {
                       <span className="text-slate-900 font-medium">{hotel.phone}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Check-in:</span>
-                      <span className="text-slate-900 font-medium">{hotel.checkInTime}</span>
+                      <span className="text-slate-500">Check-in/out:</span>
+                      <span className="text-slate-900 font-medium">{hotel.checkInTime} - {hotel.checkOutTime}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Check-out:</span>
-                      <span className="text-slate-900 font-medium">{hotel.checkOutTime}</span>
+                  </div>
+
+                  {/* Features */}
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-1">
+                      <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
+                        {getAccommodationIcon(hotel.accommodationType)} {hotel.accommodationType}
+                      </span>
+                      <span className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full">
+                        {hotel.totalRooms} Rooms
+                      </span>
+                      <span className="px-2 py-1 bg-yellow-50 text-yellow-700 text-xs rounded-full">
+                        {hotel.starRating || 4}★ Hotel
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                    <div>
+                      <span className="text-lg font-bold text-slate-800">
+                        {hotel.totalRooms} Rooms
+                      </span>
+                      <span className="text-sm text-slate-500 block">
+                        Available
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg transition-colors duration-200 text-sm"
+                        onClick={() => handleViewHotelDetails(hotel._id || hotel.id)}
+                      >
+                        Details
+                      </button>
+                      <button 
+                        className="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 text-sm"
+                        onClick={() => handleUpdateHotel(hotel._id || hotel.id)}
+                      >
+                        Edit
+                      </button>
                     </div>
                   </div>
                 </div>
-
-                {/* Hotel Stats */}
-                <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <div className="text-lg font-bold text-slate-900">{hotel.totalRooms}</div>
-                      <div className="text-xs text-slate-500">Rooms</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-slate-900">{hotel.starRating}</div>
-                      <div className="text-xs text-slate-500">Stars</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="p-4 grid grid-cols-2 gap-2">
-                  <button 
-                    className="flex items-center justify-center px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg transition-colors duration-200 text-sm"
-                    onClick={() => handleViewHotelDetails(hotel._id || hotel.id)}
-                  >
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    View
-                  </button>
-                  <button 
-                    className="flex items-center justify-center px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 font-medium rounded-lg transition-colors duration-200 text-sm"
-                    onClick={() => handleUpdateHotel(hotel._id || hotel.id)}
-                  >
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Update
-                  </button>
-                </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
