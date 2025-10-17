@@ -12,6 +12,7 @@ import {
   HotelsPage,
   Rooms,
   Bookings,
+  AddNewAccommodation,
   AdminDashboard,
   AdminPayment,
   AdminRequests,
@@ -59,6 +60,7 @@ const AppRoutes = () => {
         <Route path="/accommodation" element={<AccommodationLayout />}>
           <Route index element={<AccommodationDashboard />} />
           <Route path="hotels" element={<HotelsPage />} />
+          <Route path="add-new" element={<AddNewAccommodation />} />
           <Route path="hotels/:hotelid" element={<Rooms />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="payments" element={<AccommodationPayments />} />

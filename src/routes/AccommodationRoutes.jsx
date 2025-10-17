@@ -5,7 +5,8 @@ import {
   AccommodationPayments,
   HotelsPage,
   Rooms,
-  Bookings
+  Bookings,
+  AddNewAccommodation
 } from '../pages';
 
 const AccommodationRoutes = () => {
@@ -16,6 +17,9 @@ const AccommodationRoutes = () => {
       
       {/* Hotels Management */}
       <Route path="hotels" element={<HotelsPage />} />
+      
+      {/* Add New Accommodation */}
+      <Route path="add-new" element={<AddNewAccommodation />} />
       
       {/* Specific Hotel Rooms */}
       <Route path="hotels/:hotelid" element={<Rooms />} />

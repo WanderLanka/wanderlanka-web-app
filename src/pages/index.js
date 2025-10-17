@@ -15,6 +15,7 @@ export { default as AccommodationDashboard } from './accommodation/Accommodation
 export { default as AccommodationPayments } from './accommodation/AccommodationPayments.jsx';
 export { default as HotelsPage } from './accommodation/HotelsPage.jsx';
 export { default as Rooms } from './accommodation/Rooms.jsx';
+export { default as AddNewAccommodation } from './accommodation/AddNewAccommodation.jsx';
 
 // Transport pages
 export { default as TransportDashboard } from './transport/TransportDashboard.jsx';
