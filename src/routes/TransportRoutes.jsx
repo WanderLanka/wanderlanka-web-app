@@ -4,6 +4,7 @@ import {
   TransportDashboard,
   VehiclesPage
 } from '../pages';
+import AddNewTransport from '../pages/transport/AddNewTransport';
 
 const TransportRoutes = () => {
   return (
@@ -13,6 +14,7 @@ const TransportRoutes = () => {
       
       {/* Vehicles Management */}
       <Route path="vehicles" element={<VehiclesPage />} />
+      <Route path="add-new" element={<AddNewTransport />} />
     </Routes>
   );
 };

@@ -31,6 +31,7 @@ import {
   TransportationDetails,
   TourGuideDetails
 } from '../pages';
+import AddNewTransport from '../pages/transport/AddNewTransport';
 import { ProtectedRoute } from '../components';
 import {
   TransportLayout,
@@ -52,6 +53,7 @@ const AppRoutes = () => {
         <Route path="/transport" element={<TransportLayout />} >
           <Route index element={<TransportDashboard />} />
           <Route path="vehicles" element={<VehiclesPage />} />
+          <Route path="add-new" element={<AddNewTransport />} />
         </Route>
       </Route>
 

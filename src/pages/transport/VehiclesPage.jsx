@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/axiosConfig.js"; // Use your existing axios config
 // import "../styles/VehiclesPage.css"; // Converted to Tailwind CSS
 
 const VehiclesPage = () => {
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState([]);
   const [filteredVehicles, setFilteredVehicles] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -450,7 +452,7 @@ const VehiclesPage = () => {
             <div className="flex space-x-3">
               <button 
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 flex items-center space-x-2"
-                onClick={() => setShowAddModal(true)}
+                onClick={() => navigate('/transport/add-new')}
               >
                 <span className="text-lg">➕</span>
                 Add Vehicle
