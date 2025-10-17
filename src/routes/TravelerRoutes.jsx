@@ -6,7 +6,6 @@ import {
   MyTrips,
   Payments,
   Services,
-  ServiceDetails,
   Profile,
   Accommodations,
   Transportation,
@@ -30,7 +29,6 @@ const TravelerRoutes = () => {
       
       {/* Services */}
       <Route path="services" element={<Services />} />
-      <Route path="services/:id" element={<ServiceDetails />} />
       
       {/* Dedicated Service Category Pages */}
       <Route path="accommodations" element={<Accommodations />} />

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ArrowLeft, 
     Star, 
@@ -19,11 +19,17 @@ import {
 } from 'lucide-react';
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
+import PaymentModal from '../../components/PaymentModal';
+import { useTripPlanning } from '../../hooks/useTripPlanning';
 
 const AccommodationDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { addToTripPlanning } = useTripPlanning();
+    
     const [currentImage, setCurrentImage] = useState(0);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [bookingData, setBookingData] = useState({
         checkIn: '',
         checkOut: '',
@@ -31,6 +37,9 @@ const AccommodationDetails = () => {
         children: 0,
         rooms: 1
     });
+
+    // Check if user came from trip planning page
+    const isFromTripPlanning = location.state?.fromTripPlanning === true;
 
     // Mock accommodation data
     const mockAccommodations = [
@@ -165,8 +174,32 @@ const AccommodationDetails = () => {
     };
 
     const handleBookingSubmit = () => {
-        console.log('Booking submitted:', bookingData);
-        alert('Booking confirmed! You will receive a confirmation email shortly.');
+        if (isFromTripPlanning) {
+            // Add to trip planning summary
+            const planningBooking = {
+                id: `acc_${accommodation.id}_${Date.now()}`,
+                serviceId: accommodation.id,
+                name: accommodation.name,
+                provider: accommodation.provider,
+                location: accommodation.location,
+                type: 'accommodation',
+                checkIn: bookingData.checkIn,
+                checkOut: bookingData.checkOut,
+                adults: bookingData.adults,
+                children: bookingData.children,
+                rooms: bookingData.rooms,
+                nights: getNights(),
+                pricePerNight: accommodation.price,
+                totalPrice: calculateTotal(),
+                image: accommodation.images[0]
+            };
+            
+            addToTripPlanning(planningBooking, 'accommodations');
+            alert('Added to your trip planning! Continue adding more services or review your summary.');
+        } else {
+            // Open payment modal for direct booking
+            setShowPaymentModal(true);
+        }
     };
 
     const calculateTotal = () => {
@@ -565,11 +598,14 @@ const AccommodationDetails = () => {
                                     onClick={handleBookingSubmit}
                                     disabled={!bookingData.checkIn || !bookingData.checkOut || getNights() <= 0}
                                 >
-                                    Reserve Now
+                                    {isFromTripPlanning ? 'Add to Trip' : 'Reserve Now'}
                                 </Button>
                                 
                                 <p className="text-xs text-slate-500 text-center">
-                                    You won't be charged yet
+                                    {isFromTripPlanning 
+                                        ? 'Add to your trip planning summary' 
+                                        : 'You won\'t be charged yet'
+                                    }
                                 </p>
                             </div>
                         </Card>
@@ -578,6 +614,14 @@ const AccommodationDetails = () => {
             </div>
 
             <TravelerFooter />
+
+            {/* Payment Modal */}
+            <PaymentModal 
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                bookingData={accommodation}
+                totalAmount={calculateTotal()}
+            />
         </div>
     );
 };

@@ -23,11 +23,11 @@ export { default as VehiclesPage } from './transport/VehiclesPage.jsx';
 // User pages
 export { default as TravelerDashboard } from './traveler/TravelerDashboard.jsx';
 export { default as TripPlanning } from './traveler/TripPlanning.jsx';
+export { default as TripPlanSummary } from './traveler/TripPlanSummary.jsx';
 export { default as MyBookings } from './traveler/MyBookings.jsx';
 export { default as MyTrips } from './traveler/MyTrips.jsx';
 export { default as Payments } from './traveler/Payments.jsx';
 export { default as Services } from './traveler/Services.jsx';
-export { default as ServiceDetails } from './traveler/ServiceDetails.jsx';
 export { default as Profile } from './traveler/Profile.jsx';
 export { default as Accommodations } from './traveler/Accommodations.jsx';
 export { default as Transportation } from './traveler/Transportation.jsx';
