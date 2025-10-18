@@ -185,5 +185,127 @@ export const contactAPI = {
   }
 };
 
+// Accommodation endpoints
+export const accommodationAPI = {
+  // Get all accommodations
+  getAll: async () => {
+    try {
+      const response = await api.get('/accommodation/accommodations');
+      console.log('API Response:', response.data);
+      // Extract the actual data from the response structure
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Get accommodations failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get accommodation by ID
+  getById: async (id) => {
+    try {
+      const response = await api.get(`/accommodation/accommodations/${id}`);
+      console.log('API Response:', response.data);
+      // Extract the actual data from the response structure
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Get accommodation failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Search accommodations
+  search: async (query) => {
+    try {
+      const response = await api.get(`/accommodation/accommodations/search?q=${encodeURIComponent(query)}`);
+      return response.data;
+    } catch (error) {
+      console.error('Search accommodations failed:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
+// Transportation endpoints
+export const transportationAPI = {
+  // Get all transportation options
+  getAll: async () => {
+    try {
+      const response = await api.get('/transport/transportation');
+      console.log('Transportation API Response:', response.data);
+      // Extract the actual data from the response structure
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Get transportation failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get transportation by ID
+  getById: async (id) => {
+    try {
+      const response = await api.get(`/transport/transportation/${id}`);
+      console.log('Transportation API Response:', response.data);
+      // Extract the actual data from the response structure
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Get transportation failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Search transportation
+  search: async (query) => {
+    try {
+      const response = await api.get(`/transport/transportation/search?q=${encodeURIComponent(query)}`);
+      console.log('Transportation Search API Response:', response.data);
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Search transportation failed:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
+// Tour Guide endpoints
+export const tourGuideAPI = {
+  // Get all tour guides
+  getAll: async () => {
+    try {
+      const response = await api.get('/guide/list');
+      console.log('Tour Guide API Response:', response.data);
+      // Extract the actual data from the response structure
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Get tour guides failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get tour guide by ID
+  getById: async (id) => {
+    try {
+      const response = await api.get(`/guide/get/${id}`);
+      console.log('Tour Guide API Response:', response.data);
+      // Extract the actual data from the response structure
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Get tour guide failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Search tour guides
+  search: async (query) => {
+    try {
+      const response = await api.get(`/guide/list?q=${encodeURIComponent(query)}`);
+      console.log('Tour Guide Search API Response:', response.data);
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error('Search tour guides failed:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
 // Export the configured axios instance for direct use if needed
 export { api as axiosInstance };

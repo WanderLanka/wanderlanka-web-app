@@ -16,8 +16,13 @@ api.interceptors.request.use(
     // Setting the header to identify the platform in the backend
     config.headers['x-platform'] = 'web';
 
-    // Debug logging
-    console.log('🔍 Axios Request Interceptor:');
+    // Enhanced debug logging
+    console.log('🔍 Axios Request Interceptor:', {
+      method: config.method?.toUpperCase(),
+      baseURL: config.baseURL,
+      url: config.url,
+      fullURL: `${config.baseURL}${config.url}`
+    });
     console.log('Token from localStorage:', token ? 'Found' : 'Not found');
     console.log('Request URL:', config.baseURL + config.url);
     // console.log('X-Client-Type:', config.headers['X-Client-Type']); // DEBUGGING

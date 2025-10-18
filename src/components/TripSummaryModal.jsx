@@ -187,9 +187,25 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                               <div className="flex items-center gap-2">
                                 <h3 className="text-lg font-bold text-gray-900">Day {dayNum}</h3>
                                 {isCollapsed && (
-                                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">
-                                    {dayData.destinations.length + dayData.accommodations.length + dayData.transportation.length + dayData.guides.length} items
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">
+                                      {dayData.destinations.length + dayData.accommodations.length + dayData.transportation.length + dayData.guides.length} items
+                                    </span>
+                                    {dayData.destinations.length > 0 && (
+                                      <div className="flex gap-1 max-w-[200px] overflow-hidden">
+                                        {dayData.destinations.slice(0, 2).map(place => (
+                                          <span key={place.id} className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full truncate">
+                                            {place.name}
+                                          </span>
+                                        ))}
+                                        {dayData.destinations.length > 2 && (
+                                          <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full">
+                                            +{dayData.destinations.length - 2}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                               <p className="text-sm text-gray-600">

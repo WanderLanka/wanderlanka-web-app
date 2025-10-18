@@ -1,114 +1,37 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Star, Users, Car, Fuel, Shield, Clock } from 'lucide-react';
+import { Search, MapPin, Star, Users, Car, Fuel, Shield, Clock, Loader2 } from 'lucide-react';
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
+import { transportationAPI } from '../../services/api';
 
 const Transportation = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [vehicleType, setVehicleType] = useState('all');
     const [priceFilter, setPriceFilter] = useState('all');
+    const [transportation, setTransportation] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Mock data for transportation
-    const mockTransportation = useMemo(() => [
-        {
-            id: 6,
-            name: 'Private Car with Driver',
-            provider: 'Island Tours',
-            location: 'Colombo, Sri Lanka',
-            rating: 4.6,
-            reviews: 156,
-            price: 45,
-            priceUnit: 'day',
-            image: 'https://images.unsplash.com/photo-1494905998402-395d579af36f?w=800',
-            features: ['A/C', 'English Speaking', 'Fuel Included', 'Insurance'],
-            availability: 'Available',
-            description: 'Comfortable private transportation with experienced driver',
-            vehicleType: 'Car',
-            capacity: 4
-        },
-        {
-            id: 7,
-            name: 'Luxury SUV Service',
-            provider: 'Premium Transport',
-            location: 'Kandy, Sri Lanka',
-            rating: 4.8,
-            reviews: 89,
-            price: 75,
-            priceUnit: 'day',
-            image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800',
-            features: ['Luxury Interior', 'WiFi', 'Refreshments', 'Professional Driver'],
-            availability: 'Available',
-            description: 'Premium SUV service for comfortable long-distance travel',
-            vehicleType: 'SUV',
-            capacity: 6
-        },
-        {
-            id: 8,
-            name: 'Airport Transfer Service',
-            provider: 'Quick Transfer',
-            location: 'Colombo Airport, Sri Lanka',
-            rating: 4.4,
-            reviews: 234,
-            price: 25,
-            priceUnit: 'trip',
-            image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800',
-            features: ['24/7 Service', 'Flight Tracking', 'Meet & Greet', 'Fixed Price'],
-            availability: 'Available',
-            description: 'Reliable airport transfer service with flight monitoring',
-            vehicleType: 'Sedan',
-            capacity: 3
-        },
-        {
-            id: 9,
-            name: 'Mini Bus for Groups',
-            provider: 'Group Travel Co',
-            location: 'Galle, Sri Lanka',
-            rating: 4.5,
-            reviews: 67,
-            price: 120,
-            priceUnit: 'day',
-            image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800',
-            features: ['Large Capacity', 'A/C', 'Tour Guide Available', 'Comfortable Seats'],
-            availability: 'Limited',
-            description: 'Perfect for group travel and sightseeing tours',
-            vehicleType: 'Bus',
-            capacity: 15
-        },
-        {
-            id: 10,
-            name: 'Motorcycle Rental',
-            provider: 'Bike Adventures',
-            location: 'Ella, Sri Lanka',
-            rating: 4.3,
-            reviews: 145,
-            price: 15,
-            priceUnit: 'day',
-            image: 'https://images.unsplash.com/photo-1558618047-fcd1c85cd64c?w=800',
-            features: ['Helmet Included', 'GPS Navigation', 'Roadside Assistance', 'Insurance'],
-            availability: 'Available',
-            description: 'Explore Sri Lanka on two wheels with our well-maintained bikes',
-            vehicleType: 'Motorcycle',
-            capacity: 2
-        },
-        {
-            id: 11,
-            name: 'Tuk-Tuk City Tours',
-            provider: 'Local Adventures',
-            location: 'Colombo, Sri Lanka',
-            rating: 4.7,
-            reviews: 198,
-            price: 20,
-            priceUnit: 'hour',
-            image: 'https://images.unsplash.com/photo-1605649487212-47bdaf2ad291?w=800',
-            features: ['Local Driver', 'City Tour Guide', 'Photo Stops', 'Cultural Experience'],
-            availability: 'Available',
-            description: 'Authentic Sri Lankan experience with tuk-tuk city tours',
-            vehicleType: 'Tuk-Tuk',
-            capacity: 3
+    useEffect(() => {
+        fetchTransportation();
+    }, []);
+
+    const fetchTransportation = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await transportationAPI.getAll();
+            console.log('Transportation API Response:', response);
+            setTransportation(response || []);
+        } catch (err) {
+            setError('Failed to load transportation data. Please try again.');
+            console.error('Error fetching transportation:', err);
+        } finally {
+            setLoading(false);
         }
-    ], []);
+    };
 
     const vehicleTypes = useMemo(() => [
         { key: 'all', label: 'All Vehicles' },
@@ -127,14 +50,14 @@ const Transportation = () => {
     ], []);
 
     const filteredTransportation = useMemo(() => {
-        let filtered = mockTransportation;
+        let filtered = transportation;
         
         if (searchTerm) {
             filtered = filtered.filter(transport =>
-                transport.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                transport.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                transport.provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                transport.vehicleType.toLowerCase().includes(searchTerm.toLowerCase())
+                transport.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                transport.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                transport.provider?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                transport.vehicleType?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -150,7 +73,7 @@ const Transportation = () => {
         }
         
         return filtered;
-    }, [mockTransportation, searchTerm, vehicleType, priceFilter, priceRanges]);
+    }, [transportation, searchTerm, vehicleType, priceFilter, priceRanges]);
 
     const getAvailabilityColor = (availability) => {
         switch (availability.toLowerCase()) {
@@ -181,6 +104,33 @@ const Transportation = () => {
                     <p className="text-lg text-slate-600">Comfortable and reliable transportation options across Sri Lanka</p>
                 </div>
 
+                {/* Loading State */}
+                {loading && (
+                    <div className="flex justify-center items-center py-16">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                        <span className="ml-2 text-slate-600">Loading transportation options...</span>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+                        <div className="text-red-800 font-medium mb-2">Error Loading Transportation</div>
+                        <div className="text-red-600 mb-4">{error}</div>
+                        <Button 
+                            onClick={fetchTransportation}
+                            variant="outline"
+                            size="sm"
+                            className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                            Try Again
+                        </Button>
+                    </div>
+                )}
+
+                {/* Content - only show when not loading and no error */}
+                {!loading && !error && (
+                    <>
                 {/* Search and Filters */}
                 <div className="mb-8 space-y-4">
                     {/* Search Bar */}
@@ -355,6 +305,8 @@ const Transportation = () => {
                             Clear Filters
                         </Button>
                     </div>
+                )}
+                </>
                 )}
             </div>
             <TravelerFooter />

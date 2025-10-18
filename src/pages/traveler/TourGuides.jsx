@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Star, Users, Globe, Clock, Award, Languages } from 'lucide-react';
+import { Search, MapPin, Star, Users, Globe, Clock, Award, Languages, Loader2 } from 'lucide-react';
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
+import { tourGuideAPI } from '../../services/api';
 
 const TourGuides = () => {
     const navigate = useNavigate();
@@ -10,118 +11,28 @@ const TourGuides = () => {
     const [specialtyFilter, setSpecialtyFilter] = useState('all');
     const [languageFilter, setLanguageFilter] = useState('all');
     const [priceFilter, setPriceFilter] = useState('all');
+    const [tourGuides, setTourGuides] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Mock data for tour guides
-    const mockTourGuides = useMemo(() => [
-        {
-            id: 12,
-            name: 'Cultural Heritage Tour Guide',
-            provider: 'Heritage Walks',
-            location: 'Kandy, Sri Lanka',
-            rating: 4.7,
-            reviews: 203,
-            price: 35,
-            priceUnit: 'hour',
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
-            features: ['Multi-lingual', 'Licensed', 'Historical Expert', 'Cultural Stories'],
-            availability: 'Available',
-            description: 'Expert guide for cultural sites and historical landmarks',
-            specialty: 'Cultural',
-            languages: ['English', 'Sinhala', 'Tamil'],
-            experience: '8 years',
-            guideName: 'Pradeep Silva'
-        },
-        {
-            id: 13,
-            name: 'Wildlife Safari Guide',
-            provider: 'Safari Experts',
-            location: 'Yala National Park, Sri Lanka',
-            rating: 4.9,
-            reviews: 156,
-            price: 50,
-            priceUnit: 'day',
-            image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800',
-            features: ['Wildlife Expert', 'Photography Tips', 'Conservation Knowledge', 'Early Bird Tours'],
-            availability: 'Available',
-            description: 'Experienced wildlife guide specializing in Sri Lankan fauna',
-            specialty: 'Wildlife',
-            languages: ['English', 'German'],
-            experience: '12 years',
-            guideName: 'Roshan Perera'
-        },
-        {
-            id: 14,
-            name: 'Adventure Hiking Guide',
-            provider: 'Mountain Adventures',
-            location: 'Ella, Sri Lanka',
-            rating: 4.6,
-            reviews: 134,
-            price: 40,
-            priceUnit: 'day',
-            image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800',
-            features: ['Mountain Expert', 'Safety Certified', 'Equipment Provided', 'Route Planning'],
-            availability: 'Limited',
-            description: 'Professional hiking guide for mountain trails and adventures',
-            specialty: 'Adventure',
-            languages: ['English', 'French'],
-            experience: '6 years',
-            guideName: 'Chaminda Fernando'
-        },
-        {
-            id: 15,
-            name: 'Cooking Experience Guide',
-            provider: 'Culinary Tours',
-            location: 'Colombo, Sri Lanka',
-            rating: 4.8,
-            reviews: 89,
-            price: 45,
-            priceUnit: 'session',
-            image: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=800',
-            features: ['Cooking Classes', 'Market Tours', 'Recipe Cards', 'Traditional Methods'],
-            availability: 'Available',
-            description: 'Learn authentic Sri Lankan cooking with local chef guide',
-            specialty: 'Culinary',
-            languages: ['English', 'Sinhala'],
-            experience: '10 years',
-            guideName: 'Malini Jayawardena'
-        },
-        {
-            id: 16,
-            name: 'Tea Plantation Guide',
-            provider: 'Ceylon Tea Tours',
-            location: 'Nuwara Eliya, Sri Lanka',
-            rating: 4.5,
-            reviews: 167,
-            price: 30,
-            priceUnit: 'tour',
-            image: 'https://images.unsplash.com/photo-1594736797933-d0a4ba0ccfec?w=800',
-            features: ['Tea Expert', 'Factory Tours', 'Tasting Sessions', 'History Knowledge'],
-            availability: 'Available',
-            description: 'Discover the art of Ceylon tea making with expert guide',
-            specialty: 'Cultural',
-            languages: ['English', 'Japanese'],
-            experience: '5 years',
-            guideName: 'Thilak Rathnayake'
-        },
-        {
-            id: 17,
-            name: 'Beach & Water Sports Guide',
-            provider: 'Ocean Adventures',
-            location: 'Mirissa, Sri Lanka',
-            rating: 4.4,
-            reviews: 198,
-            price: 38,
-            priceUnit: 'day',
-            image: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=800',
-            features: ['Water Sports', 'Whale Watching', 'Snorkeling', 'Beach Safety'],
-            availability: 'Available',
-            description: 'Water sports and marine life expert for coastal adventures',
-            specialty: 'Adventure',
-            languages: ['English', 'Italian'],
-            experience: '7 years',
-            guideName: 'Nimal Costa'
+    useEffect(() => {
+        fetchTourGuides();
+    }, []);
+
+    const fetchTourGuides = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await tourGuideAPI.getAll();
+            console.log('Tour Guide API Response:', response);
+            setTourGuides(response || []);
+        } catch (err) {
+            setError('Failed to load tour guides. Please try again.');
+            console.error('Error fetching tour guides:', err);
+        } finally {
+            setLoading(false);
         }
-    ], []);
+    };
 
     const specialties = useMemo(() => [
         { key: 'all', label: 'All Specialties' },
@@ -148,15 +59,15 @@ const TourGuides = () => {
     ], []);
 
     const filteredTourGuides = useMemo(() => {
-        let filtered = mockTourGuides;
+        let filtered = tourGuides;
         
         if (searchTerm) {
             filtered = filtered.filter(guide =>
-                guide.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                guide.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                guide.provider.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                guide.guideName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                guide.specialty.toLowerCase().includes(searchTerm.toLowerCase())
+                guide.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                guide.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                guide.provider?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                guide.guideName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                guide.specialty?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -165,7 +76,7 @@ const TourGuides = () => {
         }
 
         if (languageFilter !== 'all') {
-            filtered = filtered.filter(guide => guide.languages.includes(languageFilter));
+            filtered = filtered.filter(guide => guide.languages?.includes(languageFilter));
         }
 
         if (priceFilter !== 'all') {
@@ -176,7 +87,7 @@ const TourGuides = () => {
         }
         
         return filtered;
-    }, [mockTourGuides, searchTerm, specialtyFilter, languageFilter, priceFilter, priceRanges]);
+    }, [tourGuides, searchTerm, specialtyFilter, languageFilter, priceFilter, priceRanges]);
 
     const getAvailabilityColor = (availability) => {
         switch (availability.toLowerCase()) {
@@ -207,6 +118,33 @@ const TourGuides = () => {
                     <p className="text-lg text-slate-600">Expert local guides to enhance your travel experience in Sri Lanka</p>
                 </div>
 
+                {/* Loading State */}
+                {loading && (
+                    <div className="flex justify-center items-center py-16">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                        <span className="ml-2 text-slate-600">Loading tour guides...</span>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+                        <div className="text-red-800 font-medium mb-2">Error Loading Tour Guides</div>
+                        <div className="text-red-600 mb-4">{error}</div>
+                        <Button 
+                            onClick={fetchTourGuides}
+                            variant="outline"
+                            size="sm"
+                            className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                            Try Again
+                        </Button>
+                    </div>
+                )}
+
+                {/* Content - only show when not loading and no error */}
+                {!loading && !error && (
+                    <>
                 {/* Search and Filters */}
                 <div className="mb-8 space-y-4">
                     {/* Search Bar */}
@@ -418,6 +356,8 @@ const TourGuides = () => {
                             Clear Filters
                         </Button>
                     </div>
+                )}
+                </>
                 )}
             </div>
             <TravelerFooter />

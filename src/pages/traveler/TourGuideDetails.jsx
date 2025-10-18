@@ -11,7 +11,6 @@ import {
     Share2,
     Users,
     Clock,
-    Award,
     Languages,
     Camera,
     Globe,
@@ -235,7 +234,7 @@ const TourGuideDetails = () => {
                             className="flex items-center"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Tour Guides
+                            {isFromTripPlanning ? 'Back to Planning' : 'Back to Tour Guides'}
                         </Button>
                         <div className="flex items-center gap-2">
                             <Button variant="outline" size="sm" className="flex items-center">
@@ -254,7 +253,11 @@ const TourGuideDetails = () => {
             <div className="bg-white border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
                     <Breadcrumb 
-                        items={[
+                        items={isFromTripPlanning ? [
+                            { label: 'Dashboard', path: '/user/dashboard', isHome: true },
+                            { label: 'Trip Planning', path: '/user/trip-planning' },
+                            { label: guide.guideName, isActive: true }
+                        ] : [
                             { label: 'Dashboard', path: '/user/dashboard', isHome: true },
                             { label: 'Services'},
                             { label: 'Tour Guides', path: '/user/tour-guides' },
@@ -636,13 +639,13 @@ const TourGuideDetails = () => {
                                     onClick={handleBookingSubmit}
                                     disabled={!bookingData.tourDate}
                                 >
-                                    {isFromTripPlanning ? 'Add to Trip' : 'Book Tour'}
+                                    {isFromTripPlanning ? 'Add to Itinerary' : 'Proceed to Payment'}
                                 </Button>
                                 
                                 <p className="text-xs text-slate-500 text-center">
                                     {isFromTripPlanning 
-                                        ? 'Add to your trip planning summary' 
-                                        : 'Guide will contact you to finalize details'
+                                        ? 'Add tour guide to your trip itinerary' 
+                                        : 'Complete booking and payment'
                                     }
                                 </p>
                             </div>

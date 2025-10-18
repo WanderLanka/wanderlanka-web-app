@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ArrowLeft, 
@@ -21,6 +21,7 @@ import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import PaymentModal from '../../components/PaymentModal';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
+import { accommodationAPI } from '../../services/api';
 
 const AccommodationDetails = () => {
     const { id } = useParams();
@@ -30,6 +31,9 @@ const AccommodationDetails = () => {
     
     const [currentImage, setCurrentImage] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [accommodation, setAccommodation] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [bookingData, setBookingData] = useState({
         checkIn: '',
         checkOut: '',
@@ -41,146 +45,96 @@ const AccommodationDetails = () => {
     // Check if user came from trip planning page
     const isFromTripPlanning = location.state?.fromTripPlanning === true;
 
-    // Mock accommodation data
-    const mockAccommodations = [
-        {
-            id: 1,
-            name: 'Luxury Beach Resort',
-            provider: 'Paradise Hotels',
-            location: 'Mirissa, Sri Lanka',
-            rating: 4.8,
-            reviews: 324,
-            price: 150,
-            priceUnit: 'night',
-            images: [
-                'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800',
-                'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800',
-                'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?w=800',
-                'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800'
-            ],
-            features: ['Pool', 'Spa', 'Beach Access', 'WiFi', 'Restaurant', 'Fitness Center'],
-            availability: 'Available',
-            description: 'Experience the ultimate in relaxation and luxury at our beachfront resort. Located on the pristine shores of Mirissa, this resort offers spacious rooms with stunning ocean views, world-class amenities including a large swimming pool, full-service spa, and gourmet dining options. Perfect for families, couples, and solo travelers seeking an unforgettable getaway in one of Sri Lanka\'s most beautiful coastal destinations.',
-            amenities: ['Free WiFi', 'Swimming Pool', 'Breakfast Included', 'Spa & Wellness Center', 'Direct Beach Access', 'Fitness Center', '24/7 Room Service', 'Laundry Service', 'Concierge Service', 'Airport Transfer', 'Parking', 'Restaurant & Bar'],
-            type: 'Beach Resort',
-            checkIn: '3:00 PM',
-            checkOut: '11:00 AM',
-            roomTypes: [
-                { name: 'Deluxe Ocean View', price: 150, size: '35 sqm', occupancy: 2 },
-                { name: 'Junior Suite', price: 220, size: '50 sqm', occupancy: 3 },
-                { name: 'Presidential Suite', price: 450, size: '85 sqm', occupancy: 4 }
-            ],
-            policies: [
-                'Free cancellation up to 24 hours before check-in',
-                'Pet-friendly accommodation available',
-                'Non-smoking rooms available',
-                'Children under 12 stay free with parents',
-                'Late check-out available (subject to availability)'
-            ],
-            nearbyAttractions: [
-                { name: 'Mirissa Beach', distance: '0.1 km', type: 'Beach' },
-                { name: 'Whale Watching Point', distance: '0.5 km', type: 'Activity' },
-                { name: 'Coconut Tree Hill', distance: '2 km', type: 'Viewpoint' },
-                { name: 'Parrot Rock', distance: '1.5 km', type: 'Natural Site' }
-            ],
-            userReviews: [
-                {
-                    id: 1,
-                    name: 'John Doe',
-                    rating: 4.8,
-                    review: 'Amazing stay! The beach access was incredible and the staff was extremely friendly. The spa services were world-class and the ocean view from our room was breathtaking.',
-                    profileImage: 'https://randomuser.me/api/portraits/men/1.jpg',
-                    date: '2024-01-15',
-                    helpful: 23
-                },
-                {
-                    id: 2,
-                    name: 'Jane Smith',
-                    rating: 4.7,
-                    review: 'Beautiful location with excellent facilities. The breakfast was amazing with great variety. Highly recommend for couples looking for a romantic getaway.',
-                    profileImage: 'https://randomuser.me/api/portraits/women/2.jpg',
-                    date: '2024-01-10',
-                    helpful: 18
-                },
-                {
-                    id: 3,
-                    name: 'Mike Johnson',
-                    rating: 4.9,
-                    review: 'Perfect family vacation spot! Kids loved the pool and beach. Staff went above and beyond to make our stay memorable.',
-                    profileImage: 'https://randomuser.me/api/portraits/men/3.jpg',
-                    date: '2024-01-08',
-                    helpful: 31
-                }
-            ]
-        },
-        {
-            id: 2,
-            name: 'Mountain View Hotel',
-            provider: 'Hill Country Hotels',
-            location: 'Ella, Sri Lanka',
-            rating: 4.6,
-            reviews: 198,
-            price: 85,
-            priceUnit: 'night',
-            images: [
-                'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800',
-                'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800',
-                'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'
-            ],
-            features: ['Mountain View', 'Restaurant', 'WiFi', 'Hiking Trails', 'Garden'],
-            availability: 'Available',
-            description: 'Nestled in the heart of Sri Lanka\'s hill country, this charming hotel offers stunning mountain views and easy access to hiking trails.',
-            amenities: ['Free WiFi', 'Restaurant', 'Mountain Views', 'Hiking Access', 'Garden', 'Room Service', 'Laundry', 'Tour Desk'],
-            type: 'Mountain Hotel',
-            checkIn: '2:00 PM',
-            checkOut: '11:00 AM',
-            roomTypes: [
-                { name: 'Standard Room', price: 85, size: '25 sqm', occupancy: 2 },
-                { name: 'Deluxe Mountain View', price: 120, size: '30 sqm', occupancy: 2 }
-            ],
-            policies: [
-                'Free cancellation up to 48 hours',
-                'No pets allowed',
-                'Non-smoking property',
-                'Early check-in subject to availability'
-            ],
-            nearbyAttractions: [
-                { name: 'Little Adam\'s Peak', distance: '2 km', type: 'Hiking' },
-                { name: 'Nine Arch Bridge', distance: '5 km', type: 'Landmark' },
-                { name: 'Ella Rock', distance: '3 km', type: 'Hiking' }
-            ],
-            userReviews: [
-                {
-                    id: 1,
-                    name: 'Sarah Wilson',
-                    rating: 4.7,
-                    review: 'Breathtaking mountain views and excellent location for hiking. The breakfast was delicious with local specialties.',
-                    profileImage: 'https://randomuser.me/api/portraits/women/4.jpg',
-                    date: '2024-01-12',
-                    helpful: 15
-                }
-            ]
-        }
-    ];
+    // Fetch accommodation data
+    useEffect(() => {
+        const fetchAccommodation = async () => {
+            try {
+                setLoading(true);
+                const data = await accommodationAPI.getById(id);
+                setAccommodation(data);
+                setError(null);
+            } catch (err) {
+                console.error('Failed to fetch accommodation:', err);
+                setError('Failed to load accommodation details. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const accommodation = mockAccommodations.find(acc => acc.id === parseInt(id)) || mockAccommodations[0];
+        if (id) {
+            fetchAccommodation();
+        }
+    }, [id]);
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Loading accommodation details...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                <div className="text-center py-12">
+                    <div className="text-red-500 text-xl mb-4">{error}</div>
+                    <Button 
+                        variant="primary" 
+                        onClick={() => window.location.reload()}
+                    >
+                        Try Again
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    // No accommodation found
+    if (!accommodation) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 py-8">
+                <div className="text-center py-12">
+                    <p className="text-gray-600 text-xl">Accommodation not found</p>
+                    <Button 
+                        variant="primary" 
+                        onClick={() => navigate('/user/accommodations')}
+                        className="mt-4"
+                    >
+                        Back to Accommodations
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     const handlePrevImage = () => {
-        setCurrentImage(prev => prev === 0 ? accommodation.images.length - 1 : prev - 1);
+        if (accommodation?.images?.length) {
+            setCurrentImage(prev => prev === 0 ? accommodation.images.length - 1 : prev - 1);
+        }
     };
 
     const handleNextImage = () => {
-        setCurrentImage(prev => prev === accommodation.images.length - 1 ? 0 : prev + 1);
+        if (accommodation?.images?.length) {
+            setCurrentImage(prev => prev === accommodation.images.length - 1 ? 0 : prev + 1);
+        }
     };
 
     const handleBookingSubmit = () => {
         if (isFromTripPlanning) {
             // Add to trip planning summary
             const planningBooking = {
-                id: `acc_${accommodation.id}_${Date.now()}`,
-                serviceId: accommodation.id,
+                id: `acc_${accommodation._id || accommodation.id}_${Date.now()}`,
+                serviceId: accommodation._id || accommodation.id,
                 name: accommodation.name,
-                provider: accommodation.provider,
+                provider: accommodation.userId || 'Property Owner',
                 location: accommodation.location,
                 type: 'accommodation',
                 checkIn: bookingData.checkIn,
@@ -189,9 +143,9 @@ const AccommodationDetails = () => {
                 children: bookingData.children,
                 rooms: bookingData.rooms,
                 nights: getNights(),
-                pricePerNight: accommodation.price,
+                pricePerNight: accommodation?.price || 0,
                 totalPrice: calculateTotal(),
-                image: accommodation.images[0]
+                image: accommodation?.images?.[0] || '/placeholder-hotel.jpg'
             };
             
             addToTripPlanning(planningBooking, 'accommodations');
@@ -207,7 +161,7 @@ const AccommodationDetails = () => {
         const checkIn = new Date(bookingData.checkIn);
         const checkOut = new Date(bookingData.checkOut);
         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-        return nights > 0 ? (accommodation.price * nights * bookingData.rooms) + 25 : 0;
+        return nights > 0 ? ((accommodation?.price || 0) * nights * bookingData.rooms) + 25 : 0;
     };
 
     const getNights = () => {
@@ -231,7 +185,7 @@ const AccommodationDetails = () => {
                             className="flex items-center"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Accommodations
+                            {isFromTripPlanning ? 'Back to Planning' : 'Back to Accommodations'}
                         </Button>
                         <div className="flex items-center gap-2">
                             <Button variant="outline" size="sm" className="flex items-center">
@@ -250,11 +204,15 @@ const AccommodationDetails = () => {
             <div className="bg-white border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
                     <Breadcrumb 
-                        items={[
+                        items={isFromTripPlanning ? [
+                            { label: 'Dashboard', path: '/user/dashboard', isHome: true },
+                            { label: 'Trip Planning', path: '/user/trip-planning' },
+                            { label: accommodation?.name || 'Accommodation Details', isActive: true }
+                        ] : [
                             { label: 'Dashboard', path: '/user/dashboard', isHome: true },
                             { label: 'Services'},
                             { label: 'Accommodations', path: '/user/accommodations' },
-                            { label: accommodation.name, isActive: true }
+                            { label: accommodation?.name || 'Accommodation Details', isActive: true }
                         ]} 
                     />
                 </div>
@@ -263,14 +221,14 @@ const AccommodationDetails = () => {
             {/* Image Gallery */}
             <div className="relative h-96 overflow-hidden">
                 <img
-                    src={accommodation.images[currentImage]}
-                    alt={accommodation.name}
+                    src={accommodation?.images?.[currentImage] || '/placeholder-hotel.jpg'}
+                    alt={accommodation?.name || 'Accommodation'}
                     className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-20"></div>
                 
                 {/* Image Navigation */}
-                {accommodation.images.length > 1 && (
+                {accommodation?.images && accommodation.images.length > 1 && (
                     <>
                         <button
                             onClick={handlePrevImage}
@@ -287,7 +245,7 @@ const AccommodationDetails = () => {
                         
                         {/* Image Indicators */}
                         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                            {accommodation.images.map((_, index) => (
+                            {(accommodation?.images || []).map((_, index) => (
                                 <button
                                     key={index}
                                     onClick={() => setCurrentImage(index)}
@@ -312,26 +270,26 @@ const AccommodationDetails = () => {
                         <Card className="p-6">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex-1">
-                                    <h1 className="text-3xl font-bold text-slate-800 mb-2">{accommodation.name}</h1>
+                                    <h1 className="text-3xl font-bold text-slate-800 mb-2">{accommodation?.name || 'Accommodation Details'}</h1>
                                     <div className="flex items-center text-slate-600 mb-2">
                                         <MapPin className="w-4 h-4 mr-2" />
-                                        <span>{accommodation.location}</span>
+                                        <span>{accommodation?.location || 'Location not specified'}</span>
                                     </div>
-                                    <p className="text-slate-500">by {accommodation.provider}</p>
+                                    <p className="text-slate-500">by {accommodation?.userId || 'Property Owner'}</p>
                                     <div className="flex items-center mt-2">
                                         <Home className="w-4 h-4 mr-2 text-blue-500" />
-                                        <span className="text-sm font-medium text-slate-700">{accommodation.type}</span>
+                                        <span className="text-sm font-medium text-slate-700">{accommodation?.accommodationType || 'Hotel'}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                                    <span className="font-semibold text-slate-800">{accommodation.rating}</span>
-                                    <span className="text-slate-500">({accommodation.reviews} reviews)</span>
+                                    <span className="font-semibold text-slate-800">{accommodation?.rating || '4.0'}</span>
+                                    <span className="text-slate-500">({accommodation?.reviews || '0'} reviews)</span>
                                 </div>
                             </div>
                             
                             <div className="text-3xl font-bold text-blue-600 mb-4">
-                                ${accommodation.price}
+                                ${accommodation?.price || '0'}
                                 <span className="text-lg font-normal text-slate-500">/night</span>
                             </div>
                         </Card>
@@ -339,24 +297,35 @@ const AccommodationDetails = () => {
                         {/* Description */}
                         <Card className="p-6">
                             <h2 className="text-2xl font-bold text-slate-800 mb-4">About this property</h2>
-                            <p className="text-slate-600 leading-relaxed">{accommodation.description}</p>
+                            <p className="text-slate-600 leading-relaxed">{accommodation?.description || 'No description available for this accommodation.'}</p>
                         </Card>
 
                         {/* Room Types */}
                         <Card className="p-6">
                             <h2 className="text-2xl font-bold text-slate-800 mb-4">Room Types</h2>
                             <div className="space-y-4">
-                                {accommodation.roomTypes.map((room, index) => (
+                                {(accommodation?.roomTypes || []).map((room, index) => (
                                     <div key={index} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
                                         <div className="flex-1">
-                                            <h3 className="font-semibold text-slate-800">{room.name}</h3>
-                                            <p className="text-sm text-slate-600">{room.size} • Up to {room.occupancy} guests</p>
+                                            <h3 className="font-semibold text-slate-800">{room?.name || 'Standard Room'}</h3>
+                                            <p className="text-sm text-slate-600">{room?.size || 'Medium'} • Up to {room?.occupancy || '2'} guests</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-lg font-bold text-blue-600">${room.price}/night</p>
+                                            <p className="text-lg font-bold text-blue-600">${room?.price || accommodation?.price || '0'}/night</p>
                                         </div>
                                     </div>
                                 ))}
+                                {(!accommodation?.roomTypes || accommodation.roomTypes.length === 0) && (
+                                    <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold text-slate-800">Standard Room</h3>
+                                            <p className="text-sm text-slate-600">Comfortable accommodation • Up to 2 guests</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-lg font-bold text-blue-600">${accommodation?.price || '0'}/night</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </Card>
 
@@ -364,7 +333,7 @@ const AccommodationDetails = () => {
                         <Card className="p-6">
                             <h2 className="text-2xl font-bold text-slate-800 mb-4">Amenities</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {accommodation.amenities.map((amenity, index) => (
+                                {(accommodation?.amenities || ['WiFi', 'Air Conditioning', 'Room Service', 'Free Parking']).map((amenity, index) => (
                                     <div key={index} className="flex items-center space-x-3">
                                         <CheckCircle className="w-5 h-5 text-green-500" />
                                         <span className="text-slate-700">{amenity}</span>
@@ -375,17 +344,17 @@ const AccommodationDetails = () => {
                                 <div className="text-center">
                                     <Clock className="w-6 h-6 text-blue-500 mx-auto mb-2" />
                                     <p className="text-sm font-medium text-slate-700">Check-in</p>
-                                    <p className="text-sm text-slate-500">{accommodation.checkIn}</p>
+                                    <p className="text-sm text-slate-500">{accommodation?.checkInTime || '14:00'}</p>
                                 </div>
                                 <div className="text-center">
                                     <Clock className="w-6 h-6 text-blue-500 mx-auto mb-2" />
                                     <p className="text-sm font-medium text-slate-700">Check-out</p>
-                                    <p className="text-sm text-slate-500">{accommodation.checkOut}</p>
+                                    <p className="text-sm text-slate-500">{accommodation?.checkOutTime || '11:00'}</p>
                                 </div>
                                 <div className="text-center">
                                     <Home className="w-6 h-6 text-blue-500 mx-auto mb-2" />
                                     <p className="text-sm font-medium text-slate-700">Property Type</p>
-                                    <p className="text-sm text-slate-500">{accommodation.type}</p>
+                                    <p className="text-sm text-slate-500">{accommodation?.accommodationType || 'Hotel'}</p>
                                 </div>
                             </div>
                         </Card>
@@ -394,16 +363,20 @@ const AccommodationDetails = () => {
                         <Card className="p-6">
                             <h2 className="text-2xl font-bold text-slate-800 mb-4">Nearby Attractions</h2>
                             <div className="space-y-3">
-                                {accommodation.nearbyAttractions.map((attraction, index) => (
+                                {(accommodation?.nearbyAttractions || [
+                                    { name: 'Local Beach', type: 'Beach', distance: '2.5 km' },
+                                    { name: 'City Center', type: 'Shopping', distance: '5.0 km' },
+                                    { name: 'National Park', type: 'Nature', distance: '8.2 km' }
+                                ]).map((attraction, index) => (
                                     <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                                         <div className="flex items-center space-x-3">
                                             <MapPin className="w-4 h-4 text-blue-500" />
                                             <div>
-                                                <p className="font-medium text-slate-800">{attraction.name}</p>
-                                                <p className="text-sm text-slate-500">{attraction.type}</p>
+                                                <p className="font-medium text-slate-800">{attraction?.name || 'Local Attraction'}</p>
+                                                <p className="text-sm text-slate-500">{attraction?.type || 'Point of Interest'}</p>
                                             </div>
                                         </div>
-                                        <span className="text-sm font-medium text-slate-600">{attraction.distance}</span>
+                                        <span className="text-sm font-medium text-slate-600">{attraction?.distance || 'Unknown'}</span>
                                     </div>
                                 ))}
                             </div>
@@ -413,7 +386,13 @@ const AccommodationDetails = () => {
                         <Card className="p-6">
                             <h2 className="text-2xl font-bold text-slate-800 mb-4">Policies</h2>
                             <div className="space-y-3">
-                                {accommodation.policies.map((policy, index) => (
+                                {(accommodation?.policies || [
+                                    'Check-in: 2:00 PM - 11:00 PM',
+                                    'Check-out: Before 11:00 AM',
+                                    'No smoking in rooms',
+                                    'Pets allowed with additional fee',
+                                    'Free cancellation up to 24 hours before arrival'
+                                ]).map((policy, index) => (
                                     <div key={index} className="flex items-start space-x-3">
                                         <CheckCircle className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                                         <span className="text-slate-700">{policy}</span>
@@ -426,26 +405,45 @@ const AccommodationDetails = () => {
                         <Card className="p-6">
                             <h2 className="text-2xl font-bold text-slate-800 mb-4">Guest Reviews</h2>
                             <div className="space-y-6">
-                                {accommodation.userReviews.map((review) => (
-                                    <div key={review.id} className="border-b border-slate-200 pb-6 last:border-b-0">
+                                {(accommodation?.userReviews || [
+                                    {
+                                        id: 1,
+                                        name: 'Sarah Johnson',
+                                        profileImage: '/api/placeholder/48/48',
+                                        rating: 5,
+                                        review: 'Amazing stay! The staff was incredibly helpful and the location was perfect.',
+                                        date: 'March 2024',
+                                        helpful: 12
+                                    },
+                                    {
+                                        id: 2,
+                                        name: 'Michael Chen',
+                                        profileImage: '/api/placeholder/48/48',
+                                        rating: 4,
+                                        review: 'Great accommodation with excellent amenities. Would definitely stay again.',
+                                        date: 'February 2024',
+                                        helpful: 8
+                                    }
+                                ]).map((review) => (
+                                    <div key={review?.id || Math.random()} className="border-b border-slate-200 pb-6 last:border-b-0">
                                         <div className="flex items-start space-x-4">
                                             <img
-                                                src={review.profileImage}
-                                                alt={review.name}
+                                                src={review?.profileImage || '/api/placeholder/48/48'}
+                                                alt={review?.name || 'Guest'}
                                                 className="w-12 h-12 rounded-full object-cover"
                                             />
                                             <div className="flex-1">
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <h4 className="font-semibold text-slate-800">{review.name}</h4>
+                                                    <h4 className="font-semibold text-slate-800">{review?.name || 'Anonymous Guest'}</h4>
                                                     <div className="flex items-center space-x-1">
                                                         <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                                        <span className="text-sm text-slate-600">{review.rating}</span>
+                                                        <span className="text-sm text-slate-600">{review?.rating || 5}</span>
                                                     </div>
                                                 </div>
-                                                <p className="text-slate-600 mb-3">{review.review}</p>
+                                                <p className="text-slate-600 mb-3">{review?.review || 'Great accommodation!'}</p>
                                                 <div className="flex items-center justify-between text-sm text-slate-400">
-                                                    <span>{review.date}</span>
-                                                    <span>{review.helpful} people found this helpful</span>
+                                                    <span>{review?.date || 'Recent'}</span>
+                                                    <span>{review?.helpful || 0} people found this helpful</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -598,13 +596,13 @@ const AccommodationDetails = () => {
                                     onClick={handleBookingSubmit}
                                     disabled={!bookingData.checkIn || !bookingData.checkOut || getNights() <= 0}
                                 >
-                                    {isFromTripPlanning ? 'Add to Trip' : 'Reserve Now'}
+                                    {isFromTripPlanning ? 'Add to Itinerary' : 'Proceed to Payment'}
                                 </Button>
                                 
                                 <p className="text-xs text-slate-500 text-center">
                                     {isFromTripPlanning 
-                                        ? 'Add to your trip planning summary' 
-                                        : 'You won\'t be charged yet'
+                                        ? 'Add accommodation to your trip itinerary' 
+                                        : 'Complete booking and payment'
                                     }
                                 </p>
                             </div>
