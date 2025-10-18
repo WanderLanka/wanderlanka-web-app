@@ -1,262 +1,194 @@
-
+import React, { useState } from 'react';
 
 const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+
   return (
-    <div className="admin-dashboard">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-content">
-          <div className="hero-text">
-            <h1 className="hero-title">WanderLanka Admin Control Center</h1>
-            <p className="hero-subtitle">
-              Comprehensive platform administration, user management, and system oversight with 
-              advanced analytics and real-time monitoring capabilities.
+      <section className="bg-gradient-to-b from-slate-950 to-slate-900 relative py-20 overflow-hidden">
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 via-transparent to-indigo-500/10 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+        
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[1.618fr,1fr] gap-16 items-center relative z-10">
+          <div className="text-white">
+            <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight mb-6 bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent tracking-tight">
+              WanderLanka Admin Control Center
+            </h1>
+            <p className="text-xl text-slate-300 leading-relaxed max-w-xl">
+              Comprehensive platform administration, user management, and system oversight with advanced analytics and real-time monitoring capabilities.
             </p>
           </div>
-          <div className="hero-stats">
-            <div className="stat-card">
-              <div className="stat-number">24/7</div>
-              <div className="stat-label">System Monitoring</div>
+          
+          <div className="grid gap-6">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 hover:border-blue-500/30 transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-4xl font-extrabold text-blue-200 mb-2 leading-none">24/7</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">System Monitoring</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">99.9%</div>
-              <div className="stat-label">Service Uptime</div>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 hover:border-blue-500/30 transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-4xl font-extrabold text-blue-200 mb-2 leading-none">99.9%</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">Service Uptime</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">10K+</div>
-              <div className="stat-label">Active Users</div>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 hover:border-blue-500/30 transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-4xl font-extrabold text-blue-200 mb-2 leading-none">10K+</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active Users</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Quick Overview Cards */}
-      <section className="overview-section">
-        <div className="section-header">
-          <h2 className="section-title">System Overview</h2>
-          <p className="section-subtitle">Real-time insights and administrative control panels</p>
+      {/* System Overview Cards */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">System Overview</h2>
+          <p className="text-xl text-slate-600">Real-time insights and administrative control panels</p>
         </div>
         
-        <div className="overview-grid">
-          <div className="overview-card">
-            <div className="card-icon card-icon--primary">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-blue-200 transition-all duration-150">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-blue-600">
                 <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 5.5V7.5C15 8.1 14.6 8.5 14 8.5S13 8.1 13 7.5V7L7 8.5V16.5L9.5 15.5V22H11V16L14.5 15L17 22H19L15.5 14.5L21 9Z" fill="currentColor"/>
               </svg>
             </div>
-            <div className="card-content">
-              <h3 className="card-title">User Management</h3>
-              <p className="card-description">
-                Comprehensive user administration with role-based access control, 
-                profile management, and activity monitoring across all platforms.
-              </p>
-            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">User Management</h3>
+            <p className="text-slate-600 text-sm">
+              Comprehensive user administration with role-based access control and activity monitoring.
+            </p>
           </div>
 
-          <div className="overview-card">
-            <div className="card-icon card-icon--success">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-green-200 transition-all duration-150">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-green-600">
                 <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
                 <path d="M2 17L12 22L22 17" fill="currentColor"/>
                 <path d="M2 12L12 17L22 12" fill="currentColor"/>
               </svg>
             </div>
-            <div className="card-content">
-              <h3 className="card-title">Payment Analytics</h3>
-              <p className="card-description">
-                Advanced financial analytics with revenue tracking, transaction monitoring, 
-                and comprehensive reporting tools for business intelligence.
-              </p>
-            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Payment Analytics</h3>
+            <p className="text-slate-600 text-sm">
+              Advanced financial analytics with revenue tracking and transaction monitoring.
+            </p>
           </div>
 
-          <div className="overview-card">
-            <div className="card-icon card-icon--warning">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-amber-200 transition-all duration-150">
+            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-amber-600">
                 <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM9 17H7V10H9V17ZM13 17H11V7H13V17ZM17 17H15V13H17V17Z" fill="currentColor"/>
               </svg>
             </div>
-            <div className="card-content">
-              <h3 className="card-title">Signup Requests</h3>
-              <p className="card-description">
-                Streamlined approval workflow for new registrations with verification 
-                processes, document review, and automated onboarding systems.
-              </p>
-            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Signup Requests</h3>
+            <p className="text-slate-600 text-sm">
+              Streamlined approval workflow for new registrations with verification processes.
+            </p>
           </div>
 
-          <div className="overview-card">
-            <div className="card-icon card-icon--info">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-indigo-200 transition-all duration-150">
+            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-indigo-600">
                 <path d="M20 6L9 17L4 12" fill="currentColor"/>
               </svg>
             </div>
-            <div className="card-content">
-              <h3 className="card-title">Complaints Management</h3>
-              <p className="card-description">
-                Comprehensive complaint tracking and resolution system with priority 
-                management, escalation workflows, and customer satisfaction metrics.
-              </p>
-            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Complaints Management</h3>
+            <p className="text-slate-600 text-sm">
+              Comprehensive complaint tracking with priority management and escalation workflows.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Key Features Section */}
-      <section className="features-section">
-        <div className="section-header">
-          <h2 className="section-title">Administrative Capabilities</h2>
-          <p className="section-subtitle">Powerful tools designed for efficient platform administration</p>
+      {/* Administrative Capabilities */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">Administrative Capabilities</h2>
+          <p className="text-xl text-slate-600">Powerful tools designed for efficient platform administration</p>
         </div>
 
-        <div className="features-grid">
-          <div className="feature-item">
-            <div className="feature-header">
-              <h3 className="feature-title">Real-Time Monitoring</h3>
-              <span className="feature-badge">Live Dashboard</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[
+            { title: 'Real-Time Monitoring', badge: 'Live Dashboard', desc: 'Monitor system performance, user activity, and platform health with real-time alerts.' },
+            { title: 'Revenue Analytics', badge: 'Advanced Reports', desc: 'Detailed financial reporting with revenue streams analysis and profit calculations.' },
+            { title: 'User Verification', badge: 'Automated', desc: 'Streamlined user verification with document validation and compliance workflows.' },
+            { title: 'Support Ticketing', badge: 'Integrated', desc: 'Advanced ticketing system with priority management and auto-assignment.' },
+            { title: 'Security Management', badge: 'Enterprise', desc: 'Comprehensive security oversight with access control and threat detection.' },
+            { title: 'System Configuration', badge: 'Flexible', desc: 'Advanced configuration tools with feature toggles and deployment control.' },
+          ].map((feature, i) => (
+            <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-150">
+              <div className="flex items-start justify-between mb-3">
+                <h3 className="text-lg font-semibold text-slate-900">{feature.title}</h3>
+                <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">{feature.badge}</span>
+              </div>
+              <p className="text-slate-600">{feature.desc}</p>
             </div>
-            <p className="feature-description">
-              Monitor system performance, user activity, and platform health with 
-              real-time alerts and comprehensive status indicators.
-            </p>
-          </div>
-
-          <div className="feature-item">
-            <div className="feature-header">
-              <h3 className="feature-title">Revenue Analytics</h3>
-              <span className="feature-badge">Advanced Reports</span>
-            </div>
-            <p className="feature-description">
-              Detailed financial reporting with revenue streams analysis, payment 
-              gateway monitoring, and profit margin calculations.
-            </p>
-          </div>
-
-          <div className="feature-item">
-            <div className="feature-header">
-              <h3 className="feature-title">User Verification</h3>
-              <span className="feature-badge">Automated</span>
-            </div>
-            <p className="feature-description">
-              Streamlined user verification process with document validation, 
-              background checks, and compliance verification workflows.
-            </p>
-          </div>
-
-          <div className="feature-item">
-            <div className="feature-header">
-              <h3 className="feature-title">Support Ticketing</h3>
-              <span className="feature-badge">Integrated</span>
-            </div>
-            <p className="feature-description">
-              Advanced ticketing system with priority management, auto-assignment, 
-              and comprehensive resolution tracking capabilities.
-            </p>
-          </div>
-
-          <div className="feature-item">
-            <div className="feature-header">
-              <h3 className="feature-title">Security Management</h3>
-              <span className="feature-badge">Enterprise</span>
-            </div>
-            <p className="feature-description">
-              Comprehensive security oversight with access control, audit logs, 
-              threat detection, and compliance monitoring tools.
-            </p>
-          </div>
-
-          <div className="feature-item">
-            <div className="feature-header">
-              <h3 className="feature-title">System Configuration</h3>
-              <span className="feature-badge">Flexible</span>
-            </div>
-            <p className="feature-description">
-              Advanced system configuration tools with feature toggles, environment 
-              management, and deployment control capabilities.
-            </p>
-          </div>
+          ))}
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section className="benefits-section">
-        <div className="benefits-content">
-          <div className="benefits-text">
-            <h2 className="benefits-title">Why WanderLanka Admin Platform Excels</h2>
-            <div className="benefits-list">
-              <div className="benefit-item">
-                <div className="benefit-icon">✓</div>
-                <div className="benefit-text">
-                  <strong>Increase operational efficiency</strong> by 40% through automated workflows and intelligent routing
-                </div>
-              </div>
-              <div className="benefit-item">
-                <div className="benefit-icon">✓</div>
-                <div className="benefit-text">
-                  <strong>Enhance security posture</strong> with advanced threat detection and real-time monitoring
-                </div>
-              </div>
-              <div className="benefit-item">
-                <div className="benefit-icon">✓</div>
-                <div className="benefit-text">
-                  <strong>Streamline user onboarding</strong> with automated verification and approval processes
-                </div>
-              </div>
-              <div className="benefit-item">
-                <div className="benefit-icon">✓</div>
-                <div className="benefit-text">
-                  <strong>Optimize revenue streams</strong> with detailed analytics and performance insights
-                </div>
+      <section className="bg-gradient-to-br from-blue-50 to-indigo-50 py-16">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-8">
+                Why WanderLanka Admin Platform Excels
+              </h2>
+              <div className="space-y-6">
+                {[
+                  { title: 'Increase operational efficiency', desc: 'by 40% through automated workflows and intelligent routing' },
+                  { title: 'Enhance security posture', desc: 'with advanced threat detection and real-time monitoring' },
+                  { title: 'Streamline user onboarding', desc: 'with automated verification and approval processes' },
+                  { title: 'Optimize revenue streams', desc: 'with detailed analytics and performance insights' },
+                ].map((benefit, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 font-bold">✓</span>
+                    </div>
+                    <div>
+                      <p className="text-slate-900"><strong>{benefit.title}</strong> {benefit.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-          <div className="benefits-visual">
-            <div className="visual-card">
-              <h4 className="visual-title">System Performance</h4>
-              <div className="visual-metric">
-                <span className="metric-value">99.9%</span>
-                <span className="metric-label">Uptime</span>
+
+            <div className="grid gap-6">
+              <div className="bg-white rounded-xl shadow-md border border-slate-200 p-8 text-center hover:shadow-lg transition-shadow duration-150">
+                <h4 className="text-sm font-semibold text-slate-600 uppercase tracking-wider mb-3">System Performance</h4>
+                <div className="text-5xl font-extrabold text-blue-600 mb-2">99.9%</div>
+                <p className="text-slate-600">Uptime</p>
               </div>
-            </div>
-            <div className="visual-card">
-              <h4 className="visual-title">Response Time</h4>
-              <div className="visual-metric">
-                <span className="metric-value">&lt;100ms</span>
-                <span className="metric-label">Average</span>
+              <div className="bg-white rounded-xl shadow-md border border-slate-200 p-8 text-center hover:shadow-lg transition-shadow duration-150">
+                <h4 className="text-sm font-semibold text-slate-600 uppercase tracking-wider mb-3">Response Time</h4>
+                <div className="text-5xl font-extrabold text-indigo-600 mb-2">&lt;100ms</div>
+                <p className="text-slate-600">Average</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Admin Tools Section */}
-      <section className="support-section">
-        <div className="support-content">
-          <h2 className="support-title">Administrative Tools & Resources</h2>
-          <p className="support-subtitle">
-            Comprehensive administrative capabilities with enterprise-grade tools and support systems
-          </p>
-          
-          <div className="support-grid">
-            <div className="support-item">
-              <h3 className="support-item-title">Advanced Analytics</h3>
-              <p className="support-item-description">
-                Deep dive into platform metrics with customizable dashboards, trend analysis, and predictive insights for data-driven decisions.
-              </p>
+      {/* Administrative Tools & Resources */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">Administrative Tools & Resources</h2>
+          <p className="text-xl text-slate-600">Comprehensive administrative capabilities with enterprise-grade tools and support systems</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { title: 'Advanced Analytics', desc: 'Deep dive into platform metrics with customizable dashboards, trend analysis, and predictive insights for data-driven decisions.' },
+            { title: 'Audit & Compliance', desc: 'Comprehensive audit trails, compliance reporting, and regulatory management tools to ensure platform integrity and legal compliance.' },
+            { title: 'API Management', desc: 'Complete API gateway management with rate limiting, authentication controls, and comprehensive monitoring for third-party integrations.' },
+          ].map((tool, i) => (
+            <div key={i} className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 hover:shadow-md hover:border-blue-200 transition-all duration-150">
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">{tool.title}</h3>
+              <p className="text-slate-600">{tool.desc}</p>
             </div>
-            <div className="support-item">
-              <h3 className="support-item-title">Audit & Compliance</h3>
-              <p className="support-item-description">
-                Comprehensive audit trails, compliance reporting, and regulatory management tools to ensure platform integrity and legal compliance.
-              </p>
-            </div>
-            <div className="support-item">
-              <h3 className="support-item-title">API Management</h3>
-              <p className="support-item-description">
-                Complete API gateway management with rate limiting, authentication controls, and comprehensive monitoring for third-party integrations.
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
     </div>

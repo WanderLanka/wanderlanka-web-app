@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from "react";
-// import "../styles/AdminPayment.css"; // Converted to Tailwind CSS
 
 const AdminPayment = () => {
-  // State management
   const [payments, setPayments] = useState([]);
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // Filter states
-  const [filterType, setFilterType] = useState("all"); // all, received, sent
-  const [filterProvider, setFilterProvider] = useState("all"); // all, accommodation, transport, guide
-  const [filterStatus, setFilterStatus] = useState("all"); // all, completed, pending, failed
-  const [filterDate, setFilterDate] = useState("all"); // all, today, week, month
+  const [filterType, setFilterType] = useState("all");
+  const [filterProvider, setFilterProvider] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterDate, setFilterDate] = useState("all");
   
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // Mock payment data - replace with actual API call
   const mockPayments = [
     {
       id: "PAY-001",
@@ -112,12 +107,10 @@ const AdminPayment = () => {
     }
   ];
 
-  // Simulate API call
   useEffect(() => {
     const fetchPayments = async () => {
       setLoading(true);
       try {
-        // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         setPayments(mockPayments);
         setFilteredPayments(mockPayments);
@@ -128,46 +121,33 @@ const AdminPayment = () => {
         setLoading(false);
       }
     };
-
     fetchPayments();
   }, []);
 
-  // Filter payments
   useEffect(() => {
     let filtered = [...payments];
 
-    // Filter by type
     if (filterType !== "all") {
       filtered = filtered.filter(payment => payment.type === filterType);
     }
-
-    // Filter by provider
     if (filterProvider !== "all") {
       filtered = filtered.filter(payment => payment.provider === filterProvider);
     }
-
-    // Filter by status
     if (filterStatus !== "all") {
       filtered = filtered.filter(payment => payment.status === filterStatus);
     }
-
-    // Filter by date
     if (filterDate !== "all") {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
       filtered = filtered.filter(payment => {
         const paymentDate = new Date(payment.date);
-        
         switch (filterDate) {
           case "today":
             return paymentDate >= today;
           case "week":
-            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-            return paymentDate >= weekAgo;
+            return paymentDate >= new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
           case "month":
-            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-            return paymentDate >= monthAgo;
+            return paymentDate >= new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
           default:
             return true;
         }
@@ -178,7 +158,6 @@ const AdminPayment = () => {
     setCurrentPage(1);
   }, [payments, filterType, filterProvider, filterStatus, filterDate]);
 
-  // Calculate statistics
   const stats = {
     totalPayments: filteredPayments.length,
     totalReceived: filteredPayments
@@ -190,13 +169,11 @@ const AdminPayment = () => {
     pendingPayments: filteredPayments.filter(p => p.status === "pending").length
   };
 
-  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentPayments = filteredPayments.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
 
-  // Helper functions
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-LK', {
       style: 'currency',
@@ -215,13 +192,13 @@ const AdminPayment = () => {
     });
   };
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      completed: "status-badge status-badge--success",
-      pending: "status-badge status-badge--warning",
-      failed: "status-badge status-badge--error"
+  const getStatusColor = (status) => {
+    const colors = {
+      completed: "bg-green-100 text-green-700",
+      pending: "bg-amber-100 text-amber-700",
+      failed: "bg-red-100 text-red-700"
     };
-    return badges[status] || "status-badge";
+    return colors[status] || "bg-gray-100 text-gray-700";
   };
 
   const getTypeIcon = (type) => {
@@ -240,63 +217,57 @@ const AdminPayment = () => {
 
   if (loading) {
     return (
-      <div className="payment-analytics">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <div className="loading-text">Loading payment analytics...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-slate-600">Loading payment analytics...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="payment-analytics">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Header Section */}
-      <div className="page-header">
-        <div className="header-content">
-          <div className="header-text">
-            <h1 className="page-title">Payment Analytics</h1>
-            <p className="page-subtitle">
+      <section className="bg-gradient-to-b from-slate-950 to-slate-900 relative py-16 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 via-transparent to-indigo-500/10 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+        
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="mb-8">
+            <h1 className="text-4xl lg:text-5xl font-extrabold leading-tight mb-4 bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent tracking-tight">
+              Payment Analytics
+            </h1>
+            <p className="text-xl text-slate-300 leading-relaxed max-w-2xl">
               Comprehensive payment tracking and financial insights across all platform transactions
             </p>
           </div>
-          
-          <div className="header-stats">
-            <div className="stats-grid">
-              <div className="stat-item stat-item--success">
-                <div className="stat-icon">💰</div>
-                <div className="stat-content">
-                  <div className="stat-number">{formatCurrency(stats.totalReceived)}</div>
-                  <div className="stat-label">Total Received</div>
-                </div>
-              </div>
-              <div className="stat-item stat-item--primary">
-                <div className="stat-icon">💸</div>
-                <div className="stat-content">
-                  <div className="stat-number">{formatCurrency(stats.totalSent)}</div>
-                  <div className="stat-label">Total Sent</div>
-                </div>
-              </div>
-              <div className="stat-item stat-item--warning">
-                <div className="stat-icon">⏳</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.pendingPayments}</div>
-                  <div className="stat-label">Pending</div>
-                </div>
-              </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 hover:bg-white/10 hover:border-green-500/30 transform hover:-translate-y-1 transition-all duration-300">
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2">Total Received</div>
+              <div className="text-3xl font-extrabold text-green-200">{formatCurrency(stats.totalReceived)}</div>
+            </div>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 hover:bg-white/10 hover:border-blue-500/30 transform hover:-translate-y-1 transition-all duration-300">
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2">Total Sent</div>
+              <div className="text-3xl font-extrabold text-blue-200">{formatCurrency(stats.totalSent)}</div>
+            </div>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 hover:bg-white/10 hover:border-amber-500/30 transform hover:-translate-y-1 transition-all duration-300">
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2">Pending Payments</div>
+              <div className="text-3xl font-extrabold text-amber-200">{stats.pendingPayments}</div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Filters Section */}
-      <div className="filters-section">
-        <div className="filters-container">
-          <div className="filters-group">
-            <div className="filter-item">
-              <label className="filter-label">Payment Type:</label>
+      <section className="max-w-7xl mx-auto px-6 py-8">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Payment Type</label>
               <select 
-                className="filter-select"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
               >
@@ -306,10 +277,10 @@ const AdminPayment = () => {
               </select>
             </div>
 
-            <div className="filter-item">
-              <label className="filter-label">Provider Type:</label>
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Provider Type</label>
               <select 
-                className="filter-select"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={filterProvider}
                 onChange={(e) => setFilterProvider(e.target.value)}
               >
@@ -321,10 +292,10 @@ const AdminPayment = () => {
               </select>
             </div>
 
-            <div className="filter-item">
-              <label className="filter-label">Status:</label>
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Status</label>
               <select 
-                className="filter-select"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
@@ -335,10 +306,10 @@ const AdminPayment = () => {
               </select>
             </div>
 
-            <div className="filter-item">
-              <label className="filter-label">Date Range:</label>
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Date Range</label>
               <select 
-                className="filter-select"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
               >
@@ -348,143 +319,122 @@ const AdminPayment = () => {
                 <option value="month">Last 30 Days</option>
               </select>
             </div>
-          </div>
 
-          <div className="results-info">
-            <span className="results-count">
-              {filteredPayments.length} payment{filteredPayments.length !== 1 ? 's' : ''} found
-            </span>
+            <div className="flex items-end">
+              <div className="text-sm text-slate-600">
+                <span className="font-semibold text-slate-900">{filteredPayments.length}</span> payment{filteredPayments.length !== 1 ? 's' : ''}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Error Message */}
       {error && (
-        <div className="error-message">
-          <span className="error-icon">⚠️</span>
-          {error}
+        <div className="max-w-7xl mx-auto px-6 mb-6">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+            <span className="text-xl">⚠️</span>
+            <p className="text-red-700">{error}</p>
+          </div>
         </div>
       )}
 
       {/* Payments Table */}
-      <div className="payments-section">
+      <section className="max-w-7xl mx-auto px-6 pb-16">
         {currentPayments.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">💳</div>
-            <h3 className="empty-title">No Payments Found</h3>
-            <p className="empty-description">
-              No payment records match your current filter criteria.
-            </p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+            <div className="text-5xl mb-4">💳</div>
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No Payments Found</h3>
+            <p className="text-slate-600">No payment records match your current filter criteria.</p>
           </div>
         ) : (
           <>
-            <div className="payments-table-container">
-              <table className="payments-table">
-                <thead>
-                  <tr>
-                    <th>Transaction</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Parties</th>
-                    <th>Service</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Method</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentPayments.map((payment) => (
-                    <tr key={payment.id} className="payment-row">
-                      <td className="transaction-cell">
-                        <div className="transaction-info">
-                          <div className="transaction-id">{payment.id}</div>
-                          <div className="transaction-ref">{payment.transactionId}</div>
-                        </div>
-                      </td>
-                      
-                      <td className="type-cell">
-                        <div className="payment-type">
-                          <span className="type-icon">{getTypeIcon(payment.type)}</span>
-                          <span className={`type-text type-text--${payment.type}`}>
-                            {payment.type === "received" ? "Received" : "Sent"}
-                          </span>
-                        </div>
-                      </td>
-                      
-                      <td className="amount-cell">
-                        <div className={`amount amount--${payment.type}`}>
-                          {formatCurrency(payment.amount)}
-                        </div>
-                      </td>
-                      
-                      <td className="parties-cell">
-                        <div className="parties-info">
-                          <div className="party-item">
-                            <span className="party-label">From:</span>
-                            <span className="party-name">{payment.from}</span>
-                          </div>
-                          <div className="party-item">
-                            <span className="party-label">To:</span>
-                            <span className="party-name">{payment.to}</span>
-                          </div>
-                        </div>
-                      </td>
-                      
-                      <td className="service-cell">
-                        <div className="service-info">
-                          <span className="service-icon">{getProviderIcon(payment.provider)}</span>
-                          <div className="service-details">
-                            <div className="service-name">{payment.service}</div>
-                            <div className="service-reference">{payment.reference}</div>
-                          </div>
-                        </div>
-                      </td>
-                      
-                      <td className="status-cell">
-                        <span className={getStatusBadge(payment.status)}>
-                          {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-                        </span>
-                      </td>
-                      
-                      <td className="date-cell">
-                        <div className="date-info">
-                          {formatDate(payment.date)}
-                        </div>
-                      </td>
-                      
-                      <td className="method-cell">
-                        <div className="payment-method">
-                          {payment.paymentMethod}
-                        </div>
-                      </td>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200">
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Transaction</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Type</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Amount</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">From / To</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Service</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Status</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Date</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Method</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {currentPayments.map((payment) => (
+                      <tr key={payment.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-mono text-blue-600">{payment.id}</div>
+                          <div className="text-xs text-slate-500">{payment.transactionId}</div>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <span className="mr-2">{getTypeIcon(payment.type)}</span>
+                            <span className={payment.type === "received" ? "text-green-700 font-semibold" : "text-blue-700 font-semibold"}>
+                              {payment.type === "received" ? "Received" : "Sent"}
+                            </span>
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <div className={`text-sm font-semibold ${payment.type === "received" ? "text-green-700" : "text-blue-700"}`}>
+                            {formatCurrency(payment.amount)}
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4 text-sm">
+                          <div className="text-slate-900 font-medium">From: {payment.from}</div>
+                          <div className="text-slate-600">To: {payment.to}</div>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <span className="mr-2">{getProviderIcon(payment.provider)}</span>
+                            <span className="font-medium text-slate-900">{payment.service}</span>
+                          </div>
+                          <div className="text-xs text-slate-500">{payment.reference}</div>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(payment.status)}`}>
+                            {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                          </span>
+                        </td>
+                        
+                        <td className="px-6 py-4 text-sm text-slate-600">
+                          {formatDate(payment.date)}
+                        </td>
+                        
+                        <td className="px-6 py-4 text-sm text-slate-900">
+                          {payment.paymentMethod}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="pagination">
+              <div className="mt-6 flex items-center justify-between">
                 <button 
-                  className="pagination-btn"
+                  className="px-4 py-2 bg-slate-200 text-slate-900 rounded-lg hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 >
                   Previous
                 </button>
-                
-                <div className="pagination-info">
-                  <span className="page-numbers">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <span className="items-info">
-                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredPayments.length)} of {filteredPayments.length}
-                  </span>
+                <div className="text-sm text-slate-600">
+                  <span className="font-semibold">Page {currentPage}</span> of {totalPages} | Showing {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, filteredPayments.length)} of {filteredPayments.length}
                 </div>
-                
                 <button 
-                  className="pagination-btn"
+                  className="px-4 py-2 bg-slate-200 text-slate-900 rounded-lg hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 >
@@ -494,7 +444,7 @@ const AdminPayment = () => {
             )}
           </>
         )}
-      </div>
+      </section>
     </div>
   );
 };
