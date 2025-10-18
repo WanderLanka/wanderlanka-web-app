@@ -25,6 +25,16 @@ export const authAPI = {
     }
   },
 
+  redirect: async (userData) =>{
+    try{
+      const response = await api.post('/auth/redirect', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Redirection failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
   // Get current user profile
   getProfile: async () => {
     try {

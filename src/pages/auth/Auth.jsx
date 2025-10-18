@@ -18,7 +18,6 @@ const Auth = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
    const sriLankaImages = [
     "https://images.unsplash.com/photo-1522310193626-604c5ef8be43?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // beach
     "https://images.unsplash.com/photo-1642498041677-d26b9dfc5e61?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // temple
@@ -129,6 +128,7 @@ const Auth = () => {
           navigateToDashboard(userRole);
         }, 100); // Small delay to ensure localStorage is properly set
       } else {
+        if(formData.role ==="traveler"){
         response = await authAPI.register({
           username: formData.username,
           email: formData.email,
@@ -147,7 +147,23 @@ const Auth = () => {
               `Registration successful! Welcome ${response.user?.username || formData.username}! Please login to access your account.`
             );
         }
+      }else if(formData.role ==="transport" || formData.role==="accommodation"){
+        // Handle transport and accommodation provider registration with document upload
+        const formPayload = new FormData();
+        formPayload.append('username', formData.username);
+        formPayload.append('email', formData.email);
+        formPayload.append('password', formData.password);
+        formPayload.append('role', formData.role);
+        if(formData.document){
+          formPayload.append('document', formData.document);
+        }
         
+        response = await authAPI.redirect(formPayload);
+        setError("");
+        toast.success(
+          `Registration successful! Welcome ${response.user?.username || formData.username}! Your application is under review. You will be notified once approved.`
+        );
+      }
         // Switch to login mode after successful registration
         setIsLogin(true);
         setFormData({
@@ -350,8 +366,32 @@ const Auth = () => {
                     <span>▼</span>
                   </div>
                 </div>
+
+                {/* Conditionally render document upload field */}
+    {(formData.role === "transport" || formData.role === "accommodation") && (
+      <div className="mt-4">
+        <label
+          className="block text-sm font-semibold text-gray-700 mb-2"
+          htmlFor="document"
+        >
+          Upload Business Document
+        </label>
+        <input
+          type="file"
+          id="document"
+          name="document"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={(e) =>
+            setFormData({ ...formData, document: e.target.files[0] })
+          }
+          className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-emerald-500 focus:shadow-lg focus:shadow-emerald-500/20 transition-all duration-200"
+          required
+        />
+      </div>
+    )}
               </div>
             )}
+
 
             {/* Submit Button */}
             <button

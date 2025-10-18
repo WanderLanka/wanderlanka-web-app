@@ -32,7 +32,7 @@ import { accommodationAPI, transportationAPI, tourGuideAPI } from '../../service
 const TripPlanning = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { getTotalItemsCount, addToTripPlanning } = useTripPlanning();
+  const { getTotalItemsCount } = useTripPlanning();
   
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
@@ -44,6 +44,191 @@ const TripPlanning = () => {
   const [selectedDetailItem, setSelectedDetailItem] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+  // Mock data for available activities
+  const mockPlaces = [
+    {
+      id: 1,
+      name: "Sigiriya Rock Fortress",
+      location: "Sigiriya",
+      type: "Historical Site",
+      rating: 4.8,
+      image: "https://images.unsplash.com/photo-1580910527739-556eb89f9d65?q=80&w=1074&auto=format&fit=crop",
+      price: "LKR 2,500",
+      duration: "2-3 hours",
+      description: "Ancient rock fortress and palace ruins with stunning views from the top of the rock."
+    },
+    {
+      id: 2,
+      name: "Temple of the Tooth",
+      location: "Kandy",
+      type: "Religious Site",
+      rating: 4.7,
+      image: "https://images.unsplash.com/photo-1642498041677-d26b9dfc5e61?q=80&w=688&auto=format&fit=crop",
+      price: "LKR 1,500",
+      duration: "1-2 hours",
+      description: "Sacred Buddhist temple housing the tooth relic of Buddha, a UNESCO World Heritage site."
+    },
+    {
+      id: 3,
+      name: "Ella Nine Arch Bridge",
+      location: "Ella",
+      type: "Scenic Spot",
+      rating: 4.5,
+      image: "https://images.unsplash.com/photo-1586500036706-41963de24d8b?q=80&w=1172&auto=format&fit=crop",
+      price: "Free",
+      duration: "1 hour",
+      description: "Iconic railway bridge in the hill country offering spectacular views."
+    }
+  ];
+
+  const mockAccommodations = [
+    {
+      id: 1,
+      name: "Heritance Kandalama",
+      location: "Dambulla",
+      type: "Luxury Resort",
+      rating: 4.9,
+      image: "https://images.unsplash.com/photo-1566650576880-6740b03eaad1?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 35,000 / night",
+      amenities: ["Pool", "Spa", "Restaurant", "WiFi"],
+      description: "Eco-luxury resort designed by Geoffrey Bawa, blending with nature."
+    },
+    {
+      id: 2,
+      name: "Cinnamon Lodge Habarana",
+      location: "Habarana",
+      type: "Nature Resort",
+      rating: 4.7,
+      image: "https://images.unsplash.com/photo-1525849306000-cc26ceb5c1d7?q=80&w=735&auto=format&fit=crop",
+      price: "LKR 28,000 / night",
+      amenities: ["Pool", "Restaurant", "Wildlife Tours", "WiFi"],
+      description: "Rustic luxury in the heart of nature with wildlife experiences."
+    }
+  ];
+
+  const mockTransport = [
+    {
+      id: 1,
+      name: "Air-Conditioned Car",
+      type: "Private Vehicle",
+      capacity: "4 passengers",
+      rating: 4.8,
+      image: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 8,000 / day",
+      features: ["AC", "Driver", "Fuel Included"],
+      description: "Comfortable private car with experienced driver for sightseeing."
+    },
+    {
+      id: 2,
+      name: "Tuk Tuk Adventure",
+      type: "Three Wheeler",
+      capacity: "3 passengers",
+      rating: 4.6,
+      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 3,500 / day",
+      features: ["Local Experience", "Driver", "Flexible Route"],
+      description: "Authentic local transport experience with friendly drivers."
+    }
+  ];
+
+  const mockGuides = [
+    {
+      id: 1,
+      name: "Rohan Silva",
+      specialization: "Cultural Guide",
+      experience: "8 years",
+      rating: 4.9,
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=687&auto=format&fit=crop",
+      price: "LKR 12,000 / day",
+      languages: ["English", "Sinhala", "Tamil"],
+      description: "Expert in cultural sites, traditional crafts, and local history."
+    },
+    {
+      id: 2,
+      name: "Anura Perera",
+      specialization: "Wildlife Guide",
+      experience: "10 years",
+      rating: 4.8,
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 15,000 / day",
+      languages: ["English", "Sinhala"],
+      description: "Specialist in wildlife photography and safari tours."
+    }
+  ];
+
+  // Helper function to render activity cards
+  const renderActivityCard = (item, type) => (
+    <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+      <div className="relative h-32">
+        <img 
+          src={item.image} 
+          alt={item.name}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute top-2 right-2">
+          <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
+            <Star className="h-3 w-3 text-yellow-500 mr-1" />
+            <span className="text-xs font-medium">{item.rating}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="p-3">
+        <h5 className="font-medium text-gray-900 text-sm mb-1">{item.name}</h5>
+        <p className="text-xs text-gray-600 mb-2">
+          {type === 'places' && item.location}
+          {type === 'accommodations' && item.location}
+          {type === 'transport' && item.type}
+          {type === 'guides' && item.specialization}
+        </p>
+        
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold text-emerald-600">{item.price}</span>
+          {type === 'places' && (
+            <span className="text-xs text-gray-500">{item.duration}</span>
+          )}
+          {type === 'transport' && (
+            <span className="text-xs text-gray-500">{item.capacity}</span>
+          )}
+          {type === 'guides' && (
+            <span className="text-xs text-gray-500">{item.experience}</span>
+          )}
+        </div>
+        
+        <div className="flex gap-2">
+          <Button 
+            size="xs" 
+            variant="outline" 
+            className="flex-1 text-xs"
+            onClick={() => handleViewDetails(item, type)}
+          >
+            View Details
+          </Button>
+          <Button 
+            size="xs" 
+            variant="primary" 
+            className="flex-1 text-xs"
+            onClick={() => handleAddToDay(item)}
+          >
+            Add to Day
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Handler functions
+  const handleViewDetails = (item, type) => {
+    setSelectedDetailItem({ ...item, type });
+    setShowDetailModal(true);
+  };
+
+  const handleAddToDay = (item) => {
+    // TODO: Implement add to day functionality
+    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
+    setShowToast(true);
+    setHasUnsavedProgress(true);
+  };
   
   // New state for tab structure
   const [activeTab, setActiveTab] = useState('places');
@@ -612,7 +797,6 @@ const TripPlanning = () => {
           
           <div className="mb-4">
             <h1 className="text-2xl font-bold mb-4">Plan Your Trip</h1>
-
             {/* Date Chips */}
             {tripDays.length > 0 && (
               <div className="mb-6">
@@ -715,10 +899,10 @@ const TripPlanning = () => {
                   {loadingTourGuides && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
                 </button>
               </div>
+
             </div>
           </div>
         </div>
-
         {/* Content Area - Service Selection */}
         <div className="p-6">
           {/* Service Content Based on Active Tab */}
@@ -809,6 +993,7 @@ const TripPlanning = () => {
                   )}
                 </div>
               )}
+
             </div>
           </div>
         </div>
