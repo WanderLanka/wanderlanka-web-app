@@ -9,6 +9,7 @@ const TravelerDashboard = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [selectedDestination, setSelectedDestination] = useState('');
+    const [validationErrors, setValidationErrors] = useState({});
 
     // Handle start date change and validate end date
     const handleStartDateChange = (newStartDate) => {
@@ -22,6 +23,39 @@ const TravelerDashboard = () => {
     // Handle trip planning form submission
     const handleTripPlanningSubmit = (e) => {
         e.preventDefault();
+        
+        const errors = {};
+        
+        // Validate required fields
+        if (!selectedDestination.trim()) {
+            errors.destination = 'Please enter a destination';
+        }
+        
+        if (!startDate) {
+            errors.startDate = 'Please select a start date';
+        }
+        
+        if (!endDate) {
+            errors.endDate = 'Please select an end date';
+        }
+        
+        // Validate date logic if both dates are provided
+        if (startDate && endDate && new Date(startDate) >= new Date(endDate)) {
+            errors.endDate = 'End date must be after start date';
+        }
+        
+        // If there are validation errors, set them and return
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
+            
+            // Show alert for first error
+            const firstError = Object.values(errors)[0];
+            alert(firstError);
+            return;
+        }
+        
+        // Clear any previous validation errors
+        setValidationErrors({});
         
         // Navigate to trip planning page with form data
         navigate('/user/trip-planning', {
@@ -197,10 +231,26 @@ const TravelerDashboard = () => {
                                     <input
                                         type="text"
                                         value={selectedDestination}
-                                        onChange={(e) => setSelectedDestination(e.target.value)}
+                                        onChange={(e) => {
+                                            setSelectedDestination(e.target.value);
+                                            // Clear destination error when user starts typing
+                                            if (validationErrors.destination) {
+                                                setValidationErrors(prev => ({ ...prev, destination: null }));
+                                            }
+                                        }}
                                         placeholder="Where do you want to go?"
-                                        className="w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-0 rounded-xl text-slate-800 placeholder-slate-500 focus:ring-2 focus:ring-white/50 focus:outline-none transition-all duration-200"
+                                        required
+                                        className={`w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-0 rounded-xl text-slate-800 placeholder-slate-500 focus:ring-2 focus:outline-none transition-all duration-200 ${
+                                            validationErrors.destination 
+                                                ? 'focus:ring-red-500 ring-2 ring-red-500/50' 
+                                                : 'focus:ring-white/50'
+                                        }`}
                                     />
+                                    {validationErrors.destination && (
+                                        <p className="text-red-300 text-sm mt-1 ml-1">
+                                            {validationErrors.destination}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -213,10 +263,26 @@ const TravelerDashboard = () => {
                                     <input
                                         type="date"
                                         value={startDate}
-                                        onChange={(e) => handleStartDateChange(e.target.value)}
+                                        onChange={(e) => {
+                                            handleStartDateChange(e.target.value);
+                                            // Clear start date error when user selects a date
+                                            if (validationErrors.startDate) {
+                                                setValidationErrors(prev => ({ ...prev, startDate: null }));
+                                            }
+                                        }}
                                         min={today}
-                                        className="w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-0 rounded-xl text-slate-800 focus:ring-2 focus:ring-white/50 focus:outline-none transition-all duration-200"
+                                        required
+                                        className={`w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-0 rounded-xl text-slate-800 focus:ring-2 focus:outline-none transition-all duration-200 ${
+                                            validationErrors.startDate 
+                                                ? 'focus:ring-red-500 ring-2 ring-red-500/50' 
+                                                : 'focus:ring-white/50'
+                                        }`}
                                     />
+                                    {validationErrors.startDate && (
+                                        <p className="text-red-300 text-sm mt-1 ml-1">
+                                            {validationErrors.startDate}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -229,10 +295,26 @@ const TravelerDashboard = () => {
                                     <input
                                         type="date"
                                         value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
+                                        onChange={(e) => {
+                                            setEndDate(e.target.value);
+                                            // Clear end date error when user selects a date
+                                            if (validationErrors.endDate) {
+                                                setValidationErrors(prev => ({ ...prev, endDate: null }));
+                                            }
+                                        }}
                                         min={startDate || today}
-                                        className="w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-0 rounded-xl text-slate-800 focus:ring-2 focus:ring-white/50 focus:outline-none transition-all duration-200"
+                                        required
+                                        className={`w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-0 rounded-xl text-slate-800 focus:ring-2 focus:outline-none transition-all duration-200 ${
+                                            validationErrors.endDate 
+                                                ? 'focus:ring-red-500 ring-2 ring-red-500/50' 
+                                                : 'focus:ring-white/50'
+                                        }`}
                                     />
+                                    {validationErrors.endDate && (
+                                        <p className="text-red-300 text-sm mt-1 ml-1">
+                                            {validationErrors.endDate}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>

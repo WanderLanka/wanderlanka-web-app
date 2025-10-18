@@ -67,6 +67,41 @@ export const TripPlanningProvider = ({ children }) => {
         return Object.values(planningBookings).reduce((total, bookingType) => total + bookingType.length, 0);
     };
 
+    const getPaymentSummary = () => {
+        const summary = {
+            items: [],
+            totalAmount: 0,
+            breakdown: {
+                accommodations: { items: planningBookings.accommodations, subtotal: 0 },
+                transportation: { items: planningBookings.transportation, subtotal: 0 },
+                guides: { items: planningBookings.guides, subtotal: 0 },
+                destinations: { items: planningBookings.destinations, subtotal: 0 }
+            }
+        };
+
+        // Calculate breakdown and totals
+        Object.keys(summary.breakdown).forEach(type => {
+            const items = summary.breakdown[type].items;
+            items.forEach(item => {
+                const price = item.totalPrice || item.price || item.cost || 0;
+                const numericPrice = typeof price === 'string' ? parseFloat(price.replace(/[^\d]/g, '')) : Number(price);
+                summary.breakdown[type].subtotal += numericPrice || 0;
+                summary.items.push({
+                    id: item.id,
+                    name: item.name,
+                    type: type.slice(0, -1), // Remove 's' from plural
+                    price: numericPrice,
+                    quantity: item.quantity || 1,
+                    selectedDate: item.selectedDate,
+                    addedAt: item.addedAt
+                });
+            });
+            summary.totalAmount += summary.breakdown[type].subtotal;
+        });
+
+        return summary;
+    };
+
     const value = {
         planningBookings,
         isInPlanningMode,
@@ -75,7 +110,8 @@ export const TripPlanningProvider = ({ children }) => {
         removeFromTripPlanning,
         clearTripPlanning,
         getTotalAmount,
-        getTotalItemsCount
+        getTotalItemsCount,
+        getPaymentSummary
     };
 
     return (

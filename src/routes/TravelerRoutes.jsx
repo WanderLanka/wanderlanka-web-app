@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { 
   TravelerDashboard,
+  TripPlanning,
   MyBookings,
   MyTrips,
   Payments,
@@ -9,7 +10,10 @@ import {
   Profile,
   Accommodations,
   Transportation,
-  TourGuides
+  TourGuides,
+  AccommodationDetails,
+  TransportationDetails,
+  TourGuideDetails
 } from '../pages';
 
 const TravelerRoutes = () => {
@@ -17,6 +21,9 @@ const TravelerRoutes = () => {
     <Routes>
       {/* Traveler Dashboard - Default */}
       <Route index element={<TravelerDashboard />} />
+      
+      {/* Trip Planning */}
+      <Route path="trip-planning" element={<TripPlanning />} />
       
       {/* My Bookings */}
       <Route path="mybookings" element={<MyBookings />} />
@@ -32,8 +39,11 @@ const TravelerRoutes = () => {
       
       {/* Dedicated Service Category Pages */}
       <Route path="accommodations" element={<Accommodations />} />
+      <Route path="accommodations/:id" element={<AccommodationDetails />} />
       <Route path="transportation" element={<Transportation />} />
+      <Route path="transportation/:id" element={<TransportationDetails />} />
       <Route path="tour-guides" element={<TourGuides />} />
+      <Route path="tour-guides/:id" element={<TourGuideDetails />} />
       
       {/* Profile */}
       <Route path="profile" element={<Profile />} />

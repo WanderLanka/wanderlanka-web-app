@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ArrowLeft, 
@@ -17,19 +17,27 @@ import {
     Shield,
     Calendar
 } from 'lucide-react';
-import { Button, Card, Input, Breadcrumb } from '../../components/common';
+
+import Breadcrumb from '../../components/common/Breadcrumb';
+import { Button, Card, Input } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import PaymentModal from '../../components/PaymentModal';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
+import { transportationAPI } from '../../services/api';
 
-const TransportationDetails = () => {
+function TransportationDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { addToTripPlanning } = useTripPlanning();
+    const { selectedDate } = location.state || {};
+    
+    const { addService } = useTripPlanning();
     
     const [currentImage, setCurrentImage] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [transportationData, setTransportationData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [bookingData, setBookingData] = useState({
         startDate: '',
         days: 1,
@@ -38,137 +46,25 @@ const TransportationDetails = () => {
         dropoffLocation: ''
     });
 
-    // Mock transportation data
-    const mockTransportation = [
-        {
-            id: 7,
-            name: 'Luxury SUV with Driver',
-            provider: 'Elite Transport',
-            location: 'Colombo, Sri Lanka',
-            rating: 4.7,
-            reviews: 189,
-            price: 75,
-            priceUnit: 'day',
-            images: [
-                'https://images.unsplash.com/photo-1494905998402-395d579af36f?w=800',
-                'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800',
-                'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800',
-                'https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=800'
-            ],
-            features: ['A/C', 'English Speaking', 'Fuel Included', 'WiFi', 'Water Bottles'],
-            availability: 'Available',
-            description: 'Travel in ultimate comfort with our luxury SUV and professional driver. Perfect for families or groups exploring Sri Lanka. Our vehicle features leather seats, climate control, and ample space for luggage. Your experienced driver will not only get you to your destination safely but also share knowledge about local attractions and culture.',
-            amenities: ['Air Conditioning', 'English Speaking Driver', 'Fuel Included', 'Insurance Covered', 'Local Knowledge', 'Flexible Itinerary', 'Free WiFi', 'Complimentary Water', 'Phone Charger', 'First Aid Kit'],
-            vehicleType: 'SUV',
-            brand: 'Toyota Fortuner',
-            year: 2022,
-            capacity: 7,
-            luggage: '4 large bags + 4 small bags',
-            driverInfo: {
-                name: 'Sunil Perera',
-                experience: '8 years',
-                rating: 4.8,
-                languages: ['English', 'Sinhala', 'Tamil'],
-                specialties: ['Cultural Sites', 'Wildlife Tours', 'Beach Destinations']
-            },
-            policies: [
-                'Free cancellation up to 2 hours before pickup',
-                'Pick-up from any location in Colombo area',
-                'Waiting time up to 30 minutes included',
-                'Extra stops can be arranged',
-                'Child seats available upon request'
-            ],
-            routes: [
-                { name: 'Colombo to Kandy', duration: '3 hours', distance: '115 km' },
-                { name: 'Colombo to Galle', duration: '2 hours', distance: '120 km' },
-                { name: 'Kandy to Ella', duration: '3.5 hours', distance: '95 km' },
-                { name: 'Colombo Airport Transfer', duration: '45 mins', distance: '35 km' }
-            ],
-            pricing: {
-                halfDay: 50,
-                fullDay: 75,
-                multiDay: 70,
-                airport: 35
-            },
-            userReviews: [
-                {
-                    id: 1,
-                    name: 'Mike Johnson',
-                    rating: 4.9,
-                    review: 'Excellent service! Sunil was punctual, professional, and very knowledgeable about local attractions. The vehicle was clean and comfortable. Highly recommend for anyone visiting Sri Lanka.',
-                    profileImage: 'https://randomuser.me/api/portraits/men/3.jpg',
-                    date: '2024-01-12',
-                    helpful: 25
-                },
-                {
-                    id: 2,
-                    name: 'Sarah Wilson',
-                    rating: 4.6,
-                    review: 'Great value for money! The SUV was spacious for our family of 5. Driver was friendly and flexible with our itinerary changes. Would book again.',
-                    profileImage: 'https://randomuser.me/api/portraits/women/4.jpg',
-                    date: '2024-01-08',
-                    helpful: 18
-                },
-                {
-                    id: 3,
-                    name: 'David Chen',
-                    rating: 4.8,
-                    review: 'Professional service from start to finish. The driver helped us discover hidden gems we would never have found on our own. Vehicle was well-maintained.',
-                    profileImage: 'https://randomuser.me/api/portraits/men/5.jpg',
-                    date: '2024-01-05',
-                    helpful: 22
-                }
-            ]
-        },
-        {
-            id: 8,
-            name: 'Airport Transfer - Private Car',
-            provider: 'Swift Transfers',
-            location: 'Colombo Airport, Sri Lanka',
-            rating: 4.5,
-            reviews: 156,
-            price: 35,
-            priceUnit: 'trip',
-            images: [
-                'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800',
-                'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800'
-            ],
-            features: ['A/C', 'English Speaking', 'Flight Tracking', 'Meet & Greet'],
-            availability: 'Available',
-            description: 'Reliable airport transfer service with professional drivers and comfortable vehicles.',
-            amenities: ['Air Conditioning', 'English Speaking Driver', 'Flight Tracking', 'Meet & Greet Service', 'Luggage Assistance'],
-            vehicleType: 'Sedan',
-            brand: 'Toyota Axio',
-            year: 2021,
-            capacity: 4,
-            luggage: '3 large bags',
-            driverInfo: {
-                name: 'Ravi Fernando',
-                experience: '5 years',
-                rating: 4.6,
-                languages: ['English', 'Sinhala']
-            },
-            policies: [
-                'Free cancellation up to 1 hour before pickup',
-                'Flight tracking included',
-                'Meet & greet at arrival hall',
-                'Waiting time up to 60 minutes included'
-            ],
-            userReviews: [
-                {
-                    id: 1,
-                    name: 'Emma Davis',
-                    rating: 4.7,
-                    review: 'Smooth airport transfer. Driver was waiting with a name board and helped with luggage. Good value for the service.',
-                    profileImage: 'https://randomuser.me/api/portraits/women/6.jpg',
-                    date: '2024-01-10',
-                    helpful: 12
-                }
-            ]
-        }
-    ];
+    useEffect(() => {
+        fetchTransportationData();
+    }, []);
 
-    const vehicle = mockTransportation.find(v => v.id === parseInt(id)) || mockTransportation[0];
+    const fetchTransportationData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await transportationAPI.getAll();
+            setTransportationData(response.data);
+        } catch (err) {
+            setError('Failed to load transportation data. Please try again.');
+            console.error('Error fetching transportation data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const vehicle = transportationData.find(v => v.id === parseInt(id)) || transportationData[0];
 
     // Check if user came from trip planning page
     const isFromTripPlanning = location.state?.fromTripPlanning === true;
@@ -199,7 +95,7 @@ const TransportationDetails = () => {
                 image: vehicle.images[0]
             };
             
-            addToTripPlanning(planningBooking, 'transportation');
+            addService('transportation', planningBooking, selectedDate);
             alert('Added to your trip planning! Continue adding more services or review your summary.');
         } else {
             // Open payment modal for direct booking
@@ -215,6 +111,41 @@ const TransportationDetails = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+            {/* Loading State */}
+            {loading && (
+                <div className="flex justify-center items-center py-16">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <span className="text-slate-600">Loading transportation details...</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                        <div className="text-red-800 font-medium mb-2">Error Loading Transportation</div>
+                        <div className="text-red-600 mb-4">{error}</div>
+                        <Button 
+                            onClick={fetchTransportationData}
+                            variant="outline"
+                            size="sm"
+                            className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                            Try Again
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Main Content - only show when not loading and no error and vehicle exists */}
+            {!loading && !error && transportationData.length > 0 && (() => {
+                const vehicle = transportationData.find(v => v.id === parseInt(id)) || transportationData[0];
+                if (!vehicle) return null;
+                
+                return (
+                    <>
             {/* Header */}
             <div className="bg-white shadow-sm sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -226,7 +157,7 @@ const TransportationDetails = () => {
                             className="flex items-center"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Transportation
+                            {isFromTripPlanning ? 'Back to Planning' : 'Back to Transportation'}
                         </Button>
                         <div className="flex items-center gap-2">
                             <Button variant="outline" size="sm" className="flex items-center">
@@ -245,7 +176,11 @@ const TransportationDetails = () => {
             <div className="bg-white border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
                     <Breadcrumb 
-                        items={[
+                        items={isFromTripPlanning ? [
+                            { label: 'Dashboard', path: '/user/dashboard', isHome: true },
+                            { label: 'Trip Planning', path: '/user/trip-planning' },
+                            { label: vehicle.name, isActive: true }
+                        ] : [
                             { label: 'Dashboard', path: '/user/dashboard', isHome: true },
                             { label: 'Services'},
                             { label: 'Transportation', path: '/user/transportation' },
@@ -614,13 +549,13 @@ const TransportationDetails = () => {
                                     onClick={handleBookingSubmit}
                                     disabled={!bookingData.startDate || !bookingData.pickupLocation}
                                 >
-                                    {isFromTripPlanning ? 'Add to Trip' : 'Book Now'}
+                                    {isFromTripPlanning ? 'Add to Itinerary' : 'Proceed to Payment'}
                                 </Button>
                                 
                                 <p className="text-xs text-slate-500 text-center">
                                     {isFromTripPlanning 
-                                        ? 'Add to your trip planning summary' 
-                                        : 'Driver will contact you 30 minutes before pickup'
+                                        ? 'Add transportation to your trip itinerary' 
+                                        : 'Complete booking and payment'
                                     }
                                 </p>
                             </div>
@@ -638,6 +573,9 @@ const TransportationDetails = () => {
                 bookingData={vehicle}
                 totalAmount={calculateTotal()}
             />
+                    </>
+                );
+            })()}
         </div>
     );
 };
