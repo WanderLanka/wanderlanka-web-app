@@ -35,6 +35,7 @@ export { default as TourGuides } from './traveler/TourGuides.jsx';
 export { default as AccommodationDetails } from './traveler/AccommodationDetails.jsx';
 export { default as TransportationDetails } from './traveler/TransportationDetails.jsx';
 export { default as TourGuideDetails } from './traveler/TourGuideDetails.jsx';
+export { default as BookingPayment } from './traveler/BookingPayment.jsx';
 
 
 export { default as Bookings } from './user/Bookings.jsx';
