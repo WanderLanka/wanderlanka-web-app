@@ -29,9 +29,7 @@ function TransportationDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { selectedDate } = location.state || {};
-    
-    const { addService } = useTripPlanning();
+    const { addToTripPlanning } = useTripPlanning();
     
     const [currentImage, setCurrentImage] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -69,6 +67,18 @@ function TransportationDetails() {
     // Check if user came from trip planning page
     const isFromTripPlanning = location.state?.fromTripPlanning === true;
 
+    // Set default dates when coming from trip planning
+    useEffect(() => {
+        if (isFromTripPlanning && location.state?.selectedDateValue) {
+            const selectedDate = location.state.selectedDateValue; // This is the specific date user clicked
+            
+            setBookingData(prev => ({
+                ...prev,
+                startDate: selectedDate
+            }));
+        }
+    }, [isFromTripPlanning, location.state]);
+
     const handlePrevImage = () => {
         setCurrentImage(prev => prev === 0 ? vehicle.images.length - 1 : prev - 1);
     };
@@ -92,10 +102,11 @@ function TransportationDetails() {
                 passengers: bookingData.passengers,
                 pricePerDay: vehicle.price,
                 totalPrice: calculateTotal(),
-                image: vehicle.images[0]
+                image: vehicle.images[0],
+                selectedDate: location.state?.selectedDateValue || bookingData.startDate // Store the specific selected date
             };
             
-            addService('transportation', planningBooking, selectedDate);
+            addToTripPlanning(planningBooking, 'transportation');
             alert('Added to your trip planning! Continue adding more services or review your summary.');
         } else {
             // Open payment modal for direct booking
