@@ -62,6 +62,30 @@ export const authAPI = {
   }
 };
 
+export const adminAPI={
+  requests:async()=>{
+    try{
+      const response = await api.get('/auth/requests');
+      return response.data;
+    }
+    catch (error) {
+      console.error('Get requests failed:', error.response?.data || error.message);
+      throw error;
+  }
+}
+,
+updateRequestStatus:async(requestid,action)=>{
+  try{
+    const response = await api.put('/auth/updateRequestStatus', { requestId: requestid, action });
+    return response.data;
+  }
+  catch (error) {
+    console.error('Update request status failed:', error.response?.data || error.message);
+    throw error;    
+}
+}
+};
+
 // Destinations endpoints
 export const destinationsAPI = {
   // Get all destinations

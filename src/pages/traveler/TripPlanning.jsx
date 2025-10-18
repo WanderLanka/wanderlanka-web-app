@@ -1006,4 +1006,4 @@ const TripPlanning = () => {
   );
 };
 
-export default TripPlanning;
+export default TripPlanning;
