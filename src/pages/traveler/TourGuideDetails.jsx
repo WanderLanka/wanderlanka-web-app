@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ArrowLeft, 
@@ -179,6 +179,18 @@ const TourGuideDetails = () => {
     // Check if user came from trip planning page
     const isFromTripPlanning = location.state?.fromTripPlanning === true;
 
+    // Set default dates when coming from trip planning
+    useEffect(() => {
+        if (isFromTripPlanning && location.state?.selectedDateValue) {
+            const selectedDate = location.state.selectedDateValue; // This is the specific date user clicked
+            
+            setBookingData(prev => ({
+                ...prev,
+                tourDate: selectedDate
+            }));
+        }
+    }, [isFromTripPlanning, location.state]);
+
     const handlePrevImage = () => {
         setCurrentImage(prev => prev === 0 ? guide.images.length - 1 : prev - 1);
     };
@@ -203,7 +215,8 @@ const TourGuideDetails = () => {
                 totalPrice: calculateTotal(),
                 image: guide.images[0],
                 specialties: guide.specialties,
-                languages: guide.languages
+                languages: guide.languages,
+                selectedDate: location.state?.selectedDateValue || bookingData.tourDate // Store the specific selected date
             };
             
             addToTripPlanning(planningBooking, 'guides');

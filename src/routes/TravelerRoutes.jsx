@@ -13,7 +13,8 @@ import {
   TourGuides,
   AccommodationDetails,
   TransportationDetails,
-  TourGuideDetails
+  TourGuideDetails,
+  BookingPayment
 } from '../pages';
 
 const TravelerRoutes = () => {
@@ -24,6 +25,9 @@ const TravelerRoutes = () => {
       
       {/* Trip Planning */}
       <Route path="trip-planning" element={<TripPlanning />} />
+      
+      {/* Booking Payment */}
+      <Route path="booking-payment" element={<BookingPayment />} />
       
       {/* My Bookings */}
       <Route path="mybookings" element={<MyBookings />} />

@@ -13,7 +13,6 @@ import {
   Plus,
   Filter,
   Grid,
-  List,
   ChevronLeft,
   ChevronRight,
   Maximize2,
@@ -32,7 +31,7 @@ import { accommodationAPI, transportationAPI, tourGuideAPI } from '../../service
 const TripPlanning = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { getTotalItemsCount } = useTripPlanning();
+  const { getTotalItemsCount, addToTripPlanning } = useTripPlanning();
   
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
@@ -84,73 +83,160 @@ const TripPlanning = () => {
   // Helper function to render activity cards
   const renderActivityCard = (item, type) => (
     <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="relative h-32">
-        <img 
-          src={item.image} 
-          alt={item.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-2 right-2">
-          <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
-            <Star className="h-3 w-3 text-yellow-500 mr-1" />
-            <span className="text-xs font-medium">{item.rating}</span>
+      {type === 'places' ? (
+        // Simplified places card - only name and button
+        <>
+          <div className="p-4">
+            <h5 className="font-medium text-gray-900 text-lg mb-3 text-center">{item.name}</h5>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="primary" 
+                className="w-full text-sm py-2"
+                onClick={() => handleAddToDay(item)}
+              >
+                Add
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
-      
-      <div className="p-3">
-        <h5 className="font-medium text-gray-900 text-sm mb-1">{item.name}</h5>
-        <p className="text-xs text-gray-600 mb-2">
-          {type === 'places' && item.location}
-          {type === 'accommodations' && item.location}
-          {type === 'transport' && item.type}
-          {type === 'guides' && item.specialization}
-        </p>
-        
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-emerald-600">{item.price}</span>
-          {type === 'places' && (
-            <span className="text-xs text-gray-500">{item.duration}</span>
-          )}
-          {type === 'transport' && (
-            <span className="text-xs text-gray-500">{item.capacity}</span>
-          )}
-          {type === 'guides' && (
-            <span className="text-xs text-gray-500">{item.experience}</span>
-          )}
-        </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            size="xs" 
-            variant="outline" 
-            className="flex-1 text-xs"
-            onClick={() => handleViewDetails(item, type)}
-          >
-            View Details
-          </Button>
-          <Button 
-            size="xs" 
-            variant="primary" 
-            className="flex-1 text-xs"
-            onClick={() => handleAddToDay(item)}
-          >
-            Add to Day
-          </Button>
-        </div>
-      </div>
+        </>
+      ) : (
+        // Full card for other services
+        <>
+          <div className="relative h-32">
+            <img 
+              src={item.image} 
+              alt={item.name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute top-2 right-2">
+              <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
+                <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                <span className="text-xs font-medium">{item.rating}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-3">
+            <h5 className="font-medium text-gray-900 text-sm mb-1">{item.name}</h5>
+            <p className="text-xs text-gray-600 mb-2">
+              {type === 'accommodations' && item.location}
+              {type === 'transport' && item.type}
+              {type === 'guides' && item.specialization}
+            </p>
+            
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-emerald-600">{item.price}</span>
+              {type === 'transport' && (
+                <span className="text-xs text-gray-500">{item.capacity}</span>
+              )}
+              {type === 'guides' && (
+                <span className="text-xs text-gray-500">{item.experience}</span>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="w-full text-sm py-2"
+                onClick={() => handleViewDetails(item, type)}
+              >
+                View Details
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 
   // Handler functions
   const handleViewDetails = (item, type) => {
-    setSelectedDetailItem({ ...item, type });
-    setShowDetailModal(true);
+    // Navigate to specific details pages based on type
+    switch (type) {
+      case 'accommodations':
+        navigate(`/user/accommodations/${item.id || item._id}`, { 
+          state: { 
+            selectedItem: item,
+            returnTo: '/user/trip-planning',
+            tripData: tripData,
+            selectedDate: selectedDateIndex,
+            selectedDateValue: tripDays[selectedDateIndex]?.toISOString().split('T')[0], // Actual date string
+            fromTripPlanning: true,
+            showAddToItinerary: true, // This will change "Go to Payment" to "Add to Itinerary"
+            source: 'trip-planning'
+          } 
+        });
+        break;
+      case 'transport':
+        navigate(`/user/transportation/${item.id || item._id}`, { 
+          state: { 
+            selectedItem: item,
+            returnTo: '/user/trip-planning',
+            tripData: tripData,
+            selectedDate: selectedDateIndex,
+            selectedDateValue: tripDays[selectedDateIndex]?.toISOString().split('T')[0], // Actual date string
+            fromTripPlanning: true,
+            showAddToItinerary: true,
+            source: 'trip-planning'
+          } 
+        });
+        break;
+      case 'guides':
+        navigate(`/user/tour-guides/${item.id || item._id}`, { 
+          state: { 
+            selectedItem: item,
+            returnTo: '/user/trip-planning',
+            tripData: tripData,
+            selectedDate: selectedDateIndex,
+            selectedDateValue: tripDays[selectedDateIndex]?.toISOString().split('T')[0], // Actual date string
+            fromTripPlanning: true,
+            showAddToItinerary: true,
+            source: 'trip-planning'
+          } 
+        });
+        break;
+      default:
+        // Fallback to modal for other types
+        setSelectedDetailItem({ ...item, type });
+        setShowDetailModal(true);
+    }
   };
 
   const handleAddToDay = (item) => {
-    // TODO: Implement add to day functionality
-    setToastMessage(${item.name} added to Day ${selectedDateIndex + 1});
+    // Determine the type and prepare the booking object
+    let type;
+    let bookingData = {
+      ...item,
+      selectedDate: tripDays[selectedDateIndex]?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+      quantity: 1,
+      addedFromPlanning: true
+    };
+
+    // Determine type based on current active tab or item properties
+    if (activeTab === 'places') {
+      type = 'destinations';
+    } else if (activeTab === 'accommodations') {
+      type = 'accommodations';
+    } else if (activeTab === 'guides') {
+      type = 'guides';
+    } else if (activeTab === 'transportation') {
+      type = 'transportation';
+    } else {
+      // Fallback: try to determine from item properties
+      if (item.type) {
+        type = item.type === 'guide' ? 'guides' : item.type + 's';
+      } else {
+        type = 'destinations'; // default
+      }
+    }
+
+    // Add to trip planning
+    addToTripPlanning(bookingData, type);
+    
+    // Show success message
+    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
     setShowToast(true);
     setHasUnsavedProgress(true);
   };
@@ -914,8 +1000,10 @@ const TripPlanning = () => {
           </div>
         )}
       </Modal>
+
+
     </div>
   );
 };
 
-export default TripPlanning;
+export default TripPlanning;

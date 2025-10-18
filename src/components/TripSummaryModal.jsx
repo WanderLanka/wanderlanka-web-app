@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, MapPin, Calendar, Users, Plane, Hotel, Car, UserCheck, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from './common';
 import { useTripPlanning } from '../hooks/useTripPlanning';
 
 const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
+  const navigate = useNavigate();
   const { planningBookings, removeFromTripPlanning, getTotalAmount, clearTripPlanning } = useTripPlanning();
   const [collapsedDays, setCollapsedDays] = useState(new Set());
 
@@ -146,16 +148,30 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                 // Distribute bookings to their respective days
                 Object.entries(planningBookings).forEach(([type, bookings]) => {
                   bookings.forEach(booking => {
-                    const day = booking.selectedDay || 1;
-                    if (dailyBookings[day]) {
-                      if (type === 'destinations') {
-                        dailyBookings[day].destinations.push(booking);
-                      } else if (type === 'accommodations') {
-                        dailyBookings[day].accommodations.push(booking);
-                      } else if (type === 'transportation') {
-                        dailyBookings[day].transportation.push(booking);
-                      } else if (type === 'guides') {
-                        dailyBookings[day].guides.push(booking);
+                    // Find the matching day based on selectedDate
+                    let matchingDayNum = 1; // default to day 1
+                    
+                    if (booking.selectedDate) {
+                      try {
+                        // Find which day this booking belongs to by comparing dates
+                        const bookingDate = new Date(booking.selectedDate).toISOString().split('T')[0];
+                        tripDays.forEach((tripDay, index) => {
+                          const tripDayStr = tripDay.toISOString().split('T')[0];
+                          if (bookingDate === tripDayStr) {
+                            matchingDayNum = index + 1;
+                          }
+                        });
+                      } catch (error) {
+                        console.warn('Error parsing booking date:', booking.selectedDate, error);
+                        // Keep default matchingDayNum = 1
+                      }
+                    }
+                    
+                    // Add booking to the appropriate day and type
+                    if (dailyBookings[matchingDayNum]) {
+                      const targetArray = dailyBookings[matchingDayNum][type] || dailyBookings[matchingDayNum]['destinations'];
+                      if (targetArray) {
+                        targetArray.push(booking);
                       }
                     }
                   });
@@ -381,8 +397,14 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                 variant="primary"
                 className="flex-1"
                 onClick={() => {
-                  // TODO: Implement proceed to booking functionality
-                  console.log('Proceeding to booking...', planningBookings);
+                  // Navigate to booking payment page
+                  localStorage.setItem('currentTripData', JSON.stringify(tripData));
+                  navigate('/user/booking-payment', { 
+                    state: { 
+                      tripData: tripData,
+                      planningBookings: planningBookings 
+                    } 
+                  });
                   onClose();
                 }}
               >

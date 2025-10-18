@@ -45,6 +45,23 @@ const AccommodationDetails = () => {
     // Check if user came from trip planning page
     const isFromTripPlanning = location.state?.fromTripPlanning === true;
 
+    // Set default dates when coming from trip planning
+    useEffect(() => {
+        if (isFromTripPlanning && location.state?.selectedDateValue) {
+            const selectedDate = location.state.selectedDateValue; // This is the specific date user clicked
+            // Calculate check-out date (next day for single day booking)
+            const checkInDate = new Date(selectedDate);
+            const checkOutDate = new Date(checkInDate);
+            checkOutDate.setDate(checkOutDate.getDate() + 1);
+            
+            setBookingData(prev => ({
+                ...prev,
+                checkIn: selectedDate,
+                checkOut: checkOutDate.toISOString().split('T')[0]
+            }));
+        }
+    }, [isFromTripPlanning, location.state]);
+
     // Fetch accommodation data
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -145,7 +162,8 @@ const AccommodationDetails = () => {
                 nights: getNights(),
                 pricePerNight: accommodation?.price || 0,
                 totalPrice: calculateTotal(),
-                image: accommodation?.images?.[0] || '/placeholder-hotel.jpg'
+                image: accommodation?.images?.[0] || '/placeholder-hotel.jpg',
+                selectedDate: location.state?.selectedDateValue || bookingData.checkIn // Store the specific selected date
             };
             
             addToTripPlanning(planningBooking, 'accommodations');
