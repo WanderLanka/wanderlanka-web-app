@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { 
   AccommodationDashboard,
   AccommodationPayments,
+  AccommodationProfile,
   HotelsPage,
   Rooms,
   Bookings,
@@ -29,6 +30,9 @@ const AccommodationRoutes = () => {
       
       {/* Payments Management */}
       <Route path="payments" element={<AccommodationPayments />} />
+
+      {/* Profile */}
+      <Route path="profile" element={<AccommodationProfile />} />
     </Routes>
   );
 };

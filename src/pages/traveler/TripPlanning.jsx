@@ -83,24 +83,24 @@ const TripPlanning = () => {
 
   // Helper function to render activity cards
   const renderActivityCard = (item, type) => (
-    <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+    <div key={item.id} className="overflow-hidden transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md">
       <div className="relative h-32">
         <img 
           src={item.image} 
           alt={item.name}
-          className="w-full h-full object-cover"
+          className="object-cover w-full h-full"
         />
         <div className="absolute top-2 right-2">
-          <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
-            <Star className="h-3 w-3 text-yellow-500 mr-1" />
+          <div className="flex items-center px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm">
+            <Star className="w-3 h-3 mr-1 text-yellow-500" />
             <span className="text-xs font-medium">{item.rating}</span>
           </div>
         </div>
       </div>
       
       <div className="p-3">
-        <h5 className="font-medium text-gray-900 text-sm mb-1">{item.name}</h5>
-        <p className="text-xs text-gray-600 mb-2">
+        <h5 className="mb-1 text-sm font-medium text-gray-900">{item.name}</h5>
+        <p className="mb-2 text-xs text-gray-600">
           {type === 'places' && item.location}
           {type === 'accommodations' && item.location}
           {type === 'transport' && item.type}
@@ -150,7 +150,7 @@ const TripPlanning = () => {
 
   const handleAddToDay = (item) => {
     // TODO: Implement add to day functionality
-    setToastMessage(${item.name} added to Day ${selectedDateIndex + 1});
+    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
     setShowToast(true);
     setHasUnsavedProgress(true);
   };
@@ -375,17 +375,17 @@ const TripPlanning = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="flex min-h-screen bg-gray-50">
       {/* Left Panel - Trip Planning */}
       <div className={`bg-white shadow-lg overflow-y-auto transition-all duration-300 ${
         isPanelExpanded ? 'w-full' : 'w-1/2'
       }`}>
         {/* Header */}
-        <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 text-white p-6">
+        <div className="p-6 text-white bg-gradient-to-br from-gray-900 via-gray-800 to-green-900">
           <div className="flex items-center justify-between mb-4">
             <button 
               onClick={() => handleSafeNavigation(() => navigate(-1))}
-              className="flex items-center text-white/90 hover:text-white transition-colors"
+              className="flex items-center transition-colors text-white/90 hover:text-white"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Dashboard
@@ -394,7 +394,7 @@ const TripPlanning = () => {
             {/* Panel Toggle Button */}
             <button
               onClick={() => setIsPanelExpanded(!isPanelExpanded)}
-              className="flex items-center text-white/90 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
+              className="flex items-center p-2 transition-colors rounded-lg text-white/90 hover:text-white hover:bg-white/10"
               title={isPanelExpanded ? 'Show Map' : 'Hide Map'}
             >
               {isPanelExpanded ? (
@@ -412,11 +412,11 @@ const TripPlanning = () => {
           </div>
           
           <div className="mb-4">
-            <h1 className="text-2xl font-bold mb-4">Plan Your Trip</h1>
+            <h1 className="mb-4 text-2xl font-bold">Plan Your Trip</h1>
             {/* Date Chips */}
             {tripDays.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-white/90 mb-3">Select Date to Plan</h3>
+                <h3 className="mb-3 text-sm font-medium text-white/90">Select Date to Plan</h3>
                 <div className="flex flex-wrap gap-2">
                   {tripDays.map((day, dayIndex) => {
                     const dayNumber = dayIndex + 1;
@@ -459,8 +459,8 @@ const TripPlanning = () => {
             )}
 
             {/* Service Selection Tabs */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <h3 className="text-sm font-medium text-white/90 mb-3">Add Services to Your Trip</h3>
+            <div className="p-4 rounded-lg bg-white/10 backdrop-blur-sm">
+              <h3 className="mb-3 text-sm font-medium text-white/90">Add Services to Your Trip</h3>
               
               {/* Tab Navigation */}
               <div className="flex flex-wrap gap-2 mb-4">
@@ -472,7 +472,7 @@ const TripPlanning = () => {
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  <MapPin className="h-4 w-4 inline mr-2" />
+                  <MapPin className="inline w-4 h-4 mr-2" />
                   Places
                 </button>
                 
@@ -484,9 +484,9 @@ const TripPlanning = () => {
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  <Home className="h-4 w-4 inline mr-2" />
+                  <Home className="inline w-4 h-4 mr-2" />
                   Accommodations
-                  {loadingAccommodations && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
+                  {loadingAccommodations && <div className="inline-block w-3 h-3 ml-2 border border-white rounded-full border-t-transparent animate-spin"></div>}
                 </button>
                 
                 <button
@@ -497,9 +497,9 @@ const TripPlanning = () => {
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  <Car className="h-4 w-4 inline mr-2" />
+                  <Car className="inline w-4 h-4 mr-2" />
                   Transportation
-                  {loadingTransportation && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
+                  {loadingTransportation && <div className="inline-block w-3 h-3 ml-2 border border-white rounded-full border-t-transparent animate-spin"></div>}
                 </button>
                 
                 <button
@@ -510,9 +510,9 @@ const TripPlanning = () => {
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  <UserCheck className="h-4 w-4 inline mr-2" />
+                  <UserCheck className="inline w-4 h-4 mr-2" />
                   Tour Guides
-                  {loadingTourGuides && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
+                  {loadingTourGuides && <div className="inline-block w-3 h-3 ml-2 border border-white rounded-full border-t-transparent animate-spin"></div>}
                 </button>
               </div>
 
@@ -522,16 +522,16 @@ const TripPlanning = () => {
         {/* Content Area - Service Selection */}
         <div className="p-6">
           {/* Service Content Based on Active Tab */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
             <div className="p-6">
               {/* Tab Content */}
               {activeTab === 'places' && (
                 <div>
                   <div className="flex items-center mb-6">
-                    <MapPin className="h-6 w-6 text-emerald-600 mr-3" />
+                    <MapPin className="w-6 h-6 mr-3 text-emerald-600" />
                     <h2 className="text-xl font-bold text-gray-900">Places to Visit</h2>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                     {mockPlaces.map(place => (
                       <div key={place.id}>
                         {renderActivityCard(place, 'places')}
@@ -544,34 +544,34 @@ const TripPlanning = () => {
               {activeTab === 'accommodations' && (
                 <div>
                   <div className="flex items-center mb-6">
-                    <Home className="h-6 w-6 text-blue-600 mr-3" />
+                    <Home className="w-6 h-6 mr-3 text-blue-600" />
                     <h2 className="text-xl font-bold text-gray-900">Accommodations</h2>
                   </div>
                   {loadingAccommodations ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-emerald-600"></div>
                       <span className="ml-3 text-gray-600">Loading accommodations...</span>
                     </div>
                   ) : errorAccommodations ? (
                     <div className="flex flex-col items-center justify-center py-12">
-                      <div className="text-red-500 mb-4">
-                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="mb-4 text-red-500">
+                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <p className="text-gray-600 text-center mb-4">{errorAccommodations}</p>
+                      <p className="mb-4 text-center text-gray-600">{errorAccommodations}</p>
                       <button 
                         onClick={() => {
                           setAccommodations([]);
                           fetchAccommodations();
                         }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        className="px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
                       >
                         Try Again
                       </button>
                     </div>
                   ) : accommodations.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                       {accommodations.map(accommodation => (
                         <div key={accommodation.id || accommodation._id}>
                           {renderActivityCard(accommodation, 'accommodations')}
@@ -589,34 +589,34 @@ const TripPlanning = () => {
               {activeTab === 'transportation' && (
                 <div>
                   <div className="flex items-center mb-6">
-                    <Car className="h-6 w-6 text-purple-600 mr-3" />
+                    <Car className="w-6 h-6 mr-3 text-purple-600" />
                     <h2 className="text-xl font-bold text-gray-900">Transportation</h2>
                   </div>
                   {loadingTransportation ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-emerald-600"></div>
                       <span className="ml-3 text-gray-600">Loading transportation...</span>
                     </div>
                   ) : errorTransportation ? (
                     <div className="flex flex-col items-center justify-center py-12">
-                      <div className="text-red-500 mb-4">
-                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="mb-4 text-red-500">
+                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <p className="text-gray-600 text-center mb-4">{errorTransportation}</p>
+                      <p className="mb-4 text-center text-gray-600">{errorTransportation}</p>
                       <button 
                         onClick={() => {
                           setTransportation([]);
                           fetchTransportation();
                         }}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                        className="px-4 py-2 text-white transition-colors bg-purple-600 rounded-lg hover:bg-purple-700"
                       >
                         Try Again
                       </button>
                     </div>
                   ) : transportation.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                       {transportation.map(transport => (
                         <div key={transport.id || transport._id}>
                           {renderActivityCard(transport, 'transport')}
@@ -634,34 +634,34 @@ const TripPlanning = () => {
               {activeTab === 'guides' && (
                 <div>
                   <div className="flex items-center mb-6">
-                    <UserCheck className="h-6 w-6 text-orange-600 mr-3" />
+                    <UserCheck className="w-6 h-6 mr-3 text-orange-600" />
                     <h2 className="text-xl font-bold text-gray-900">Tour Guides</h2>
                   </div>
                   {loadingTourGuides ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-emerald-600"></div>
                       <span className="ml-3 text-gray-600">Loading tour guides...</span>
                     </div>
                   ) : errorTourGuides ? (
                     <div className="flex flex-col items-center justify-center py-12">
-                      <div className="text-red-500 mb-4">
-                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="mb-4 text-red-500">
+                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <p className="text-gray-600 text-center mb-4">{errorTourGuides}</p>
+                      <p className="mb-4 text-center text-gray-600">{errorTourGuides}</p>
                       <button 
                         onClick={() => {
                           setTourGuides([]);
                           fetchTourGuides();
                         }}
-                        className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                        className="px-4 py-2 text-white transition-colors bg-orange-600 rounded-lg hover:bg-orange-700"
                       >
                         Try Again
                       </button>
                     </div>
                   ) : tourGuides.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                       {tourGuides.map(guide => (
                         <div key={guide.id || guide._id}>
                           {renderActivityCard(guide, 'guides')}
@@ -683,9 +683,9 @@ const TripPlanning = () => {
 
       {/* Right Panel - Map */}
       {!isPanelExpanded && (
-        <div className="w-1/2 relative">
+        <div className="relative w-1/2">
           {/* Google Maps Embedded Frame */}
-          <div className="h-full w-full fixed right-0 top-0" style={{ width: '50%' }}>
+          <div className="fixed top-0 right-0 w-full h-full" style={{ width: '50%' }}>
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2024842.5462878644!2d79.6956!3d7.8731!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae2593cf65a1e9d%3A0xe13da4b400e2d38c!2sSri%20Lanka!5e0!3m2!1sen!2sus!4v1697461234567!5m2!1sen!2sus"
               width="100%"
@@ -703,14 +703,14 @@ const TripPlanning = () => {
 
       {/* Floating Trip Summary Button */}
       {getTotalItemsCount() > 0 && (
-        <div className="fixed bottom-6 right-6 z-40">
+        <div className="fixed z-40 bottom-6 right-6">
           <Button
             variant="primary"
             size="lg"
             onClick={() => setShowSummaryModal(true)}
-            className="shadow-lg hover:shadow-xl transition-all duration-300 flex items-center bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 font-semibold hover:scale-105"
+            className="flex items-center font-semibold text-white transition-all duration-300 shadow-lg hover:shadow-xl bg-emerald-600 hover:bg-emerald-700 border-emerald-600 hover:scale-105"
           >
-            <span className="bg-white text-emerald-600 rounded-full px-2 py-1 text-sm font-bold mr-2 animate-pulse">
+            <span className="px-2 py-1 mr-2 text-sm font-bold bg-white rounded-full text-emerald-600 animate-pulse">
               {getTotalItemsCount()}
             </span>
             View Summary
@@ -720,12 +720,12 @@ const TripPlanning = () => {
 
       {/* Floating Map Toggle Button (when panel is expanded) */}
       {isPanelExpanded && (
-        <div className="fixed bottom-6 left-6 z-40">
+        <div className="fixed z-40 bottom-6 left-6">
           <Button
             variant="secondary"
             size="lg"
             onClick={() => setIsPanelExpanded(false)}
-            className="shadow-lg hover:shadow-xl transition-shadow flex items-center bg-white text-gray-700 border border-gray-300"
+            className="flex items-center text-gray-700 transition-shadow bg-white border border-gray-300 shadow-lg hover:shadow-xl"
           >
             <Minimize2 className="w-5 h-5 mr-2" />
             Show Map
@@ -764,15 +764,15 @@ const TripPlanning = () => {
         {selectedDetailItem && (
           <div className="p-6 max-h-[70vh] overflow-y-auto">
             {/* Image */}
-            <div className="relative h-64 mb-6 rounded-lg overflow-hidden">
+            <div className="relative h-64 mb-6 overflow-hidden rounded-lg">
               <img 
                 src={selectedDetailItem.image} 
                 alt={selectedDetailItem.name}
-                className="w-full h-full object-cover"
+                className="object-cover w-full h-full"
               />
               <div className="absolute top-4 right-4">
-                <div className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-full flex items-center">
-                  <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                <div className="flex items-center px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm">
+                  <Star className="w-4 h-4 mr-1 text-yellow-500" />
                   <span className="text-sm font-medium">{selectedDetailItem.rating}</span>
                 </div>
               </div>
@@ -781,12 +781,12 @@ const TripPlanning = () => {
             {/* Content */}
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedDetailItem.name}</h3>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">{selectedDetailItem.name}</h3>
                 <p className="text-gray-600">{selectedDetailItem.description}</p>
               </div>
 
               {/* Details based on type */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {selectedDetailItem.type === 'places' && (
                   <>
                     <div>
@@ -826,7 +826,7 @@ const TripPlanning = () => {
                       <span className="text-sm font-medium text-gray-500">Amenities:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {selectedDetailItem.amenities?.map((amenity, index) => (
-                          <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                          <span key={index} className="px-2 py-1 text-xs text-blue-700 bg-blue-100 rounded-full">
                             {amenity}
                           </span>
                         ))}
@@ -853,7 +853,7 @@ const TripPlanning = () => {
                       <span className="text-sm font-medium text-gray-500">Features:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {selectedDetailItem.features?.map((feature, index) => (
-                          <span key={index} className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                          <span key={index} className="px-2 py-1 text-xs text-purple-700 bg-purple-100 rounded-full">
                             {feature}
                           </span>
                         ))}
@@ -880,7 +880,7 @@ const TripPlanning = () => {
                       <span className="text-sm font-medium text-gray-500">Languages:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {selectedDetailItem.languages?.map((language, index) => (
-                          <span key={index} className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">
+                          <span key={index} className="px-2 py-1 text-xs text-orange-700 bg-orange-100 rounded-full">
                             {language}
                           </span>
                         ))}
@@ -918,4 +918,4 @@ const TripPlanning = () => {
   );
 };
 
-export default TripPlanning;
+export default TripPlanning;

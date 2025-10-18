@@ -1,0 +1,98 @@
+/* Accommodation Dashboard supplemental styles */
+
+/* Overview card variants (used alongside Tailwind utility classes) */
+.overview-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb; /* slate-200 */
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+.overview-card:hover {
+  box-shadow: 0 6px 20px rgba(2,6,23,0.1); /* slate-950 */
+  transform: translateY(-2px);
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.card-icon--success { background: #ecfdf5; color: #065f46; }
+.card-icon--warning { background: #fffbeb; color: #92400e; }
+.card-icon--info    { background: #eff6ff; color: #1e40af; }
+
+.card-content { display: grid; gap: 6px; }
+.card-title { font-size: 1.125rem; font-weight: 600; color: #0f172a; }
+.card-description { color: #475569; line-height: 1.6; }
+
+/* Feature grid */
+.features-section { padding: 4rem 1.5rem; }
+.section-header { text-align: center; margin-bottom: 2.5rem; }
+.section-title { font-size: 1.875rem; font-weight: 700; color: #0f172a; }
+.section-subtitle { color: #475569; }
+
+.features-grid {
+  max-width: 80rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .features-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .features-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.feature-item {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.feature-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.feature-title { font-weight: 600; color: #0f172a; }
+.feature-badge { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 12px; padding: 2px 8px; border-radius: 9999px; }
+.feature-description { color: #475569; line-height: 1.6; }
+
+/* Benefits section */
+.benefits-section { padding: 4rem 1.5rem; background: linear-gradient(180deg, #f8fafc, #ffffff); }
+.benefits-content { max-width: 80rem; margin: 0 auto; display: grid; gap: 2rem; grid-template-columns: 1fr; }
+@media (min-width: 1024px) { .benefits-content { grid-template-columns: 1.5fr 1fr; } }
+.benefits-title { font-size: 1.75rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; }
+.benefits-list { display: grid; gap: 0.75rem; }
+.benefit-item { display: grid; grid-template-columns: 24px 1fr; gap: 0.75rem; align-items: start; }
+.benefit-icon { width: 24px; height: 24px; background: #ecfeff; color: #155e75; border: 1px solid #a5f3fc; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+.benefit-text { color: #334155; }
+
+.benefits-visual { display: grid; gap: 1rem; }
+.visual-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; }
+.visual-title { font-weight: 600; color: #0f172a; margin-bottom: 6px; }
+.visual-metric { display: flex; align-items: baseline; gap: 8px; }
+.metric-value { font-size: 1.5rem; font-weight: 800; color: #1d4ed8; }
+.metric-label { color: #64748b; font-size: 0.875rem; }
+
+/* Support section */
+.support-section { padding: 4rem 1.5rem; background: #f8fafc; }
+.support-content { max-width: 80rem; margin: 0 auto; }
+.support-title { font-size: 1.75rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+.support-subtitle { color: #475569; margin-bottom: 1.5rem; }
+.support-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 768px) { .support-grid { grid-template-columns: repeat(3, 1fr); } }
+.support-item { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
+.support-item-title { font-weight: 600; color: #0f172a; margin-bottom: 6px; }
+.support-item-description { color: #475569; }
+
+

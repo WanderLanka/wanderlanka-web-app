@@ -9,6 +9,7 @@ import {
   VehiclesPage,
   AccommodationDashboard,
   AccommodationPayments,
+  AccommodationProfile,
   HotelsPage,
   Rooms,
   Bookings,
@@ -66,6 +67,7 @@ const AppRoutes = () => {
           <Route path="hotels/:hotelid" element={<Rooms />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="payments" element={<AccommodationPayments />} />
+          <Route path="profile" element={<AccommodationProfile />} />
         </Route>
       </Route>
 
