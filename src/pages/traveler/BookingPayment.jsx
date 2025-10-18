@@ -23,18 +23,26 @@ const BookingPayment = () => {
   const location = useLocation();
   const { planningBookings, getTotalAmount, clearTripPlanning } = useTripPlanning();
   
-  // Get trip data from navigation state or localStorage
+  // Get trip data from navigation state, localStorage, or direct booking
   const getTripData = () => {
     try {
+      // First check for direct booking data
+      const directBooking = localStorage.getItem('directBookingData');
+      if (directBooking) {
+        return { directBooking: JSON.parse(directBooking) };
+      }
+      
+      // Then check for trip planning data
       const stored = localStorage.getItem('currentTripData');
       return stored ? JSON.parse(stored) : {};
     } catch (error) {
-      console.warn('Error parsing trip data from localStorage:', error);
+      console.warn('Error parsing booking data from localStorage:', error);
       return {};
     }
   };
   
   const tripData = location.state?.tripData || getTripData();
+  // const isDirectBooking = tripData.directBooking ? true : false;
   
   // Payment form state
   const [paymentData, setPaymentData] = useState({
@@ -58,6 +66,22 @@ const BookingPayment = () => {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  // Calculate total amount for both direct booking and trip planning
+  // const getCalculatedTotalAmount = () => {
+  //   if (isDirectBooking && tripData.directBooking) {
+  //     return tripData.directBooking.reduce((total, booking) => total + booking.totalPrice, 0);
+  //   }
+  //   return getTotalAmount();
+  // };
+
+  // // Get bookings data for display
+  // const getBookingsData = () => {
+  //   if (isDirectBooking && tripData.directBooking) {
+  //     return tripData.directBooking;
+  //   }
+  //   return planningBookings;
+  // };
 
   // Calculate trip days for summary
   const tripDays = [];

@@ -5,9 +5,12 @@ import { toast } from 'react-toastify';
 import Input from "../../components/common/Input";
 import { validateLogin, validateSignup } from "../../utils/validation";
 import { authAPI } from "../../services/api";
+import { useLocation } from "react-router-dom";
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const location = useLocation();
+  const initialMode = location.state?.mode === "signup" ? false : true; // login = true, signup = false
+  const [isLogin, setIsLogin] = useState(initialMode);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
@@ -77,20 +80,16 @@ const Auth = () => {
     e.stopPropagation();
 
     // Prevent multiple submissions
-    if (loading) {
-      e.preventDefault();
-      return false;
-    }
+    if (loading) return;
 
     setError("");
     let validationError = isLogin
       ? validateLogin(formData)
       : validateSignup(formData);
     if (validationError) {
-      setError(validationError);
-      e.preventDefault();
-      return false;
-    }
+    setError(validationError);
+    return; 
+  }
 
     setLoading(true);
     
@@ -184,10 +183,6 @@ const Auth = () => {
         });
       }
     } catch (error) {
-      // Prevent any potential page reload
-      e.preventDefault();
-      e.stopPropagation();
-      
       console.error('Auth error:', error);
       
       // Extract error message from response
@@ -218,7 +213,6 @@ const Auth = () => {
       
       setError(errorMessage);
       toast.error(errorMessage);
-      return false;
     } finally {
       // Clear the timeout and ensure loading is always set to false
       clearTimeout(timeoutId);
@@ -430,6 +424,7 @@ const Auth = () => {
               {isLogin ? "New to WanderLanka?" : "Already have an account?"}
             </p>
             <button
+              type="button" 
               onClick={toggleMode}
               className="mt-2 text-emerald-600 hover:text-emerald-700 font-semibold text-lg transition-colors duration-200 underline-offset-4 hover:underline"
             >

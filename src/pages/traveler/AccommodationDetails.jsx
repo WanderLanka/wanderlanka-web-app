@@ -169,8 +169,28 @@ const AccommodationDetails = () => {
             addToTripPlanning(planningBooking, 'accommodations');
             alert('Added to your trip planning! Continue adding more services or review your summary.');
         } else {
-            // Open payment modal for direct booking
-            setShowPaymentModal(true);
+            // Navigate to payment page for direct booking
+            const directBooking = {
+                id: `acc_${accommodation._id || accommodation.id}_${Date.now()}`,
+                serviceId: accommodation._id || accommodation.id,
+                name: accommodation.name,
+                provider: accommodation.userId || 'Property Owner',
+                location: accommodation.location,
+                type: 'accommodation',
+                checkIn: bookingData.checkIn,
+                checkOut: bookingData.checkOut,
+                adults: bookingData.adults,
+                children: bookingData.children,
+                rooms: bookingData.rooms,
+                nights: getNights(),
+                pricePerNight: accommodation?.price || 0,
+                totalPrice: calculateTotal(),
+                image: accommodation?.images?.[0] || '/placeholder-hotel.jpg'
+            };
+            
+            // Store booking data in localStorage for payment page
+            localStorage.setItem('directBookingData', JSON.stringify([directBooking]));
+            navigate('/user/individual-booking-payment');
         }
     };
 
