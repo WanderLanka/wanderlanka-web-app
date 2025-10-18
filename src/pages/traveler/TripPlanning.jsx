@@ -15,9 +15,11 @@ import {
   Grid,
   List,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
-import { Button, Card } from '../../components/common';
+import { Button, Card, Modal } from '../../components/common';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import NavigationWarningModal from '../../components/NavigationWarningModal';
 import Toast from '../../components/Toast';
@@ -26,20 +28,204 @@ import TripSummaryModal from '../../components/TripSummaryModal';
 const TripPlanning = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { getTotalItemsCount, addToTripPlanning } = useTripPlanning();
+  const { getTotalItemsCount } = useTripPlanning();
   
-  const [viewMode, setViewMode] = useState('grid');
-  const [selectedCategory, setSelectedCategory] = useState('destinations');
-  const [selectedDay, setSelectedDay] = useState(1);
-  const [selectedDate, setSelectedDate] = useState(null);
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const [hasUnsavedProgress, setHasUnsavedProgress] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [selectedDateIndex, setSelectedDateIndex] = useState(0);
+  const [selectedDetailItem, setSelectedDetailItem] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+
+  // Mock data for available activities
+  const mockPlaces = [
+    {
+      id: 1,
+      name: "Sigiriya Rock Fortress",
+      location: "Sigiriya",
+      type: "Historical Site",
+      rating: 4.8,
+      image: "https://images.unsplash.com/photo-1580910527739-556eb89f9d65?q=80&w=1074&auto=format&fit=crop",
+      price: "LKR 2,500",
+      duration: "2-3 hours",
+      description: "Ancient rock fortress and palace ruins with stunning views from the top of the rock."
+    },
+    {
+      id: 2,
+      name: "Temple of the Tooth",
+      location: "Kandy",
+      type: "Religious Site",
+      rating: 4.7,
+      image: "https://images.unsplash.com/photo-1642498041677-d26b9dfc5e61?q=80&w=688&auto=format&fit=crop",
+      price: "LKR 1,500",
+      duration: "1-2 hours",
+      description: "Sacred Buddhist temple housing the tooth relic of Buddha, a UNESCO World Heritage site."
+    },
+    {
+      id: 3,
+      name: "Ella Nine Arch Bridge",
+      location: "Ella",
+      type: "Scenic Spot",
+      rating: 4.5,
+      image: "https://images.unsplash.com/photo-1586500036706-41963de24d8b?q=80&w=1172&auto=format&fit=crop",
+      price: "Free",
+      duration: "1 hour",
+      description: "Iconic railway bridge in the hill country offering spectacular views."
+    }
+  ];
+
+  const mockAccommodations = [
+    {
+      id: 1,
+      name: "Heritance Kandalama",
+      location: "Dambulla",
+      type: "Luxury Resort",
+      rating: 4.9,
+      image: "https://images.unsplash.com/photo-1566650576880-6740b03eaad1?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 35,000 / night",
+      amenities: ["Pool", "Spa", "Restaurant", "WiFi"],
+      description: "Eco-luxury resort designed by Geoffrey Bawa, blending with nature."
+    },
+    {
+      id: 2,
+      name: "Cinnamon Lodge Habarana",
+      location: "Habarana",
+      type: "Nature Resort",
+      rating: 4.7,
+      image: "https://images.unsplash.com/photo-1525849306000-cc26ceb5c1d7?q=80&w=735&auto=format&fit=crop",
+      price: "LKR 28,000 / night",
+      amenities: ["Pool", "Restaurant", "Wildlife Tours", "WiFi"],
+      description: "Rustic luxury in the heart of nature with wildlife experiences."
+    }
+  ];
+
+  const mockTransport = [
+    {
+      id: 1,
+      name: "Air-Conditioned Car",
+      type: "Private Vehicle",
+      capacity: "4 passengers",
+      rating: 4.8,
+      image: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 8,000 / day",
+      features: ["AC", "Driver", "Fuel Included"],
+      description: "Comfortable private car with experienced driver for sightseeing."
+    },
+    {
+      id: 2,
+      name: "Tuk Tuk Adventure",
+      type: "Three Wheeler",
+      capacity: "3 passengers",
+      rating: 4.6,
+      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 3,500 / day",
+      features: ["Local Experience", "Driver", "Flexible Route"],
+      description: "Authentic local transport experience with friendly drivers."
+    }
+  ];
+
+  const mockGuides = [
+    {
+      id: 1,
+      name: "Rohan Silva",
+      specialization: "Cultural Guide",
+      experience: "8 years",
+      rating: 4.9,
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=687&auto=format&fit=crop",
+      price: "LKR 12,000 / day",
+      languages: ["English", "Sinhala", "Tamil"],
+      description: "Expert in cultural sites, traditional crafts, and local history."
+    },
+    {
+      id: 2,
+      name: "Anura Perera",
+      specialization: "Wildlife Guide",
+      experience: "10 years",
+      rating: 4.8,
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=1170&auto=format&fit=crop",
+      price: "LKR 15,000 / day",
+      languages: ["English", "Sinhala"],
+      description: "Specialist in wildlife photography and safari tours."
+    }
+  ];
+
+  // Helper function to render activity cards
+  const renderActivityCard = (item, type) => (
+    <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+      <div className="relative h-32">
+        <img 
+          src={item.image} 
+          alt={item.name}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute top-2 right-2">
+          <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
+            <Star className="h-3 w-3 text-yellow-500 mr-1" />
+            <span className="text-xs font-medium">{item.rating}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="p-3">
+        <h5 className="font-medium text-gray-900 text-sm mb-1">{item.name}</h5>
+        <p className="text-xs text-gray-600 mb-2">
+          {type === 'places' && item.location}
+          {type === 'accommodations' && item.location}
+          {type === 'transport' && item.type}
+          {type === 'guides' && item.specialization}
+        </p>
+        
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold text-emerald-600">{item.price}</span>
+          {type === 'places' && (
+            <span className="text-xs text-gray-500">{item.duration}</span>
+          )}
+          {type === 'transport' && (
+            <span className="text-xs text-gray-500">{item.capacity}</span>
+          )}
+          {type === 'guides' && (
+            <span className="text-xs text-gray-500">{item.experience}</span>
+          )}
+        </div>
+        
+        <div className="flex gap-2">
+          <Button 
+            size="xs" 
+            variant="outline" 
+            className="flex-1 text-xs"
+            onClick={() => handleViewDetails(item, type)}
+          >
+            View Details
+          </Button>
+          <Button 
+            size="xs" 
+            variant="primary" 
+            className="flex-1 text-xs"
+            onClick={() => handleAddToDay(item)}
+          >
+            Add to Day
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Handler functions
+  const handleViewDetails = (item, type) => {
+    setSelectedDetailItem({ ...item, type });
+    setShowDetailModal(true);
+  };
+
+  const handleAddToDay = (item) => {
+    // TODO: Implement add to day functionality
+    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
+    setShowToast(true);
+    setHasUnsavedProgress(true);
+  };
   
   // Get trip data from navigation state or default values
   const defaultDates = useMemo(() => {
@@ -64,6 +250,15 @@ const TripPlanning = () => {
     };
   }, [location.state, defaultDates]);
 
+  // Check if user accessed this page directly without proper form submission
+  useEffect(() => {
+    if (!location.state) {
+      // Show a warning toast that they're using default values
+      setToastMessage('Using default trip settings. Go back to dashboard to customize your trip.');
+      setShowToast(true);
+    }
+  }, [location.state]);
+
   // Calculate trip days with memoization to prevent infinite re-renders
   const tripDays = useMemo(() => {
     if (!tripData.startDate || !tripData.endDate) return [];
@@ -79,12 +274,7 @@ const TripPlanning = () => {
     return days;
   }, [tripData.startDate, tripData.endDate]);
 
-  // Update selected date when selectedDay changes
-  useEffect(() => {
-    if (tripDays.length > 0 && selectedDay <= tripDays.length) {
-      setSelectedDate(tripDays[selectedDay - 1]);
-    }
-  }, [selectedDay, tripDays]);
+
 
   // Track user activity to detect unsaved progress
   useEffect(() => {
@@ -144,419 +334,65 @@ const TripPlanning = () => {
     setPendingNavigation(null);
   };
 
-  const showSuccessToast = (message) => {
-    setToastMessage(message);
-    setShowToast(true);
-  };
+
 
   const hideToast = () => {
     setShowToast(false);
     setToastMessage('');
   };
 
-  const scrollDestinations = (direction) => {
-    const container = document.getElementById('destinations-container');
-    if (container) {
-      const scrollAmount = 200;
-      const newScrollLeft = direction === 'left' 
-        ? container.scrollLeft - scrollAmount 
-        : container.scrollLeft + scrollAmount;
-      
-      container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
-      
-      // Update scroll button states
-      setTimeout(() => {
-        setCanScrollLeft(container.scrollLeft > 0);
-        setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth);
-      }, 300);
-    }
-  };
 
-  const handleDestinationScroll = () => {
-    const container = document.getElementById('destinations-container');
-    if (container) {
-      setCanScrollLeft(container.scrollLeft > 0);
-      setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth);
-    }
-  };
 
-  // Initialize scroll state for destinations
-  useEffect(() => {
-    const container = document.getElementById('destinations-container');
-    if (container && selectedCategory === 'destinations') {
-      const checkScrollability = () => {
-        setCanScrollLeft(container.scrollLeft > 0);
-        setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth);
-      };
-      
-      checkScrollability();
-      container.addEventListener('scroll', handleDestinationScroll);
-      
-      return () => {
-        container.removeEventListener('scroll', handleDestinationScroll);
-      };
-    }
-  }, [selectedCategory]);
 
-  const handleNavigateToDetails = (item) => {
-    let path = '';
-    
-    switch (selectedCategory) {
-      case 'accommodations':
-        path = `/user/accommodations/${item.id}`;
-        break;
-      case 'transport':
-        path = `/user/transportation/${item.id}`;
-        break;
-      case 'guides':
-        path = `/user/tour-guides/${item.id}`;
-        break;
-      default:
-        return;
-    }
-    
-    // Navigate with state indicating this came from trip planning
-    // This is part of the planning workflow, so navigate directly
-    navigate(path, { 
-      state: { 
-        fromTripPlanning: true, 
-        selectedDay,
-        selectedDate: selectedDate ? selectedDate.toISOString() : null,
-        tripDates: {
-          start: tripData.startDate,
-          end: tripData.endDate
-        }
-      } 
-    });
-  };
 
-  const handleAddToTrip = (item) => {
-    // Map category to service type for context
-    const serviceTypeMap = {
-      'accommodations': 'accommodations',
-      'transport': 'transportation', 
-      'guides': 'guides',
-      'destinations': 'destinations'
-    };
 
-    const serviceType = serviceTypeMap[selectedCategory];
-    
-    if (serviceType && serviceType !== 'destinations') {
-      // Add to trip planning context with date information
-      const bookingData = {
-        ...item,
-        selectedDay,
-        selectedDate: selectedDate ? selectedDate.toISOString() : null,
-        tripDate: selectedDate ? selectedDate.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        }) : null
-      };
-      
-      addToTripPlanning(bookingData, serviceType);
-      setHasUnsavedProgress(true);
-      
-      // Show success toast with date information
-      const dateText = selectedDate 
-        ? ` for ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` 
-        : '';
-      showSuccessToast(`${item.name} added to your trip${dateText}!`);
-    } else if (selectedCategory === 'destinations') {
-      // Add destinations to trip planning context with date information
-      const bookingData = {
-        ...item,
-        selectedDay,
-        selectedDate: selectedDate ? selectedDate.toISOString() : null,
-        tripDate: selectedDate ? selectedDate.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        }) : null
-      };
-      
-      addToTripPlanning(bookingData, 'destinations');
-      setHasUnsavedProgress(true);
-      
-      // Show success toast with date information
-      const dateText = selectedDate 
-        ? ` for ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` 
-        : '';
-      showSuccessToast(`${item.name} added to your trip${dateText}!`);
-    }
-  };
-
-  // Mock data for destinations
-  const destinations = [
-    {
-      id: 1,
-      name: "Sigiriya Rock Fortress",
-      location: "Sigiriya",
-      type: "Historical Site",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1580910527739-556eb89f9d65?q=80&w=1074&auto=format&fit=crop",
-      price: "LKR 2,500",
-      duration: "2-3 hours",
-      description: "Ancient rock fortress and palace ruins with stunning views"
-    },
-    {
-      id: 2,
-      name: "Temple of the Tooth",
-      location: "Kandy",
-      type: "Religious Site",
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1642498041677-d26b9dfc5e61?q=80&w=688&auto=format&fit=crop",
-      price: "LKR 1,500",
-      duration: "1-2 hours",
-      description: "Sacred Buddhist temple housing Buddha's tooth relic"
-    },
-    {
-      id: 3,
-      name: "Yala National Park",
-      location: "Yala",
-      type: "Wildlife Safari",
-      rating: 4.6,
-      image: "https://images.unsplash.com/photo-1653151106419-b91300e4be19?q=80&w=1173&auto=format&fit=crop",
-      price: "LKR 8,000",
-      duration: "4-6 hours",
-      description: "Wildlife safari with leopards and elephants"
-    },
-    {
-      id: 4,
-      name: "Ella Nine Arch Bridge",
-      location: "Ella",
-      type: "Scenic Spot",
-      rating: 4.5,
-      image: "https://images.unsplash.com/photo-1586500036706-41963de24d8b?q=80&w=1172&auto=format&fit=crop",
-      price: "Free",
-      duration: "1 hour",
-      description: "Iconic railway bridge in the hill country"
-    },
-    {
-      id: 5,
-      name: "Galle Fort",
-      location: "Galle",
-      type: "Historical Site",
-      rating: 4.6,
-      image: "https://images.unsplash.com/photo-1588237135815-87da467cea3b?q=80&w=1170&auto=format&fit=crop",
-      price: "Free",
-      duration: "2-3 hours",
-      description: "UNESCO World Heritage Dutch colonial fortress"
-    },
-    {
-      id: 6,
-      name: "Adam's Peak",
-      location: "Dalhousie",
-      type: "Adventure",
-      rating: 4.4,
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 500",
-      duration: "6-8 hours",
-      description: "Sacred mountain pilgrimage with sunrise views"
-    }
-  ];
-
-  // Mock data for accommodations
-  const accommodations = [
-    {
-      id: 1,
-      name: "Heritance Kandalama",
-      location: "Dambulla",
-      type: "Luxury Resort",
-      rating: 4.9,
-      image: "https://images.unsplash.com/photo-1566650576880-6740b03eaad1?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 35,000",
-      amenities: ["Pool", "Spa", "Restaurant", "WiFi"],
-      description: "Eco-luxury resort designed by Geoffrey Bawa"
-    },
-    {
-      id: 2,
-      name: "Cinnamon Lodge Habarana",
-      location: "Habarana",
-      type: "Nature Resort",
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1525849306000-cc26ceb5c1d7?q=80&w=735&auto=format&fit=crop",
-      price: "LKR 28,000",
-      amenities: ["Pool", "Restaurant", "Wildlife Tours", "WiFi"],
-      description: "Rustic luxury in the heart of nature"
-    }
-  ];
-
-  // Mock data for guides
-  const guides = [
-    {
-      id: 1,
-      name: "Rohan Silva",
-      location: "Kandy & Central Province",
-      type: "Cultural Guide",
-      rating: 4.9,
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=687&auto=format&fit=crop",
-      price: "LKR 12,000",
-      languages: ["English", "Sinhala", "Tamil"],
-      experience: "8 years",
-      description: "Expert in cultural sites and traditional crafts"
-    },
-    {
-      id: 2,
-      name: "Anura Perera",
-      location: "Yala & Southern Province",
-      type: "Wildlife Guide",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 15,000",
-      languages: ["English", "Sinhala"],
-      experience: "10 years",
-      description: "Specialist in wildlife photography and safari tours"
-    },
-    {
-      id: 3,
-      name: "Chaminda Fernando",
-      location: "Sigiriya & Ancient Cities",
-      type: "Historical Guide",
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=687&auto=format&fit=crop",
-      price: "LKR 10,000",
-      languages: ["English", "Sinhala", "German"],
-      experience: "6 years",
-      description: "Archaeological expert and history enthusiast"
-    }
-  ];
-
-  const categories = [
-    { id: 'destinations', name: 'Destinations', icon: MapPin },
-    { id: 'accommodations', name: 'Accommodations', icon: Hotel },
-    { id: 'transport', name: 'Transport', icon: Car },
-    { id: 'guides', name: 'Guides', icon: Users }
-  ];
-
-  // Mock data for transportation
-  const transportation = [
-    {
-      id: 1,
-      name: "Private Car with Driver",
-      location: "Colombo to Kandy",
-      type: "Private Transfer",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 15,000",
-      duration: "3 hours",
-      description: "Comfortable air-conditioned car with experienced driver"
-    },
-    {
-      id: 2,
-      name: "Train Journey",
-      location: "Colombo to Ella",
-      type: "Scenic Railway",
-      rating: 4.9,
-      image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=1169&auto=format&fit=crop",
-      price: "LKR 2,000",
-      duration: "7 hours",
-      description: "Most scenic train ride in the world through tea plantations"
-    },
-    {
-      id: 3,
-      name: "Airport Transfer",
-      location: "BIA to Colombo Hotels",
-      type: "Airport Transfer",
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1590736969955-71cc94901144?q=80&w=1074&auto=format&fit=crop",
-      price: "LKR 8,000",
-      duration: "1 hour",
-      description: "Reliable airport pickup and drop-off service"
-    }
-  ];
-
-  const getCurrentData = () => {
-    switch (selectedCategory) {
-      case 'destinations':
-        return destinations;
-      case 'accommodations':
-        return accommodations;
-      case 'transport':
-        return transportation;
-      case 'guides':
-        return guides;
-      default:
-        return destinations;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Left Panel - Trip Planning */}
-      <div className="w-1/2 bg-white shadow-lg overflow-y-auto">
+      <div className={`bg-white shadow-lg overflow-y-auto transition-all duration-300 ${
+        isPanelExpanded ? 'w-full' : 'w-1/2'
+      }`}>
         {/* Header */}
         <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 text-white p-6">
-          <button 
-            onClick={() => handleSafeNavigation(() => navigate(-1))}
-            className="flex items-center text-white/90 hover:text-white mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
-          </button>
+          <div className="flex items-center justify-between mb-4">
+            <button 
+              onClick={() => handleSafeNavigation(() => navigate(-1))}
+              className="flex items-center text-white/90 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back to Dashboard
+            </button>
+            
+            {/* Panel Toggle Button */}
+            <button
+              onClick={() => setIsPanelExpanded(!isPanelExpanded)}
+              className="flex items-center text-white/90 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
+              title={isPanelExpanded ? 'Show Map' : 'Hide Map'}
+            >
+              {isPanelExpanded ? (
+                <>
+                  <Minimize2 className="w-5 h-5 mr-2" />
+                  Show Map
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-5 h-5 mr-2" />
+                  Expand Panel
+                </>
+              )}
+            </button>
+          </div>
           
           <div className="mb-4">
-            {/* Title and Date Selection in Same Line */}
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold">Plan Your Trip</h1>
-              
-              {/* Day/Date Dropdown */}
-              {tripDays.length > 0 && (
-                <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <Calendar className="h-4 w-4 text-white/90" />
-                  <div className="flex items-center space-x-2">
-                    <span className="text-white/90 text-sm font-medium">Select Date:</span>
-                    <select
-                      value={selectedDay}
-                      onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-                      className="bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer min-w-[180px] font-medium"
-                    >
-                      {tripDays.map((day, index) => {
-                        const dayNum = index + 1;
-                        const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
-                        const dayDate = day.toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric',
-                          year: day.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-                        });
-                        return (
-                          <option key={index} value={dayNum} className="bg-white text-gray-900">
-                            Day {dayNum}: {dayName}, {dayDate}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-                  {selectedDate && (
-                    <div className="text-white/90 text-xs bg-white/20 px-2 py-1 rounded">
-                      {selectedDate.toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <h1 className="text-2xl font-bold mb-4">Plan Your Trip</h1>
 
             {/* Trip Information */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-white/90">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-white/90">
                 <div className="flex items-center">
                   <MapPin className="w-4 h-4 mr-2 text-green-400" />
                   <span className="font-medium">{tripData.destination || 'Sri Lanka'}</span>
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-2 text-blue-400" />
-                  <span className="font-medium">
-                    {tripData.startDate && tripData.endDate 
-                      ? `${new Date(tripData.startDate).toLocaleDateString()} - ${new Date(tripData.endDate).toLocaleDateString()}`
-                      : 'Select dates'
-                    }
-                  </span>
                 </div>
                 <div className="flex items-center">
                   <Users className="w-4 h-4 mr-2 text-purple-400" />
@@ -567,252 +403,150 @@ const TripPlanning = () => {
               {/* Trip Duration Info */}
               {tripDays.length > 0 && (
                 <div className="mt-2 text-xs text-white/70">
-                  Trip Duration: {tripDays.length} day{tripDays.length !== 1 ? 's' : ''} • 
-                  {selectedDate && ` Currently planning: ${selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`}
+                  Trip Duration: {tripDays.length} day{tripDays.length !== 1 ? 's' : ''}
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Category Tabs */}
-          <div className="flex space-x-1 bg-white/10 rounded-lg p-1">
-            {categories.map((category) => {
-
-              const Icon = category.icon;
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                    selectedCategory === category.id
-                      ? 'bg-white text-gray-800 shadow-sm'
-                      : 'text-white/90 hover:bg-white/10'
-                  }`}
-                >
-                  <Icon className="w-4 h-4 mr-1" />
-                  {category.name}
-                </button>
-              );
-            })}
           </div>
         </div>
 
-        {/* Content Area */}
+        {/* Content Area - Trip Days */}
         <div className="p-6">
-          {/* Controls */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-1" />
-                Filter
-              </Button>
-              <div className="flex border rounded-lg">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-emerald-100 text-emerald-600' : 'text-gray-500'}`}
-                >
-                  <Grid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-emerald-100 text-emerald-600' : 'text-gray-500'}`}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Trip Itinerary</h2>
+
+          {/* Date Selector */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-600 mb-3">Select Date to Plan</h3>
+            <div className="flex flex-wrap gap-2">
+              {tripDays.map((day, dayIndex) => {
+                const dayNumber = dayIndex + 1;
+                const dayName = day.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayDate = day.toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric'
+                });
+
+                return (
+                  <button
+                    key={dayIndex}
+                    onClick={() => setSelectedDateIndex(dayIndex)}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+                      selectedDateIndex === dayIndex
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-emerald-300 hover:bg-emerald-25'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-sm font-semibold">Day {dayNumber}</div>
+                      <div className="text-xs">{dayName}</div>
+                      <div className="text-xs">{dayDate}</div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-            {selectedCategory === 'destinations' ? (
-              <h2 className="text-lg font-bold text-gray-800 mb-2">POPULAR DESTINATIONS</h2>
-            ) : (
-              <span className="text-sm text-gray-500">
-                {getCurrentData().length} {selectedCategory} found
-              </span>
-            )}
           </div>
 
-          {/* Items Grid/List */}
-          {selectedCategory === 'destinations' ? (
-            <div className="relative">
-              {/* Left Arrow */}
-              {canScrollLeft && (
-                <button
-                  onClick={() => scrollDestinations('left')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-600" />
-                </button>
-              )}
-              
-              {/* Right Arrow */}
-              {canScrollRight && (
-                <button
-                  onClick={() => scrollDestinations('right')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white shadow-lg rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-600" />
-                </button>
-              )}
-              
-              <div className="overflow-x-auto" id="destinations-container">
-                <div className="flex gap-3 pb-4">
-                  {getCurrentData().map((item) => (
-                    <div key={item.id} className="flex-shrink-0 w-40 bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                      <div className="h-24 relative">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                        <button className="absolute top-1 right-1 p-1 bg-white/90 rounded-full hover:bg-white transition-colors">
-                          <Heart className="w-3 h-3 text-gray-600" />
-                        </button>
-                      </div>
-                      <div className="p-2">
-                        <div className="mb-2">
-                          <h3 className="font-medium text-gray-900 text-xs leading-tight truncate">{item.name}</h3>
-                          <p className="text-xs text-gray-500 truncate">{item.location}</p>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                            <span className="text-xs font-medium ml-1">{item.rating}</span>
-                          </div>
-                          <button 
-                            onClick={() => handleAddToTrip(item)}
-                            className="w-6 h-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center transition-colors"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+          {/* Selected Day Planning */}
+          {tripDays.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              {/* Day Header */}
+              <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-t-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Day {selectedDateIndex + 1} - {tripDays[selectedDateIndex]?.toLocaleDateString('en-US', { weekday: 'long' })}
+                    </h3>
+                    <p className="text-emerald-100 text-sm">
+                      {tripDays[selectedDateIndex]?.toLocaleDateString('en-US', { 
+                        month: 'long', 
+                        day: 'numeric',
+                        year: tripDays[selectedDateIndex]?.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                      })}
+                    </p>
+                  </div>
+                  <Calendar className="h-5 w-5 text-emerald-200" />
                 </div>
               </div>
-            </div>
-          ) : (
-            // Regular grid/list for other categories
-            <div className={`space-y-4 ${viewMode === 'grid' ? 'grid grid-cols-1 gap-4' : ''}`}>
-              {getCurrentData().map((item) => (
-                <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                  <div className={`${viewMode === 'list' ? 'flex' : ''}`}>
-                    <div className={`${viewMode === 'list' ? 'w-48 h-32' : 'h-48'} relative`}>
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <button className="absolute top-2 right-2 p-2 bg-white/90 rounded-full hover:bg-white transition-colors">
-                        <Heart className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </div>
-                    
-                    <div className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                          <p className="text-sm text-gray-600">{item.location}</p>
-                        </div>
-                        <div className="flex items-center">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium ml-1">{item.rating}</span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                      
-                      {/* Additional info for transportation */}
-                      {selectedCategory === 'transport' && (
-                        <div className="mb-3">
-                          <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded font-medium">
-                            {item.type}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Additional info for guides */}
-                      {selectedCategory === 'guides' && (
-                        <div className="mb-3 space-y-1">
-                          <div className="flex items-center text-xs text-gray-500">
-                            <span className="font-medium mr-2">Experience:</span>
-                            {item.experience}
-                          </div>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <span className="font-medium mr-2">Languages:</span>
-                            {item.languages?.join(', ')}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Additional info for accommodations */}
-                      {selectedCategory === 'accommodations' && item.amenities && (
-                        <div className="mb-3">
-                          <div className="flex flex-wrap gap-1">
-                            {item.amenities.slice(0, 3).map((amenity, index) => (
-                              <span key={index} className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded">
-                                {amenity}
-                              </span>
-                            ))}
-                            {item.amenities.length > 3 && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                                +{item.amenities.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-semibold text-emerald-600">{item.price}</span>
-                          {item.duration && (
-                            <span className="text-sm text-gray-500 ml-1">/ {item.duration}</span>
-                          )}
-                          {selectedCategory === 'guides' && (
-                            <span className="text-sm text-gray-500 ml-1">/ day</span>
-                          )}
-                          {selectedCategory === 'accommodations' && (
-                            <span className="text-sm text-gray-500 ml-1">/ night</span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          {selectedCategory !== 'destinations' && (
-                            <Button 
-                              size="sm" 
-                              variant="primary"
-                              onClick={() => handleNavigateToDetails(item)}
-                            >
-                              View Details
-                            </Button>
-                          )}
-                        </div>
-                      </div>
+
+              {/* Day Content */}
+              <div className="p-4 space-y-6">
+                {/* Places Section */}
+                <div className="border-b border-gray-100 pb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 text-emerald-600 mr-2" />
+                      <h4 className="font-medium text-gray-900">Places to Visit</h4>
                     </div>
                   </div>
-                </Card>
-              ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {mockPlaces.map(place => renderActivityCard(place, 'places'))}
+                  </div>
+                </div>
+
+                {/* Accommodation Section */}
+                <div className="border-b border-gray-100 pb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <Hotel className="h-4 w-4 text-blue-600 mr-2" />
+                      <h4 className="font-medium text-gray-900">Accommodation</h4>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {mockAccommodations.map(accommodation => renderActivityCard(accommodation, 'accommodations'))}
+                  </div>
+                </div>
+
+                {/* Transport Section */}
+                <div className="border-b border-gray-100 pb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <Car className="h-4 w-4 text-purple-600 mr-2" />
+                      <h4 className="font-medium text-gray-900">Transportation</h4>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {mockTransport.map(transport => renderActivityCard(transport, 'transport'))}
+                  </div>
+                </div>
+
+                {/* Guide Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <Users className="h-4 w-4 text-orange-600 mr-2" />
+                      <h4 className="font-medium text-gray-900">Tour Guide</h4>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {mockGuides.map(guide => renderActivityCard(guide, 'guides'))}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
 
       {/* Right Panel - Map */}
-      <div className="w-1/2 relative">
-        {/* Google Maps Embedded Frame */}
-        <div className="h-full w-full fixed right-0 top-0" style={{ width: '50%' }}>
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2024842.5462878644!2d79.6956!3d7.8731!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae2593cf65a1e9d%3A0xe13da4b400e2d38c!2sSri%20Lanka!5e0!3m2!1sen!2sus!4v1697461234567!5m2!1sen!2sus"
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            allowFullScreen=""
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Sri Lanka Map"
-            className="absolute inset-0"
-          ></iframe>
+      {!isPanelExpanded && (
+        <div className="w-1/2 relative">
+          {/* Google Maps Embedded Frame */}
+          <div className="h-full w-full fixed right-0 top-0" style={{ width: '50%' }}>
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2024842.5462878644!2d79.6956!3d7.8731!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae2593cf65a1e9d%3A0xe13da4b400e2d38c!2sSri%20Lanka!5e0!3m2!1sen!2sus!4v1697461234567!5m2!1sen!2sus"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Sri Lanka Map"
+              className="absolute inset-0"
+            ></iframe>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Floating Trip Summary Button */}
       {getTotalItemsCount() > 0 && (
@@ -827,6 +561,21 @@ const TripPlanning = () => {
               {getTotalItemsCount()}
             </span>
             View Summary
+          </Button>
+        </div>
+      )}
+
+      {/* Floating Map Toggle Button (when panel is expanded) */}
+      {isPanelExpanded && (
+        <div className="fixed bottom-6 left-6 z-40">
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={() => setIsPanelExpanded(false)}
+            className="shadow-lg hover:shadow-xl transition-shadow flex items-center bg-white text-gray-700 border border-gray-300"
+          >
+            <Minimize2 className="w-5 h-5 mr-2" />
+            Show Map
           </Button>
         </div>
       )}
@@ -851,6 +600,167 @@ const TripPlanning = () => {
         onClose={() => setShowSummaryModal(false)}
         tripData={tripData}
       />
+
+      {/* Activity Detail Modal */}
+      <Modal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        title={selectedDetailItem?.name}
+        size="lg"
+      >
+        {selectedDetailItem && (
+          <div className="p-6 max-h-[70vh] overflow-y-auto">
+            {/* Image */}
+            <div className="relative h-64 mb-6 rounded-lg overflow-hidden">
+              <img 
+                src={selectedDetailItem.image} 
+                alt={selectedDetailItem.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-4 right-4">
+                <div className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-full flex items-center">
+                  <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                  <span className="text-sm font-medium">{selectedDetailItem.rating}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedDetailItem.name}</h3>
+                <p className="text-gray-600">{selectedDetailItem.description}</p>
+              </div>
+
+              {/* Details based on type */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedDetailItem.type === 'places' && (
+                  <>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Location:</span>
+                      <p className="text-gray-900">{selectedDetailItem.location}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Type:</span>
+                      <p className="text-gray-900">{selectedDetailItem.type}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Duration:</span>
+                      <p className="text-gray-900">{selectedDetailItem.duration}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Entry Fee:</span>
+                      <p className="text-gray-900">{selectedDetailItem.price}</p>
+                    </div>
+                  </>
+                )}
+
+                {selectedDetailItem.type === 'accommodations' && (
+                  <>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Location:</span>
+                      <p className="text-gray-900">{selectedDetailItem.location}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Type:</span>
+                      <p className="text-gray-900">{selectedDetailItem.type}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Price:</span>
+                      <p className="text-gray-900">{selectedDetailItem.price}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Amenities:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedDetailItem.amenities?.map((amenity, index) => (
+                          <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                            {amenity}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {selectedDetailItem.type === 'transport' && (
+                  <>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Type:</span>
+                      <p className="text-gray-900">{selectedDetailItem.type}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Capacity:</span>
+                      <p className="text-gray-900">{selectedDetailItem.capacity}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Price:</span>
+                      <p className="text-gray-900">{selectedDetailItem.price}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Features:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedDetailItem.features?.map((feature, index) => (
+                          <span key={index} className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {selectedDetailItem.type === 'guides' && (
+                  <>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Specialization:</span>
+                      <p className="text-gray-900">{selectedDetailItem.specialization}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Experience:</span>
+                      <p className="text-gray-900">{selectedDetailItem.experience}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Price:</span>
+                      <p className="text-gray-900">{selectedDetailItem.price}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Languages:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedDetailItem.languages?.map((language, index) => (
+                          <span key={index} className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">
+                            {language}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowDetailModal(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  className="flex-1"
+                  onClick={() => {
+                    handleAddToDay(selectedDetailItem);
+                    setShowDetailModal(false);
+                  }}
+                >
+                  Add to Day {selectedDateIndex + 1}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
