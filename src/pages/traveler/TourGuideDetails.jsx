@@ -222,8 +222,26 @@ const TourGuideDetails = () => {
             addToTripPlanning(planningBooking, 'guides');
             alert('Added to your trip planning! Continue adding more services or review your summary.');
         } else {
-            // Open payment modal for direct booking
-            setShowPaymentModal(true);
+            // Navigate to payment page for direct booking
+            const directBooking = {
+                id: `guide_${guide.id}_${Date.now()}`,
+                serviceId: guide.id,
+                name: guide.name,
+                location: guide.location,
+                type: 'guide',
+                tourDate: bookingData.tourDate,
+                duration: bookingData.duration,
+                groupSize: bookingData.groupSize,
+                pricePerHour: guide.price,
+                totalPrice: calculateTotal(),
+                image: guide.images[0],
+                specialties: guide.specialties,
+                languages: guide.languages
+            };
+            
+            // Store booking data in localStorage for payment page
+            localStorage.setItem('directBookingData', JSON.stringify([directBooking]));
+            navigate('/user/individual-booking-payment');
         }
     };
 

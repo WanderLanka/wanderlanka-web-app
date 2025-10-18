@@ -109,8 +109,25 @@ function TransportationDetails() {
             addToTripPlanning(planningBooking, 'transportation');
             alert('Added to your trip planning! Continue adding more services or review your summary.');
         } else {
-            // Open payment modal for direct booking
-            setShowPaymentModal(true);
+            // Navigate to payment page for direct booking
+            const directBooking = {
+                id: `trans_${vehicle.id}_${Date.now()}`,
+                serviceId: vehicle.id,
+                name: vehicle.name,
+                provider: vehicle.provider,
+                location: vehicle.location,
+                type: 'transportation',
+                startDate: bookingData.startDate,
+                days: bookingData.days,
+                passengers: bookingData.passengers,
+                pricePerDay: vehicle.price,
+                totalPrice: calculateTotal(),
+                image: vehicle.images[0]
+            };
+            
+            // Store booking data in localStorage for payment page
+            localStorage.setItem('directBookingData', JSON.stringify([directBooking]));
+            navigate('/user/individual-booking-payment');
         }
     };
 
