@@ -18,18 +18,21 @@ import {
   ChevronRight,
   Maximize2,
   Minimize2,
-  X
+  X,
+  UserCheck,
+  Home
 } from 'lucide-react';
 import { Button, Card, Modal } from '../../components/common';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import NavigationWarningModal from '../../components/NavigationWarningModal';
 import Toast from '../../components/Toast';
 import TripSummaryModal from '../../components/TripSummaryModal';
+import { accommodationAPI, transportationAPI, tourGuideAPI } from '../../services/api';
 
 const TripPlanning = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { getTotalItemsCount, addToTripPlanning, planningBookings, removeFromTripPlanning } = useTripPlanning();
+  const { getTotalItemsCount, addToTripPlanning } = useTripPlanning();
   
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
@@ -41,9 +44,23 @@ const TripPlanning = () => {
   const [selectedDetailItem, setSelectedDetailItem] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
-  const [showAccommodationCards, setShowAccommodationCards] = useState(false);
-  const [showTransportCards, setShowTransportCards] = useState(false);
-  const [showGuideCards, setShowGuideCards] = useState(false);
+  
+  // New state for tab structure
+  const [activeTab, setActiveTab] = useState('places');
+  const [accommodations, setAccommodations] = useState([]);
+  const [transportation, setTransportation] = useState([]);
+  const [tourGuides, setTourGuides] = useState([]);
+  const [loadingAccommodations, setLoadingAccommodations] = useState(false);
+  const [loadingTransportation, setLoadingTransportation] = useState(false);
+  const [loadingTourGuides, setLoadingTourGuides] = useState(false);
+
+  // Tab configuration
+  const _tabs = [
+    { id: 'places', label: 'Places', icon: MapPin, color: 'emerald' },
+    { id: 'accommodations', label: 'Accommodations', icon: Hotel, color: 'blue' },
+    { id: 'guides', label: 'Tour Guides', icon: UserCheck, color: 'orange' },
+    { id: 'transportation', label: 'Transportation', icon: Car, color: 'purple' }
+  ];
 
   // Mock data for available activities
   const mockPlaces = [
@@ -300,6 +317,82 @@ const TripPlanning = () => {
     }
   };
 
+  // Load initial data when component mounts
+  useEffect(() => {
+    // Places will use Google Maps API, so no initial fetch needed
+  }, []);
+
+  // API fetch functions
+  const fetchAccommodations = async () => {
+    if (accommodations.length > 0) return; // Only fetch if not already loaded
+    
+    try {
+      setLoadingAccommodations(true);
+      const response = await accommodationAPI.getAll();
+      setAccommodations(response || []);
+    } catch (error) {
+      console.error('Error fetching accommodations:', error);
+      setToastMessage('Failed to load accommodations');
+      setShowToast(true);
+    } finally {
+      setLoadingAccommodations(false);
+    }
+  };
+
+  const fetchTransportation = async () => {
+    if (transportation.length > 0) return; // Only fetch if not already loaded
+    
+    try {
+      setLoadingTransportation(true);
+      const response = await transportationAPI.getAll();
+      setTransportation(response || []);
+    } catch (error) {
+      console.error('Error fetching transportation:', error);
+      setToastMessage('Failed to load transportation');
+      setShowToast(true);
+    } finally {
+      setLoadingTransportation(false);
+    }
+  };
+
+  const fetchTourGuides = async () => {
+    if (tourGuides.length > 0) return; // Only fetch if not already loaded
+    
+    try {
+      setLoadingTourGuides(true);
+      const response = await tourGuideAPI.getAll();
+      setTourGuides(response || []);
+    } catch (error) {
+      console.error('Error fetching tour guides:', error);
+      setToastMessage('Failed to load tour guides');
+      setShowToast(true);
+    } finally {
+      setLoadingTourGuides(false);
+    }
+  };
+
+  // Handle tab change and fetch data
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    
+    switch (tabId) {
+      case 'places':
+        // Places will use Google Maps API, no fetch needed
+        break;
+      case 'accommodations':
+        fetchAccommodations();
+        break;
+      case 'transportation':
+        fetchTransportation();
+        break;
+      case 'guides':
+        fetchTourGuides();
+        break;
+      default:
+        break;
+    }
+  };
+
   const handleAddToDay = (item) => {
     const placeData = {
       ...item,
@@ -328,7 +421,6 @@ const TripPlanning = () => {
     addToTripPlanning(accommodationData, 'accommodations');
     setToastMessage(`${accommodation.name} added to trip summary`);
     setShowToast(true);
-    setShowAccommodationCards(false);
   };
 
   const handleAddTransport = (transport) => {
@@ -344,7 +436,6 @@ const TripPlanning = () => {
     addToTripPlanning(transportData, 'transportation');
     setToastMessage(`${transport.name} added to trip summary`);
     setShowToast(true);
-    setShowTransportCards(false);
   };
 
   const handleAddGuide = (guide) => {
@@ -360,90 +451,6 @@ const TripPlanning = () => {
     addToTripPlanning(guideData, 'guides');
     setToastMessage(`${guide.name} added to trip summary`);
     setShowToast(true);
-    setShowGuideCards(false);
-  };
-
-  // Function to render selected services as cards
-  const renderSelectedServiceCard = (service, serviceType) => {
-    const getServiceIcon = (type) => {
-      switch (type) {
-        case 'accommodations': return Hotel;
-        case 'transportation': return Car;
-        case 'guides': return Users;
-        default: return Hotel;
-      }
-    };
-
-    const getServiceStyles = (type) => {
-      switch (type) {
-        case 'accommodations': 
-          return {
-            iconBg: 'bg-blue-100',
-            iconColor: 'text-blue-600'
-          };
-        case 'transportation': 
-          return {
-            iconBg: 'bg-purple-100',
-            iconColor: 'text-purple-600'
-          };
-        case 'guides': 
-          return {
-            iconBg: 'bg-orange-100',
-            iconColor: 'text-orange-600'
-          };
-        default: 
-          return {
-            iconBg: 'bg-blue-100',
-            iconColor: 'text-blue-600'
-          };
-      }
-    };
-
-    const Icon = getServiceIcon(serviceType);
-    const styles = getServiceStyles(serviceType);
-
-    return (
-      <div key={`${serviceType}-${service.id}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3 flex-1">
-            <div className={`p-2 ${styles.iconBg} rounded-lg`}>
-              <Icon className={`h-4 w-4 ${styles.iconColor}`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h5 className="font-medium text-gray-900 text-sm mb-1 truncate">{service.name}</h5>
-              {service.location && (
-                <p className="text-xs text-gray-600 mb-1">{service.location}</p>
-              )}
-              {service.type && serviceType === 'transportation' && (
-                <p className="text-xs text-gray-600 mb-1">{service.type}</p>
-              )}
-              {service.specialization && serviceType === 'guides' && (
-                <p className="text-xs text-gray-600 mb-1">{service.specialization}</p>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-emerald-600">
-                  {service.price || `LKR ${service.totalPrice || 0}`}
-                </span>
-                <span className="text-xs text-gray-500">Day {service.selectedDay}</span>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => removeFromTripPlanning(service.id, serviceType)}
-            className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors ml-2"
-            title="Remove from trip"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  // Function to get selected services for current day and type
-  const getSelectedServicesForDay = (serviceType) => {
-    const currentDay = selectedDateIndex + 1;
-    return planningBookings[serviceType]?.filter(service => service.selectedDay === currentDay) || [];
   };
 
   // Get trip data from navigation state or default values
@@ -606,206 +613,204 @@ const TripPlanning = () => {
           <div className="mb-4">
             <h1 className="text-2xl font-bold mb-4">Plan Your Trip</h1>
 
-            {/* Trip Overview with Date Selector */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <h3 className="text-sm font-medium text-white/90 mb-3">Select Date to Plan</h3>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {tripDays.map((day, dayIndex) => {
-                  const dayNumber = dayIndex + 1;
-                  const dayDate = day.toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric'
-                  });
+            {/* Date Chips */}
+            {tripDays.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-white/90 mb-3">Select Date to Plan</h3>
+                <div className="flex flex-wrap gap-2">
+                  {tripDays.map((day, dayIndex) => {
+                    const dayNumber = dayIndex + 1;
+                    const dayDate = day.toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      weekday: 'short'
+                    });
 
-                  return (
-                    <button
-                      key={dayIndex}
-                      onClick={() => setSelectedDateIndex(dayIndex)}
-                      className={`px-3 py-2 rounded-lg border-2 transition-all duration-200 text-xs ${
-                        selectedDateIndex === dayIndex
-                          ? 'border-white bg-white text-emerald-700 font-semibold'
-                          : 'border-white/30 bg-white/10 text-white/90 hover:border-white/50 hover:bg-white/20'
-                      }`}
-                    >
-                      <div className="text-center">
-                        <div className="font-semibold">Day {dayNumber}</div>
-                        <div>{dayDate}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              
-              
-              
-              {/* Trip Duration Info */}
-              {tripDays.length > 0 && (
-                <div className="mt-2 text-xs text-white/70">
-                  Trip Duration: {tripDays.length} day{tripDays.length !== 1 ? 's' : ''}
+                    return (
+                      <button
+                        key={dayIndex}
+                        onClick={() => setSelectedDateIndex(dayIndex)}
+                        className={`px-3 py-2 rounded-full backdrop-blur-sm border text-xs transition-all duration-200 hover:scale-105 ${
+                          selectedDateIndex === dayIndex
+                            ? 'bg-white text-emerald-700 border-white shadow-lg font-semibold'
+                            : 'bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/50'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="font-semibold">Day {dayNumber}</div>
+                          <div className={selectedDateIndex === dayIndex ? 'text-emerald-600' : 'text-white/80'}>
+                            {dayDate}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+                
+                {/* Selected Date Info */}
+                <div className="mt-3 text-xs text-white/70">
+                  Planning for Day {selectedDateIndex + 1} - {tripDays[selectedDateIndex]?.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Service Selection Tabs */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <h3 className="text-sm font-medium text-white/90 mb-3">Add Services to Your Trip</h3>
+              
+              {/* Tab Navigation */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <button
+                  onClick={() => handleTabChange('places')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'places'
+                      ? 'bg-white text-emerald-700 shadow-md'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  <MapPin className="h-4 w-4 inline mr-2" />
+                  Places
+                </button>
+                
+                <button
+                  onClick={() => handleTabChange('accommodations')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'accommodations'
+                      ? 'bg-white text-emerald-700 shadow-md'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  <Home className="h-4 w-4 inline mr-2" />
+                  Accommodations
+                  {loadingAccommodations && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
+                </button>
+                
+                <button
+                  onClick={() => handleTabChange('transportation')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'transportation'
+                      ? 'bg-white text-emerald-700 shadow-md'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  <Car className="h-4 w-4 inline mr-2" />
+                  Transportation
+                  {loadingTransportation && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
+                </button>
+                
+                <button
+                  onClick={() => handleTabChange('guides')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'guides'
+                      ? 'bg-white text-emerald-700 shadow-md'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  <UserCheck className="h-4 w-4 inline mr-2" />
+                  Tour Guides
+                  {loadingTourGuides && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Content Area - Trip Days */}
+        {/* Content Area - Service Selection */}
         <div className="p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Trip Itinerary</h2>
-
-          {/* Selected Day Planning */}
-          {tripDays.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              {/* Day Header */}
-              <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-t-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      Day {selectedDateIndex + 1} - {tripDays[selectedDateIndex]?.toLocaleDateString('en-US', { weekday: 'long' })}
-                    </h3>
-                    <p className="text-emerald-100 text-sm">
-                      {tripDays[selectedDateIndex]?.toLocaleDateString('en-US', { 
-                        month: 'long', 
-                        day: 'numeric',
-                        year: tripDays[selectedDateIndex]?.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-                      })}
-                    </p>
+          {/* Service Content Based on Active Tab */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6">
+              {/* Tab Content */}
+              {activeTab === 'places' && (
+                <div>
+                  <div className="flex items-center mb-6">
+                    <MapPin className="h-6 w-6 text-emerald-600 mr-3" />
+                    <h2 className="text-xl font-bold text-gray-900">Places to Visit</h2>
                   </div>
-                  <Calendar className="h-5 w-5 text-emerald-200" />
-                </div>
-              </div>
-
-              {/* Day Content */}
-              <div className="p-4 space-y-6">
-                {/* Places Section - Horizontal Scroll */}
-                <div className="border-b border-gray-100 pb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 text-emerald-600 mr-2" />
-                      <h4 className="font-medium text-gray-900">Places to Visit</h4>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {mockPlaces.map(place => (
-                      <div key={place.id} className="flex-shrink-0 w-32">
+                      <div key={place.id}>
                         {renderActivityCard(place, 'places')}
                       </div>
                     ))}
                   </div>
                 </div>
+              )}
 
-                {/* Accommodation Section */}
-                <div className="border-b border-gray-100 pb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <Hotel className="h-4 w-4 text-blue-600 mr-2" />
-                      <h4 className="font-medium text-gray-900">Accommodation</h4>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="primary" 
-                      className="text-xs bg-slate-800 hover:bg-slate-900 text-white border-slate-800 font-medium shadow-sm px-3 py-2 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                      onClick={() => setShowAccommodationCards(!showAccommodationCards)}
-                    >
-                      {showAccommodationCards ? <X className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                      {showAccommodationCards ? 'Close' : 'Add'}
-                    </Button>
-                  </div>
-                  
-                  {/* Show selected accommodations for current day */}
-                  {getSelectedServicesForDay('accommodations').length > 0 && (
-                    <div className="mb-4">
-                      <h5 className="text-sm font-medium text-gray-700 mb-2">Selected for Day {selectedDateIndex + 1}</h5>
-                      <div className="grid grid-cols-1 gap-3">
-                        {getSelectedServicesForDay('accommodations').map(service => 
-                          renderSelectedServiceCard(service, 'accommodations')
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {showAccommodationCards && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {mockAccommodations.map(accommodation => renderActivityCard(accommodation, 'accommodations'))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Transport Section */}
-                <div className="border-b border-gray-100 pb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <Car className="h-4 w-4 text-purple-600 mr-2" />
-                      <h4 className="font-medium text-gray-900">Transportation</h4>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="primary" 
-                      className="text-xs bg-slate-800 hover:bg-slate-900 text-white border-slate-800 font-medium shadow-sm px-3 py-2 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                      onClick={() => setShowTransportCards(!showTransportCards)}
-                    >
-                      {showTransportCards ? <X className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                      {showTransportCards ? 'Close' : 'Add'}
-                    </Button>
-                  </div>
-                  
-                  {/* Show selected transportation for current day */}
-                  {getSelectedServicesForDay('transportation').length > 0 && (
-                    <div className="mb-4">
-                      <h5 className="text-sm font-medium text-gray-700 mb-2">Selected for Day {selectedDateIndex + 1}</h5>
-                      <div className="grid grid-cols-1 gap-3">
-                        {getSelectedServicesForDay('transportation').map(service => 
-                          renderSelectedServiceCard(service, 'transportation')
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {showTransportCards && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {mockTransport.map(transport => renderActivityCard(transport, 'transport'))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Guide Section */}
+              {activeTab === 'accommodations' && (
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 text-orange-600 mr-2" />
-                      <h4 className="font-medium text-gray-900">Tour Guide</h4>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="primary" 
-                      className="text-xs bg-slate-800 hover:bg-slate-900 text-white border-slate-800 font-medium shadow-sm px-3 py-2 transition-all duration-200 hover:scale-105 hover:shadow-md"
-                      onClick={() => setShowGuideCards(!showGuideCards)}
-                    >
-                      {showGuideCards ? <X className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                      {showGuideCards ? 'Close' : 'Add'}
-                    </Button>
+                  <div className="flex items-center mb-6">
+                    <Home className="h-6 w-6 text-blue-600 mr-3" />
+                    <h2 className="text-xl font-bold text-gray-900">Accommodations</h2>
                   </div>
-                  
-                  {/* Show selected guides for current day */}
-                  {getSelectedServicesForDay('guides').length > 0 && (
-                    <div className="mb-4">
-                      <h5 className="text-sm font-medium text-gray-700 mb-2">Selected for Day {selectedDateIndex + 1}</h5>
-                      <div className="grid grid-cols-1 gap-3">
-                        {getSelectedServicesForDay('guides').map(service => 
-                          renderSelectedServiceCard(service, 'guides')
-                        )}
-                      </div>
+                  {loadingAccommodations ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <span className="ml-3 text-gray-600">Loading accommodations...</span>
                     </div>
-                  )}
-
-                  {showGuideCards && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {mockGuides.map(guide => renderActivityCard(guide, 'guides'))}
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {(accommodations.length > 0 ? accommodations : mockAccommodations).map(accommodation => (
+                        <div key={accommodation.id || accommodation._id}>
+                          {renderActivityCard(accommodation, 'accommodations')}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
-              </div>
+              )}
+
+              {activeTab === 'transportation' && (
+                <div>
+                  <div className="flex items-center mb-6">
+                    <Car className="h-6 w-6 text-purple-600 mr-3" />
+                    <h2 className="text-xl font-bold text-gray-900">Transportation</h2>
+                  </div>
+                  {loadingTransportation ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <span className="ml-3 text-gray-600">Loading transportation...</span>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {(transportation.length > 0 ? transportation : mockTransport).map(transport => (
+                        <div key={transport.id || transport._id}>
+                          {renderActivityCard(transport, 'transport')}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'guides' && (
+                <div>
+                  <div className="flex items-center mb-6">
+                    <UserCheck className="h-6 w-6 text-orange-600 mr-3" />
+                    <h2 className="text-xl font-bold text-gray-900">Tour Guides</h2>
+                  </div>
+                  {loadingTourGuides ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <span className="ml-3 text-gray-600">Loading tour guides...</span>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {(tourGuides.length > 0 ? tourGuides : mockGuides).map(guide => (
+                        <div key={guide.id || guide._id}>
+                          {renderActivityCard(guide, 'guides')}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
