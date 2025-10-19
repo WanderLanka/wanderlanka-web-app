@@ -1,55 +1,73 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Calendar, Clock, MapPin, Users, Phone, Mail, DollarSign } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, Clock, MapPin, Users, Phone, Mail, DollarSign, Loader2 } from 'lucide-react';
 import { Button, Card, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
+import { bookingsAPI } from '../../services/api';
 
 const MyBookings = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [bookings, setBookings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Mock data for bookings
-    const mockBookings = useMemo(() => [
-        {
-            id: 1,
-            type: 'accommodation',
-            title: 'Heritance Kandalama Hotel',
-            location: 'Dambulla, Sri Lanka',
-            dates: { checkIn: '2024-01-15', checkOut: '2024-01-20' },
-            guests: 2,
-            price: '$450',
-            status: 'confirmed',
-            image: '/api/placeholder/300/200',
-            bookingRef: 'HTL001'
-        },
-        {
-            id: 2,
-            type: 'transport',
-            title: 'Airport Transfer - SUV',
-            location: 'Colombo to Hotel',
-            dates: { departure: '2024-01-15', arrival: '2024-01-15' },
-            passengers: 2,
-            price: '$35',
-            status: 'confirmed',
-            image: '/api/placeholder/300/200',
-            bookingRef: 'TRP001'
-        },
-        {
-            id: 3,
-            type: 'experience',
-            title: 'Sigiriya Rock Climbing Tour',
-            location: 'Sigiriya, Sri Lanka',
-            dates: { date: '2024-01-16' },
-            participants: 2,
-            price: '$85',
-            status: 'pending',
-            image: '/api/placeholder/300/200',
-            bookingRef: 'EXP001'
-        }
-    ], []);
-
+    // Fetch user bookings from API
     useEffect(() => {
-        setBookings(mockBookings);
-    }, [mockBookings]);
+        const fetchBookings = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                
+                // Get user data from localStorage
+                const userData = localStorage.getItem('user');
+                if (!userData) {
+                    setError('User not logged in. Please log in to view your bookings.');
+                    setBookings([]);
+                    setLoading(false);
+                    return;
+                }
+                
+                const parsedUserData = JSON.parse(userData);
+                const userId = parsedUserData.id;
+                
+                if (!userId) {
+                    setError('User ID not found. Please log in again.');
+                    setBookings([]);
+                    setLoading(false);
+                    return;
+                }
+                
+                console.log('Fetching bookings for user ID:', userId);
+                const response = await bookingsAPI.getUserBookings();
+                console.log('Bookings API Response:', response);
+                
+                // Transform API response to match our component structure
+                const transformedBookings = (response.data || response || []).map(booking => ({
+                    id: booking._id || booking.id,
+                    type: booking.serviceType || booking.type,
+                    title: booking.serviceName || booking.title,
+                    location: booking.serviceProvider || booking.location,
+                    dates: booking.bookingDetails || booking.dates,
+                    guests: booking.bookingDetails?.adults || booking.guests,
+                    passengers: booking.bookingDetails?.passengers || booking.passengers,
+                    participants: booking.bookingDetails?.groupSize || booking.participants,
+                    price: booking.totalAmount || booking.price,
+                    status: booking.status || 'confirmed',
+                    image: booking.image || '/api/placeholder/300/200',
+                    bookingRef: booking.bookingReference || booking.bookingRef || `REF${booking._id?.slice(-6) || '000000'}`
+                }));
+                
+                setBookings(transformedBookings);
+            } catch (err) {
+                console.error('Failed to fetch bookings:', err);
+                setError('Failed to load your bookings. Please try again.');
+                setBookings([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchBookings();
+    }, []);
 
     const filterBookings = (status) => {
         if (status === 'all') return bookings;
@@ -84,26 +102,53 @@ const MyBookings = () => {
                     <p className="text-lg text-slate-600">Manage and track all your travel bookings</p>
                 </div>
 
-                {/* Filter Tabs */}
-                <div className="mb-8">
-                    <div className="flex flex-wrap gap-2">
-                        {['all', 'confirmed', 'pending', 'cancelled'].map((tab) => (
-                            <Button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                variant={activeTab === tab ? 'primary' : 'outline'}
-                                size="md"
-                                className="capitalize"
-                            >
-                                {tab === 'all' ? 'All Bookings' : tab}
-                            </Button>
-                        ))}
+                {/* Loading State */}
+                {loading && (
+                    <div className="flex justify-center items-center py-16">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                        <span className="ml-2 text-slate-600">Loading your bookings...</span>
                     </div>
-                </div>
+                )}
 
-                {/* Bookings Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filterBookings(activeTab).map((booking) => (
+                {/* Error State */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+                        <div className="text-red-800 font-medium mb-2">Error Loading Bookings</div>
+                        <div className="text-red-600 mb-4">{error}</div>
+                        <Button 
+                            onClick={() => window.location.reload()}
+                            variant="outline"
+                            size="sm"
+                            className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                            Try Again
+                        </Button>
+                    </div>
+                )}
+
+                {/* Content - only show when not loading and no error */}
+                {!loading && !error && (
+                    <>
+                        {/* Filter Tabs */}
+                        <div className="mb-8">
+                            <div className="flex flex-wrap gap-2">
+                                {['all', 'confirmed', 'pending', 'cancelled'].map((tab) => (
+                                    <Button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        variant={activeTab === tab ? 'primary' : 'outline'}
+                                        size="md"
+                                        className="capitalize"
+                                    >
+                                        {tab === 'all' ? 'All Bookings' : tab}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Bookings Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filterBookings(activeTab).map((booking) => (
                         <Card
                             key={booking.id}
                             className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
@@ -170,12 +215,19 @@ const MyBookings = () => {
                     ))}
                 </div>
 
-                {filterBookings(activeTab).length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="text-6xl mb-4">📋</div>
-                        <h3 className="text-xl font-semibold text-slate-700 mb-2">No bookings found</h3>
-                        <p className="text-slate-500">You don't have any {activeTab === 'all' ? '' : activeTab} bookings yet.</p>
-                    </div>
+                        {filterBookings(activeTab).length === 0 && (
+                            <div className="text-center py-12">
+                                <div className="text-6xl mb-4">📋</div>
+                                <h3 className="text-xl font-semibold text-slate-700 mb-2">No current bookings</h3>
+                                <p className="text-slate-500">
+                                    {activeTab === 'all' 
+                                        ? "You don't have any bookings yet. Start planning your trip!" 
+                                        : `You don't have any ${activeTab} bookings.`
+                                    }
+                                </p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
             <TravelerFooter />

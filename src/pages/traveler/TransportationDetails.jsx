@@ -115,16 +115,19 @@ function TransportationDetails() {
         if (isFromTripPlanning) {
             // Add to trip planning summary
             const planningBooking = {
-                id: `trans_${vehicle.id}_${Date.now()}`,
-                serviceId: vehicle.id,
+                id: `trans_${vehicle._id || vehicle.id}_${Date.now()}`,
+                serviceId: vehicle._id || vehicle.id,
                 name: vehicle?.brand && vehicle?.model ? `${vehicle.brand} ${vehicle.model}` : 'Vehicle',
-                provider: vehicle?.provider || vehicle?.userId || 'Vehicle Owner',
+                provider: vehicle?.userId || 'Vehicle Owner',
                 location: vehicle?.location || 'Location not specified',
                 type: 'transportation',
                 startDate: bookingData.startDate,
                 days: bookingData.days,
                 passengers: bookingData.passengers,
-                pricePerDay: vehicle.price,
+                pickupLocation: bookingData.pickupLocation,
+                dropoffLocation: bookingData.dropoffLocation,
+                estimatedDistance: bookingData.estimatedDistance,
+                pricePerKm: vehicle.pricingPerKm || 0,
                 totalPrice: calculateTotal(),
                 image: vehicle.images?.[0] || '/placeholder-transport.jpg',
                 selectedDate: location.state?.selectedDateValue || bookingData.startDate // Store the specific selected date
@@ -135,16 +138,19 @@ function TransportationDetails() {
         } else {
             // Navigate to payment page for direct booking
             const directBooking = {
-                id: `trans_${vehicle.id}_${Date.now()}`,
-                serviceId: vehicle.id,
+                id: `trans_${vehicle._id || vehicle.id}_${Date.now()}`,
+                serviceId: vehicle._id || vehicle.id,
                 name: vehicle?.brand && vehicle?.model ? `${vehicle.brand} ${vehicle.model}` : 'Vehicle',
-                provider: vehicle?.provider || vehicle?.userId || 'Vehicle Owner',
+                provider: vehicle?.userId || 'Vehicle Owner',
                 location: vehicle?.location || 'Location not specified',
                 type: 'transportation',
                 startDate: bookingData.startDate,
                 days: bookingData.days,
                 passengers: bookingData.passengers,
-                pricePerDay: vehicle.price,
+                pickupLocation: bookingData.pickupLocation,
+                dropoffLocation: bookingData.dropoffLocation,
+                estimatedDistance: bookingData.estimatedDistance,
+                pricePerKm: vehicle.pricingPerKm || 0,
                 totalPrice: calculateTotal(),
                 image: vehicle.images?.[0] || '/placeholder-transport.jpg'
             };
@@ -661,7 +667,7 @@ function TransportationDetails() {
                                             <button
                                                 onClick={() => setBookingData(prev => ({ 
                                                     ...prev, 
-                                                    passengers: Math.min(vehicle.capacity, prev.passengers + 1) 
+                                                    passengers: Math.min(vehicle.seats, prev.passengers + 1) 
                                                 }))}
                                                 className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
                                             >
@@ -669,7 +675,7 @@ function TransportationDetails() {
                                             </button>
                                         </div>
                                     </div>
-                                    <p className="text-xs text-slate-500">Maximum {vehicle.capacity} passengers</p>
+                                    <p className="text-xs text-slate-500">Maximum {vehicle.seats} passengers</p>
                                 </div>
 
                                 {/* Price Breakdown */}
