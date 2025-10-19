@@ -116,13 +116,7 @@ const IndividualBookingPayment = () => {
     setIsProcessing(true);
     
     try {
-      // Get authentication token
-      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Please log in to continue with your booking');
-      }
-
-      // Prepare booking request according to your architecture
+      // Prepare booking request according to enhanced booking architecture
       const bookingRequest = {
         serviceType: bookingData.type,
         serviceId: bookingData.serviceId,
@@ -177,38 +171,47 @@ const IndividualBookingPayment = () => {
         contactInfo: paymentData.contactInfo
       };
 
-      console.log('Sending booking request to API Gateway:', bookingRequest);
+      console.log('Sending enhanced booking request to API Gateway:', bookingRequest);
 
-      // Send request to API Gateway at /api/booking/addBooking
-      // API Gateway will:
-      // 1. Authenticate the request
-      // 2. Log the request  
-      // 3. Route to Booking Service
-      const result = await bookingsAPI.create(bookingRequest);
-      console.log('Booking service response:', result);
+      // Send request to API Gateway using bookingsAPI.createEnhanced
+      // This goes through API Gateway /api/bookings/enhanced which forwards to booking service
+      // The booking service uses the complete enhanced booking architecture:
+      // 1. Authentication & request validation
+      // 2. Create pending booking in database
+      // 3. Check availability via Accommodation Adapter
+      // 4. Create temporary reservation
+      // 5. Process payment via Payment Adapter
+      // 6. Confirm reservation and finalize booking
+      // 7. Return complete booking confirmation with timeline
+      const result = await bookingsAPI.createEnhanced(bookingRequest);
+      console.log('Enhanced booking service response:', result);
 
       // Check if booking was successful
-      if (result && (result.success !== false)) {
-        // Booking Service has:
-        // 1. Created a pending booking record
-        // 2. Used adapter layer to check availability with service
-        // 3. Temporarily reserved the service  
-        // 4. Processed payment via Payment Service adapter
-        // 5. Updated booking status to confirmed
-        // 6. Finalized reservation in the service
-        // 7. Returned booking confirmation
+      if (result && result.success && result.data) {
+        // Enhanced Booking Service has completed the full flow:
+        // 1. Created pending booking record with validation
+        // 2. Checked availability via Accommodation Adapter
+        // 3. Created temporary reservation (room hold)
+        // 4. Processed payment via Payment Adapter
+        // 5. Confirmed reservation and updated booking status
+        // 6. Finalized booking with confirmation number
+        // 7. Returned complete booking timeline and details
 
         // Clear the booking data after successful payment
         localStorage.removeItem('directBookingData');
         
-        // Extract booking data from response (handle different response structures)
-        const bookingData = result.data || result;
+        // Extract enhanced booking data from response
+        const bookingDetails = result.data;
         
-        // Store booking confirmation for reference
+        // Store enhanced booking confirmation for reference
         localStorage.setItem('latestBooking', JSON.stringify({
-          bookingId: bookingData.bookingId,
-          reservationId: bookingData.reservationId, 
-          confirmationNumber: bookingData.confirmationNumber,
+          bookingId: bookingDetails.bookingId,
+          confirmationNumber: bookingDetails.confirmationNumber,
+          reservationId: bookingDetails.reservationDetails?.reservationId,
+          transactionId: bookingDetails.paymentDetails?.transactionId,
+          status: bookingDetails.status,
+          serviceDetails: bookingDetails.serviceDetails,
+          bookingTimeline: bookingDetails.bookingTimeline,
           timestamp: new Date().toISOString()
         }));
         
@@ -217,29 +220,32 @@ const IndividualBookingPayment = () => {
           navigate('/user/mybookings', { 
             state: { 
               paymentSuccess: true,
-              bookingId: bookingData.bookingId,
-              confirmationNumber: bookingData.confirmationNumber,
-              message: 'Your booking has been confirmed successfully!'
+              bookingId: bookingDetails.bookingId,
+              confirmationNumber: bookingDetails.confirmationNumber,
+              transactionId: bookingDetails.paymentDetails?.transactionId,
+              message: 'Your booking has been confirmed successfully! Reservation details have been sent to your email.'
             }
           });
         }, 2000);
         
       } else {
-        throw new Error(result.message || 'Booking confirmation not received');
+        throw new Error(result.message || 'Enhanced booking confirmation not received');
       }
       
     } catch (error) {
       console.error('Booking/Payment failed:', error);
       
       // Show appropriate error message based on error type
-      let errorMessage = 'Booking failed. Please try again.';
+      let errorMessage = 'Enhanced booking failed. Please try again.';
       if (error.message.includes('log in') || error.message.includes('Authentication')) {
         errorMessage = 'Please log in to continue with your booking.';
         setTimeout(() => navigate('/auth/login'), 2000);
-      } else if (error.message.includes('available') || error.message.includes('availability')) {
-        errorMessage = 'Sorry, this service is no longer available for the selected dates.';
+      } else if (error.message.includes('not available') || error.message.includes('availability')) {
+        errorMessage = 'Sorry, this service is no longer available for the selected dates. Please try different dates.';
       } else if (error.message.includes('payment') || error.message.includes('Payment')) {
         errorMessage = 'Payment processing failed. Please check your card details and try again.';
+      } else if (error.message.includes('service is currently unavailable')) {
+        errorMessage = 'One or more booking services are temporarily unavailable. Please try again later.';
       } else if (error.message) {
         errorMessage = error.message;
       }
