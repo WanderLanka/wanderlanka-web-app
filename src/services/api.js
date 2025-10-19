@@ -149,13 +149,46 @@ export const testimonialsAPI = {
 
 // Bookings endpoints  
 export const bookingsAPI = {
-  // Create new booking
+  // Create new booking (original endpoint)
   create: async (bookingData) => {
     try {
       const response = await api.post('/booking/addBooking', bookingData);
       return response.data;
     } catch (error) {
       console.error('Create booking failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Create enhanced booking with complete flow
+  createEnhanced: async (bookingData) => {
+    try {
+      const response = await api.post('/booking/enhanced', bookingData);
+      return response.data;
+    } catch (error) {
+      console.error('Create enhanced booking failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get enhanced booking details
+  getEnhanced: async (bookingId) => {
+    try {
+      const response = await api.get(`/bookings/enhanced/${bookingId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get enhanced booking failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Cancel enhanced booking
+  cancelEnhanced: async (bookingId, reason) => {
+    try {
+      const response = await api.post(`/bookings/enhanced/${bookingId}/cancel`, { reason });
+      return response.data;
+    } catch (error) {
+      console.error('Cancel enhanced booking failed:', error.response?.data || error.message);
       throw error;
     }
   },
