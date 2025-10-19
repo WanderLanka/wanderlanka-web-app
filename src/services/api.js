@@ -152,7 +152,7 @@ export const bookingsAPI = {
   // Create new booking
   create: async (bookingData) => {
     try {
-      const response = await api.post('/bookings', bookingData);
+      const response = await api.post('/booking/addBooking', bookingData);
       return response.data;
     } catch (error) {
       console.error('Create booking failed:', error.response?.data || error.message);
