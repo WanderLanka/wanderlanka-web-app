@@ -43,6 +43,7 @@ const handleLogout = () => {
     { path: '/accommodation/hotels', label: 'My Hotels' },
     { path: '/accommodation/bookings', label: 'Bookings' },
     { path: '/accommodation/payments', label: 'Payments' },
+    { path: '/accommodation/complains/report', label: 'Report a Complain' },
     { path: '/accommodation/profile', label: 'Profile' }
   ];
 

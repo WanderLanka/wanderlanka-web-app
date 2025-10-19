@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import api from "../../services/axiosConfig.js";
 // import "../styles/AdminComplains.css"; // Converted to Tailwind CSS
 
 const AdminComplains = () => {
@@ -11,6 +12,11 @@ const AdminComplains = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [adminResponse, setAdminResponse] = useState("");
+  const [savingResponse, setSavingResponse] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [statusDraft, setStatusDraft] = useState('');
   
   // Filter states
   const [filterCategory, setFilterCategory] = useState("all"); // all, accommodation, transport, guide, platform
@@ -23,7 +29,7 @@ const AdminComplains = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
 
-  // Mock complaints data - replace with actual API call
+  // Mock complaints data - kept for fallback if API fails
   const mockComplaints = [
     {
       id: "COMP-001",
@@ -170,24 +176,72 @@ const AdminComplains = () => {
     }
   ];
 
-  // Simulate API call
+  // Fetch complaints from backend (accommodation + transport)
   useEffect(() => {
     const fetchComplaints = async () => {
       setLoading(true);
+      setError("");
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Parallel fetch from services via API gateway
+        const [accRes, transRes] = await Promise.all([
+          api.get('/accommodation/complaints'),
+          api.get('/transport/complaints')
+        ]);
+
+        const accData = Array.isArray(accRes?.data?.data) ? accRes.data.data : (Array.isArray(accRes?.data) ? accRes.data : []);
+        const transData = Array.isArray(transRes?.data?.data) ? transRes.data.data : (Array.isArray(transRes?.data) ? transRes.data : []);
+
+        const normalize = (doc) => ({
+          id: doc._id || doc.id,
+          providerType: doc.providerType,
+          topic: doc.topic,
+          category: doc.category,
+          complaint: doc.complaint,
+          userEmail: doc.userEmail,
+          userName: doc.userName,
+          submittedDate: doc.submittedDate,
+          status: doc.status,
+          priority: doc.priority,
+          photos: Array.isArray(doc.photos) ? doc.photos : [],
+          serviceProvider: doc.serviceProvider,
+          bookingReference: doc.bookingReference,
+          responseRequired: Boolean(doc.responseRequired),
+          response: doc.response,
+          resolution: doc.resolution,
+          createdBy: doc.createdBy,
+          createdAt: doc.createdAt,
+          updatedAt: doc.updatedAt,
+        });
+
+        const merged = [...accData, ...transData].map(normalize);
+
+        // If backend returns nothing, fallback to mock to avoid empty UI during dev
+        const dataToUse = merged.length > 0 ? merged : mockComplaints;
+
+        setComplaints(dataToUse);
+        setFilteredComplaints(dataToUse);
+      } catch (err) {
+        console.error('Failed to fetch complaints:', err);
+        setError("Failed to fetch complaints data. Please try again.");
         setComplaints(mockComplaints);
         setFilteredComplaints(mockComplaints);
-        setError("");
-      } catch (err) {
-        setError("Failed to fetch complaints data. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchComplaints();
+    // Determine if current user is admin
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        const roleRaw = u?.role;
+        const role = typeof roleRaw === 'string' ? roleRaw.toLowerCase() : '';
+        // Accept admin, superadmin, or Sysadmin casing
+        setIsAdmin(role === 'admin' || role === 'superadmin' || roleRaw === 'Sysadmin');
+      }
+    } catch {}
   }, []);
 
   // Filter complaints
@@ -314,11 +368,15 @@ const AdminComplains = () => {
   const handleComplaintClick = (complaint) => {
     setSelectedComplaint(complaint);
     setShowModal(true);
+    setAdminResponse(complaint.response || "");
+    setStatusDraft(complaint.status || 'new');
   };
 
   const closeModal = () => {
     setShowModal(false);
     setSelectedComplaint(null);
+    setAdminResponse("");
+    setStatusDraft('');
   };
 
   const handleImageClick = (image) => {
@@ -334,6 +392,74 @@ const AdminComplains = () => {
   const truncateText = (text, maxLength) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
+  };
+
+  const submitAdminResponse = async () => {
+    if (!selectedComplaint) return;
+    if (!adminResponse || !adminResponse.trim()) return;
+    if (!isAdmin) {
+      alert('Admin privileges required to respond. Please sign in as an admin.');
+      return;
+    }
+    try {
+      setSavingResponse(true);
+      const serviceBase = selectedComplaint.providerType === 'transport' ? '/transport' : '/accommodation';
+      const url = `${serviceBase}/complaints/${selectedComplaint.id}/response`;
+      await api.patch(url, { response: adminResponse.trim() });
+
+      // Update local state
+      setComplaints((prev) => prev.map((c) => (
+        c.id === selectedComplaint.id ? { ...c, response: adminResponse.trim(), status: c.status === 'new' ? 'investigating' : c.status } : c
+      )));
+      setFilteredComplaints((prev) => prev.map((c) => (
+        c.id === selectedComplaint.id ? { ...c, response: adminResponse.trim(), status: c.status === 'new' ? 'investigating' : c.status } : c
+      )));
+      setSelectedComplaint((prev) => prev ? { ...prev, response: adminResponse.trim(), status: prev.status === 'new' ? 'investigating' : prev.status } : prev);
+    } catch (e) {
+      console.error('Failed to submit admin response', e);
+      if (e?.response?.status === 403) {
+        alert('Forbidden: Admin privileges required. Please sign in as an admin.');
+      } else if (e?.response?.status === 401) {
+        alert('Unauthorized: Please sign in again.');
+      } else {
+        alert('Failed to submit response. Please try again.');
+      }
+    } finally {
+      setSavingResponse(false);
+    }
+  };
+
+  const submitStatusUpdate = async () => {
+    if (!selectedComplaint) return;
+    if (!isAdmin) {
+      alert('Admin privileges required to update status.');
+      return;
+    }
+    if (!statusDraft) return;
+    try {
+      setUpdatingStatus(true);
+      const serviceBase = selectedComplaint.providerType === 'transport' ? '/transport' : '/accommodation';
+      const url = `${serviceBase}/complaints/${selectedComplaint.id}/status`;
+      await api.patch(url, { status: statusDraft });
+      setComplaints((prev) => prev.map((c) => (
+        c.id === selectedComplaint.id ? { ...c, status: statusDraft } : c
+      )));
+      setFilteredComplaints((prev) => prev.map((c) => (
+        c.id === selectedComplaint.id ? { ...c, status: statusDraft } : c
+      )));
+      setSelectedComplaint((prev) => prev ? { ...prev, status: statusDraft } : prev);
+    } catch (e) {
+      console.error('Failed to update status', e);
+      if (e?.response?.status === 403) {
+        alert('Forbidden: Admin privileges required.');
+      } else if (e?.response?.status === 401) {
+        alert('Unauthorized: Please sign in again.');
+      } else {
+        alert('Failed to update status. Please try again.');
+      }
+    } finally {
+      setUpdatingStatus(false);
+    }
   };
 
   if (loading) {
@@ -606,7 +732,7 @@ const AdminComplains = () => {
         )}
       </div>
 
-      {/* Complaint Details Modal */}
+      {/* Admin privileges required to respond. Modal */}
       {showModal && selectedComplaint && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -633,9 +759,29 @@ const AdminComplains = () => {
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Status:</span>
-                      <span className={getStatusBadge(selectedComplaint.status)}>
-                        {selectedComplaint.status.charAt(0).toUpperCase() + selectedComplaint.status.slice(1)}
-                      </span>
+                      {isAdmin ? (
+                        <div className="flex items-center gap-2">
+                          <select
+                            className="filter-select"
+                            value={statusDraft}
+                            onChange={(e) => setStatusDraft(e.target.value)}
+                          >
+                            <option value="investigating">Investigating</option>
+                            <option value="resolved">Completed</option>
+                          </select>
+                          <button
+                            className={`pagination-btn ${updatingStatus ? 'opacity-60 cursor-not-allowed' : ''}`}
+                            disabled={updatingStatus || statusDraft === selectedComplaint.status}
+                            onClick={submitStatusUpdate}
+                          >
+                            {updatingStatus ? 'Saving...' : 'Update'}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className={getStatusBadge(selectedComplaint.status)}>
+                          {selectedComplaint.status.charAt(0).toUpperCase() + selectedComplaint.status.slice(1)}
+                        </span>
+                      )}
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Priority:</span>
@@ -706,6 +852,39 @@ const AdminComplains = () => {
                     <p className="resolution-text">{selectedComplaint.resolution}</p>
                   </div>
                 )}
+
+              {/* Admin Response Input (only if response required) */}
+              {selectedComplaint.responseRequired && (
+                <div className="details-section">
+                  <h3 className="section-title">Admin Response</h3>
+                  <div className="space-y-3">
+                    <textarea
+                      rows={4}
+                      value={adminResponse}
+                      onChange={(e) => setAdminResponse(e.target.value)}
+                      placeholder="Write your response to the traveler..."
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <div className="flex items-center gap-3">
+                      <button
+                        disabled={!isAdmin || savingResponse || !adminResponse.trim()}
+                        onClick={submitAdminResponse}
+                        className={`inline-flex items-center px-4 py-2 rounded-lg text-white ${(!isAdmin || savingResponse || !adminResponse.trim()) ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+                      >
+                        {savingResponse ? 'Saving...' : (selectedComplaint.response ? 'Update Response' : 'Send Response')}
+                      </button>
+                      {!isAdmin && (
+                        <span className="text-red-600 text-sm">Sysadmin privileges required to send a response.</span>
+                      )}
+                      {selectedComplaint.response && (
+                        <span className="text-slate-600 text-sm">Last response saved.</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              
               </div>
             </div>
           </div>

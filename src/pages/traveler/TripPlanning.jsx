@@ -13,7 +13,6 @@ import {
   Plus,
   Filter,
   Grid,
-  List,
   ChevronLeft,
   ChevronRight,
   Maximize2,
@@ -32,7 +31,7 @@ import { accommodationAPI, transportationAPI, tourGuideAPI } from '../../service
 const TripPlanning = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { getTotalItemsCount } = useTripPlanning();
+  const { getTotalItemsCount, addToTripPlanning } = useTripPlanning();
   
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
@@ -81,401 +80,103 @@ const TripPlanning = () => {
     }
   ];
 
-  const mockAccommodations = [
-    {
-      id: 1,
-      name: "Heritance Kandalama",
-      location: "Dambulla",
-      type: "Luxury Resort",
-      rating: 4.9,
-      image: "https://images.unsplash.com/photo-1566650576880-6740b03eaad1?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 35,000 / night",
-      amenities: ["Pool", "Spa", "Restaurant", "WiFi"],
-      description: "Eco-luxury resort designed by Geoffrey Bawa, blending with nature."
-    },
-    {
-      id: 2,
-      name: "Cinnamon Lodge Habarana",
-      location: "Habarana",
-      type: "Nature Resort",
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1525849306000-cc26ceb5c1d7?q=80&w=735&auto=format&fit=crop",
-      price: "LKR 28,000 / night",
-      amenities: ["Pool", "Restaurant", "Wildlife Tours", "WiFi"],
-      description: "Rustic luxury in the heart of nature with wildlife experiences."
-    }
-  ];
-
-  const mockTransport = [
-    {
-      id: 1,
-      name: "Air-Conditioned Car",
-      type: "Private Vehicle",
-      capacity: "4 passengers",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 8,000 / day",
-      features: ["AC", "Driver", "Fuel Included"],
-      description: "Comfortable private car with experienced driver for sightseeing."
-    },
-    {
-      id: 2,
-      name: "Tuk Tuk Adventure",
-      type: "Three Wheeler",
-      capacity: "3 passengers",
-      rating: 4.6,
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 3,500 / day",
-      features: ["Local Experience", "Driver", "Flexible Route"],
-      description: "Authentic local transport experience with friendly drivers."
-    }
-  ];
-
-  const mockGuides = [
-    {
-      id: 1,
-      name: "Rohan Silva",
-      specialization: "Cultural Guide",
-      experience: "8 years",
-      rating: 4.9,
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=687&auto=format&fit=crop",
-      price: "LKR 12,000 / day",
-      languages: ["English", "Sinhala", "Tamil"],
-      description: "Expert in cultural sites, traditional crafts, and local history."
-    },
-    {
-      id: 2,
-      name: "Anura Perera",
-      specialization: "Wildlife Guide",
-      experience: "10 years",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 15,000 / day",
-      languages: ["English", "Sinhala"],
-      description: "Specialist in wildlife photography and safari tours."
-    }
-  ];
-
   // Helper function to render activity cards
   const renderActivityCard = (item, type) => (
     <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="relative h-32">
-        <img 
-          src={item.image} 
-          alt={item.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-2 right-2">
-          <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
-            <Star className="h-3 w-3 text-yellow-500 mr-1" />
-            <span className="text-xs font-medium">{item.rating}</span>
+      {type === 'places' ? (
+        // Simplified places card - only name and button
+        <>
+          <div className="p-4">
+            <h5 className="font-medium text-gray-900 text-lg mb-3 text-center">{item.name}</h5>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="primary" 
+                className="w-full text-sm py-2"
+                onClick={() => handleAddToDay(item)}
+              >
+                Add
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
-      
-      <div className="p-3">
-        <h5 className="font-medium text-gray-900 text-sm mb-1">{item.name}</h5>
-        <p className="text-xs text-gray-600 mb-2">
-          {type === 'places' && item.location}
-          {type === 'accommodations' && item.location}
-          {type === 'transport' && item.type}
-          {type === 'guides' && item.specialization}
-        </p>
-        
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-emerald-600">{item.price}</span>
-          {type === 'places' && (
-            <span className="text-xs text-gray-500">{item.duration}</span>
-          )}
-          {type === 'transport' && (
-            <span className="text-xs text-gray-500">{item.capacity}</span>
-          )}
-          {type === 'guides' && (
-            <span className="text-xs text-gray-500">{item.experience}</span>
-          )}
-        </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            size="xs" 
-            variant="outline" 
-            className="flex-1 text-xs"
-            onClick={() => handleViewDetails(item, type)}
-          >
-            View Details
-          </Button>
-          <Button 
-            size="xs" 
-            variant="primary" 
-            className="flex-1 text-xs"
-            onClick={() => handleAddToDay(item)}
-          >
-            Add to Day
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Handler functions
-  const handleViewDetails = (item, type) => {
-    setSelectedDetailItem({ ...item, type });
-    setShowDetailModal(true);
-  };
-
-  const handleAddToDay = (item) => {
-    // TODO: Implement add to day functionality
-    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
-    setShowToast(true);
-    setHasUnsavedProgress(true);
-  };
-  
-  // New state for tab structure
-  const [activeTab, setActiveTab] = useState('places');
-  const [accommodations, setAccommodations] = useState([]);
-  const [transportation, setTransportation] = useState([]);
-  const [tourGuides, setTourGuides] = useState([]);
-  const [loadingAccommodations, setLoadingAccommodations] = useState(false);
-  const [loadingTransportation, setLoadingTransportation] = useState(false);
-  const [loadingTourGuides, setLoadingTourGuides] = useState(false);
-
-  // Tab configuration
-  const _tabs = [
-    { id: 'places', label: 'Places', icon: MapPin, color: 'emerald' },
-    { id: 'accommodations', label: 'Accommodations', icon: Hotel, color: 'blue' },
-    { id: 'guides', label: 'Tour Guides', icon: UserCheck, color: 'orange' },
-    { id: 'transportation', label: 'Transportation', icon: Car, color: 'purple' }
-  ];
-
-  // Mock data for available activities
-  const mockPlaces = [
-    {
-      id: 1,
-      name: "Sigiriya Rock Fortress",
-      location: "Sigiriya",
-      type: "Historical Site",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1580910527739-556eb89f9d65?q=80&w=1074&auto=format&fit=crop",
-      price: "LKR 2,500",
-      duration: "2-3 hours",
-      description: "Ancient rock fortress and palace ruins with stunning views from the top of the rock."
-    },
-    {
-      id: 2,
-      name: "Temple of the Tooth",
-      location: "Kandy",
-      type: "Religious Site",
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1642498041677-d26b9dfc5e61?q=80&w=688&auto=format&fit=crop",
-      price: "LKR 1,500",
-      duration: "1-2 hours",
-      description: "Sacred Buddhist temple housing the tooth relic of Buddha, a UNESCO World Heritage site."
-    },
-    {
-      id: 3,
-      name: "Ella Nine Arch Bridge",
-      location: "Ella",
-      type: "Scenic Spot",
-      rating: 4.5,
-      image: "https://images.unsplash.com/photo-1586500036706-41963de24d8b?q=80&w=1172&auto=format&fit=crop",
-      price: "Free",
-      duration: "1 hour",
-      description: "Iconic railway bridge in the hill country offering spectacular views."
-    }
-  ];
-
-  const mockAccommodations = [
-    {
-      id: 1,
-      name: "Heritance Kandalama",
-      location: "Dambulla",
-      type: "Luxury Resort",
-      rating: 4.9,
-      image: "https://images.unsplash.com/photo-1566650576880-6740b03eaad1?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 35,000 / night",
-      amenities: ["Pool", "Spa", "Restaurant", "WiFi"],
-      description: "Eco-luxury resort designed by Geoffrey Bawa, blending with nature."
-    },
-    {
-      id: 2,
-      name: "Cinnamon Lodge Habarana",
-      location: "Habarana",
-      type: "Nature Resort",
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1525849306000-cc26ceb5c1d7?q=80&w=735&auto=format&fit=crop",
-      price: "LKR 28,000 / night",
-      amenities: ["Pool", "Restaurant", "Wildlife Tours", "WiFi"],
-      description: "Rustic luxury in the heart of nature with wildlife experiences."
-    }
-  ];
-
-  const mockTransport = [
-    {
-      id: 1,
-      name: "Air-Conditioned Car",
-      type: "Private Vehicle",
-      capacity: "4 passengers",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 8,000 / day",
-      features: ["AC", "Driver", "Fuel Included"],
-      description: "Comfortable private car with experienced driver for sightseeing."
-    },
-    {
-      id: 2,
-      name: "Tuk Tuk Adventure",
-      type: "Three Wheeler",
-      capacity: "3 passengers",
-      rating: 4.6,
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 3,500 / day",
-      features: ["Local Experience", "Driver", "Flexible Route"],
-      description: "Authentic local transport experience with friendly drivers."
-    }
-  ];
-
-  const mockGuides = [
-    {
-      id: 1,
-      name: "Rohan Silva",
-      specialization: "Cultural Guide",
-      experience: "8 years",
-      rating: 4.9,
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=687&auto=format&fit=crop",
-      price: "LKR 12,000 / day",
-      languages: ["English", "Sinhala", "Tamil"],
-      description: "Expert in cultural sites, traditional crafts, and local history."
-    },
-    {
-      id: 2,
-      name: "Anura Perera",
-      specialization: "Wildlife Guide",
-      experience: "10 years",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=1170&auto=format&fit=crop",
-      price: "LKR 15,000 / day",
-      languages: ["English", "Sinhala"],
-      description: "Specialist in wildlife photography and safari tours."
-    }
-  ];
-
-  // Helper function to render activity cards
-  const renderActivityCard = (item, type) => (
-    <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="relative h-24">
-        <img 
-          src={item.image} 
-          alt={item.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-1 right-1">
-          <div className="bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-full flex items-center">
-            <Star className="h-2.5 w-2.5 text-yellow-500 mr-0.5" />
-            <span className="text-xs font-medium">{item.rating}</span>
+        </>
+      ) : (
+        // Full card for other services
+        <>
+          <div className="relative h-32">
+            <img 
+              src={item.image} 
+              alt={item.name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute top-2 right-2">
+              <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center">
+                <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                <span className="text-xs font-medium">{item.rating}</span>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      
-      <div className="p-2">
-        <h5 className="font-medium text-gray-900 text-xs mb-1 line-clamp-1">{item.name}</h5>
-        
-        {/* Only show name for places, show other details for other types */}
-        {type !== 'places' && (
-          <>
-            <p className="text-xs text-gray-600 mb-1.5 line-clamp-1">
+          
+          <div className="p-3">
+            <h5 className="font-medium text-gray-900 text-sm mb-1">{item.name}</h5>
+            <p className="text-xs text-gray-600 mb-2">
               {type === 'accommodations' && item.location}
               {type === 'transport' && item.type}
               {type === 'guides' && item.specialization}
             </p>
             
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-emerald-600 truncate">{item.price}</span>
+              <span className="text-sm font-semibold text-emerald-600">{item.price}</span>
               {type === 'transport' && (
-                <span className="text-xs text-gray-500 ml-1">{item.capacity}</span>
+                <span className="text-xs text-gray-500">{item.capacity}</span>
               )}
               {type === 'guides' && (
-                <span className="text-xs text-gray-500 ml-1">{item.experience}</span>
+                <span className="text-xs text-gray-500">{item.experience}</span>
               )}
             </div>
-          </>
-        )}
-        
-        {/* Different button layout based on type */}
-        {type === 'places' ? (
-          // Places: + button to add to itinerary
-          <Button 
-            size="xs" 
-            variant="primary" 
-            className="w-full text-xs py-1 px-2 h-7 bg-slate-800 hover:bg-slate-900 text-white border-slate-800 font-medium shadow-sm"
-            onClick={() => handleAddToDay(item)}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add
-          </Button>
-        ) : (
-          // Other types: Two buttons - Add to Summary and View Details
-          <div className="flex gap-1">
-            <Button 
-              size="xs" 
-              variant="primary" 
-              className="flex-1 text-xs py-1 px-2 h-7 bg-slate-800 hover:bg-slate-900 text-white border-slate-800 font-medium shadow-sm transition-all duration-200 hover:scale-105"
-              onClick={() => {
-                switch (type) {
-                  case 'accommodations':
-                    handleAddAccommodation(item);
-                    break;
-                  case 'transport':
-                    handleAddTransport(item);
-                    break;
-                  case 'guides':
-                    handleAddGuide(item);
-                    break;
-                  default:
-                    break;
-                }
-              }}
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add
-            </Button>
-            <Button 
-              size="xs" 
-              variant="outline" 
-              className="flex-1 text-xs py-1 px-2 h-7 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-              onClick={() => handleNavigateToDetails(item, type)}
-            >
-              Details
-            </Button>
+            
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="w-full text-sm py-2"
+                onClick={() => handleViewDetails(item, type)}
+              >
+                View Details
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 
   // Handler functions
-  const handleNavigateToDetails = (item, type) => {
+  const handleViewDetails = (item, type) => {
     // Navigate to specific details pages based on type
     switch (type) {
       case 'accommodations':
-        navigate(`/user/accommodations/${item.id}`, { 
+        navigate(`/user/accommodations/${item.id || item._id}`, { 
           state: { 
             selectedItem: item,
             returnTo: '/user/trip-planning',
             tripData: tripData,
             selectedDate: selectedDateIndex,
+            selectedDateValue: tripDays[selectedDateIndex]?.toISOString().split('T')[0], // Actual date string
             fromTripPlanning: true,
-            showAddToItinerary: true,
+            showAddToItinerary: true, // This will change "Go to Payment" to "Add to Itinerary"
             source: 'trip-planning'
           } 
         });
         break;
       case 'transport':
-        navigate(`/user/transportation/${item.id}`, { 
+        navigate(`/user/transportation/${item.id || item._id}`, { 
           state: { 
             selectedItem: item,
             returnTo: '/user/trip-planning',
             tripData: tripData,
             selectedDate: selectedDateIndex,
+            selectedDateValue: tripDays[selectedDateIndex]?.toISOString().split('T')[0], // Actual date string
             fromTripPlanning: true,
             showAddToItinerary: true,
             source: 'trip-planning'
@@ -483,12 +184,13 @@ const TripPlanning = () => {
         });
         break;
       case 'guides':
-        navigate(`/user/tour-guides/${item.id}`, { 
+        navigate(`/user/tour-guides/${item.id || item._id}`, { 
           state: { 
             selectedItem: item,
             returnTo: '/user/trip-planning',
             tripData: tripData,
             selectedDate: selectedDateIndex,
+            selectedDateValue: tripDays[selectedDateIndex]?.toISOString().split('T')[0], // Actual date string
             fromTripPlanning: true,
             showAddToItinerary: true,
             source: 'trip-planning'
@@ -502,6 +204,63 @@ const TripPlanning = () => {
     }
   };
 
+  const handleAddToDay = (item) => {
+    // Determine the type and prepare the booking object
+    let type;
+    let bookingData = {
+      ...item,
+      selectedDate: tripDays[selectedDateIndex]?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+      quantity: 1,
+      addedFromPlanning: true
+    };
+
+    // Determine type based on current active tab or item properties
+    if (activeTab === 'places') {
+      type = 'destinations';
+    } else if (activeTab === 'accommodations') {
+      type = 'accommodations';
+    } else if (activeTab === 'guides') {
+      type = 'guides';
+    } else if (activeTab === 'transportation') {
+      type = 'transportation';
+    } else {
+      // Fallback: try to determine from item properties
+      if (item.type) {
+        type = item.type === 'guide' ? 'guides' : item.type + 's';
+      } else {
+        type = 'destinations'; // default
+      }
+    }
+
+    // Add to trip planning
+    addToTripPlanning(bookingData, type);
+    
+    // Show success message
+    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
+    setShowToast(true);
+    setHasUnsavedProgress(true);
+  };
+  
+  // New state for tab structure
+  const [activeTab, setActiveTab] = useState('places');
+  const [accommodations, setAccommodations] = useState([]);
+  const [transportation, setTransportation] = useState([]);
+  const [tourGuides, setTourGuides] = useState([]);
+  const [loadingAccommodations, setLoadingAccommodations] = useState(false);
+  const [loadingTransportation, setLoadingTransportation] = useState(false);
+  const [loadingTourGuides, setLoadingTourGuides] = useState(false);
+  const [errorAccommodations, setErrorAccommodations] = useState(null);
+  const [errorTransportation, setErrorTransportation] = useState(null);
+  const [errorTourGuides, setErrorTourGuides] = useState(null);
+
+  // Tab configuration
+  const _tabs = [
+    { id: 'places', label: 'Places', icon: MapPin, color: 'emerald' },
+    { id: 'accommodations', label: 'Accommodations', icon: Hotel, color: 'blue' },
+    { id: 'guides', label: 'Tour Guides', icon: UserCheck, color: 'orange' },
+    { id: 'transportation', label: 'Transportation', icon: Car, color: 'purple' }
+  ];
+
   // Load initial data when component mounts
   useEffect(() => {
     // Places will use Google Maps API, so no initial fetch needed
@@ -513,12 +272,13 @@ const TripPlanning = () => {
     
     try {
       setLoadingAccommodations(true);
+      setErrorAccommodations(null);
       const response = await accommodationAPI.getAll();
       setAccommodations(response || []);
     } catch (error) {
       console.error('Error fetching accommodations:', error);
-      setToastMessage('Failed to load accommodations');
-      setShowToast(true);
+      setErrorAccommodations('Failed to load accommodations. Please try again.');
+      setAccommodations([]);
     } finally {
       setLoadingAccommodations(false);
     }
@@ -529,12 +289,13 @@ const TripPlanning = () => {
     
     try {
       setLoadingTransportation(true);
+      setErrorTransportation(null);
       const response = await transportationAPI.getAll();
       setTransportation(response || []);
     } catch (error) {
       console.error('Error fetching transportation:', error);
-      setToastMessage('Failed to load transportation');
-      setShowToast(true);
+      setErrorTransportation('Failed to load transportation. Please try again.');
+      setTransportation([]);
     } finally {
       setLoadingTransportation(false);
     }
@@ -545,12 +306,13 @@ const TripPlanning = () => {
     
     try {
       setLoadingTourGuides(true);
+      setErrorTourGuides(null);
       const response = await tourGuideAPI.getAll();
       setTourGuides(response || []);
     } catch (error) {
       console.error('Error fetching tour guides:', error);
-      setToastMessage('Failed to load tour guides');
-      setShowToast(true);
+      setErrorTourGuides('Failed to load tour guides. Please try again.');
+      setTourGuides([]);
     } finally {
       setLoadingTourGuides(false);
     }
@@ -576,66 +338,6 @@ const TripPlanning = () => {
       default:
         break;
     }
-  };
-
-  const handleAddToDay = (item) => {
-    const placeData = {
-      ...item,
-      type: 'place',
-      selectedDay: selectedDateIndex + 1,
-      addedAt: new Date().toISOString()
-    };
-    
-    addToTripPlanning(placeData, 'destinations');
-    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
-    setShowToast(true);
-    setHasUnsavedProgress(true);
-  };
-
-  // Service handlers for adding to trip planning summary
-  const handleAddAccommodation = (accommodation) => {
-    const accommodationData = {
-      ...accommodation,
-      type: 'accommodation',
-      selectedDay: selectedDateIndex + 1,
-      quantity: 1,
-      totalPrice: parseFloat(accommodation.price?.replace(/[^\d]/g, '') || 0),
-      addedAt: new Date().toISOString()
-    };
-    
-    addToTripPlanning(accommodationData, 'accommodations');
-    setToastMessage(`${accommodation.name} added to trip summary`);
-    setShowToast(true);
-  };
-
-  const handleAddTransport = (transport) => {
-    const transportData = {
-      ...transport,
-      type: 'transport',
-      selectedDay: selectedDateIndex + 1,
-      quantity: 1,
-      totalPrice: parseFloat(transport.price?.replace(/[^\d]/g, '') || 0),
-      addedAt: new Date().toISOString()
-    };
-    
-    addToTripPlanning(transportData, 'transportation');
-    setToastMessage(`${transport.name} added to trip summary`);
-    setShowToast(true);
-  };
-
-  const handleAddGuide = (guide) => {
-    const guideData = {
-      ...guide,
-      type: 'guide',
-      selectedDay: selectedDateIndex + 1,
-      quantity: 1,
-      totalPrice: parseFloat(guide.price?.replace(/[^\d]/g, '') || 0),
-      addedAt: new Date().toISOString()
-    };
-    
-    addToTripPlanning(guideData, 'guides');
-    setToastMessage(`${guide.name} added to trip summary`);
-    setShowToast(true);
   };
 
   // Get trip data from navigation state or default values
@@ -936,13 +638,35 @@ const TripPlanning = () => {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
                       <span className="ml-3 text-gray-600">Loading accommodations...</span>
                     </div>
-                  ) : (
+                  ) : errorAccommodations ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <div className="text-red-500 mb-4">
+                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-600 text-center mb-4">{errorAccommodations}</p>
+                      <button 
+                        onClick={() => {
+                          setAccommodations([]);
+                          fetchAccommodations();
+                        }}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  ) : accommodations.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {(accommodations.length > 0 ? accommodations : mockAccommodations).map(accommodation => (
+                      {accommodations.map(accommodation => (
                         <div key={accommodation.id || accommodation._id}>
                           {renderActivityCard(accommodation, 'accommodations')}
                         </div>
                       ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-12">
+                      <p className="text-gray-500">No accommodations available.</p>
                     </div>
                   )}
                 </div>
@@ -959,13 +683,35 @@ const TripPlanning = () => {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
                       <span className="ml-3 text-gray-600">Loading transportation...</span>
                     </div>
-                  ) : (
+                  ) : errorTransportation ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <div className="text-red-500 mb-4">
+                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-600 text-center mb-4">{errorTransportation}</p>
+                      <button 
+                        onClick={() => {
+                          setTransportation([]);
+                          fetchTransportation();
+                        }}
+                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  ) : transportation.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {(transportation.length > 0 ? transportation : mockTransport).map(transport => (
+                      {transportation.map(transport => (
                         <div key={transport.id || transport._id}>
                           {renderActivityCard(transport, 'transport')}
                         </div>
                       ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-12">
+                      <p className="text-gray-500">No transportation options available.</p>
                     </div>
                   )}
                 </div>
@@ -982,13 +728,35 @@ const TripPlanning = () => {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
                       <span className="ml-3 text-gray-600">Loading tour guides...</span>
                     </div>
-                  ) : (
+                  ) : errorTourGuides ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <div className="text-red-500 mb-4">
+                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-600 text-center mb-4">{errorTourGuides}</p>
+                      <button 
+                        onClick={() => {
+                          setTourGuides([]);
+                          fetchTourGuides();
+                        }}
+                        className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  ) : tourGuides.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {(tourGuides.length > 0 ? tourGuides : mockGuides).map(guide => (
+                      {tourGuides.map(guide => (
                         <div key={guide.id || guide._id}>
                           {renderActivityCard(guide, 'guides')}
                         </div>
                       ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-12">
+                      <p className="text-gray-500">No tour guides available.</p>
                     </div>
                   )}
                 </div>
@@ -1232,6 +1000,8 @@ const TripPlanning = () => {
           </div>
         )}
       </Modal>
+
+
     </div>
   );
 };

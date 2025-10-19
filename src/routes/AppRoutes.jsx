@@ -7,12 +7,14 @@ import {
   NotFound,
   TransportDashboard,
   VehiclesPage,
+  TransportReportComplain,
   AccommodationDashboard,
   AccommodationPayments,
   HotelsPage,
   Rooms,
   Bookings,
   AddNewAccommodation,
+  AccommodationReportComplain,
   AdminDashboard,
   AdminPayment,
   AdminRequests,
@@ -54,6 +56,7 @@ const AppRoutes = () => {
           <Route index element={<TransportDashboard />} />
           <Route path="vehicles" element={<VehiclesPage />} />
           <Route path="add-new" element={<AddNewTransport />} />
+          <Route path="complains/report" element={<TransportReportComplain />} />
         </Route>
       </Route>
 
@@ -66,6 +69,7 @@ const AppRoutes = () => {
           <Route path="hotels/:hotelid" element={<Rooms />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="payments" element={<AccommodationPayments />} />
+          <Route path="complains/report" element={<AccommodationReportComplain />} />
         </Route>
       </Route>
 
