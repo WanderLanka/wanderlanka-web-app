@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -59,6 +59,28 @@ const IndividualBookingPayment = () => {
           setBookingData(parsedData[0]); // Single item booking
         }
       }
+
+      // Load user data from localStorage to prefill form
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const parsedUserData = JSON.parse(userData);
+        setPaymentData(prev => ({
+          ...prev,
+          contactInfo: {
+            ...prev.contactInfo,
+            email: parsedUserData.email || '',
+            phone: parsedUserData.phone || ''
+          },
+          billingAddress: {
+            ...prev.billingAddress,
+            street: parsedUserData.address?.street || '',
+            city: parsedUserData.address?.city || '',
+            state: parsedUserData.address?.state || '',
+            zipCode: parsedUserData.address?.zipCode || '',
+            country: parsedUserData.address?.country || 'Sri Lanka'
+          }
+        }));
+      }
     } catch (error) {
       console.error('Error loading booking data:', error);
     } finally {
@@ -84,10 +106,13 @@ const IndividualBookingPayment = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount, currency = 'USD') => {
+    if (currency === 'LKR') {
+      return `LKR ${(amount || 0).toLocaleString()}`;
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: currency
     }).format(amount || 0);
   };
 
@@ -381,11 +406,34 @@ const IndividualBookingPayment = () => {
                   )}
                   
                   {bookingData.type === 'transportation' && (
-                    <div className="flex items-center text-sm">
-                      <Users className="w-4 h-4 mr-2 text-gray-400" />
-                      <span className="text-gray-600">Passengers:</span>
-                      <span className="ml-2 font-medium">{bookingData.passengers}</span>
-                    </div>
+                    <>
+                      <div className="flex items-center text-sm">
+                        <Users className="w-4 h-4 mr-2 text-gray-400" />
+                        <span className="text-gray-600">Passengers:</span>
+                        <span className="ml-2 font-medium">{bookingData.passengers}</span>
+                      </div>
+                      {bookingData.pickupLocation && (
+                        <div className="flex items-center text-sm">
+                          <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                          <span className="text-gray-600">Pickup:</span>
+                          <span className="ml-2 font-medium">{bookingData.pickupLocation}</span>
+                        </div>
+                      )}
+                      {bookingData.dropoffLocation && (
+                        <div className="flex items-center text-sm">
+                          <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                          <span className="text-gray-600">Drop-off:</span>
+                          <span className="ml-2 font-medium">{bookingData.dropoffLocation}</span>
+                        </div>
+                      )}
+                      {bookingData.estimatedDistance && (
+                        <div className="flex items-center text-sm">
+                          <Car className="w-4 h-4 mr-2 text-gray-400" />
+                          <span className="text-gray-600">Distance:</span>
+                          <span className="ml-2 font-medium">{bookingData.estimatedDistance} km</span>
+                        </div>
+                      )}
+                    </>
                   )}
                   
                   {bookingData.type === 'guide' && (
@@ -415,12 +463,12 @@ const IndividualBookingPayment = () => {
                   {bookingData.type === 'transportation' && (
                     <>
                       <div className="flex justify-between text-sm">
-                        <span>${bookingData.pricePerDay}/day × {bookingData.days} days</span>
-                        <span>${(bookingData.pricePerDay * bookingData.days).toFixed(2)}</span>
+                        <span>LKR {bookingData.pricePerKm}/km × {bookingData.estimatedDistance} km × {bookingData.days} day(s)</span>
+                        <span>LKR {((bookingData.pricePerKm || 0) * (bookingData.estimatedDistance || 0) * bookingData.days).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Service fee</span>
-                        <span>$15.00</span>
+                        <span>LKR 500</span>
                       </div>
                     </>
                   )}
@@ -440,7 +488,7 @@ const IndividualBookingPayment = () => {
                   
                   <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200">
                     <span>Total</span>
-                    <span className="text-emerald-600">{formatCurrency(bookingData.totalPrice)}</span>
+                    <span className="text-emerald-600">{formatCurrency(bookingData.totalPrice, bookingData.type === 'transportation' ? 'LKR' : 'USD')}</span>
                   </div>
                 </div>
               </div>
