@@ -37,7 +37,13 @@ const HotelsPage = () => {
     phone: '',
     checkInTime: '',
     checkOutTime: '',
-    status: 'active'
+    status: 'active',
+    // roomTypes (luxury/deluxe/normal)
+    roomTypes: [
+      { type: 'luxury', pricePerNight: '', totalRooms: '', availableRooms: '' },
+      { type: 'deluxe', pricePerNight: '', totalRooms: '', availableRooms: '' },
+      { type: 'normal', pricePerNight: '', totalRooms: '', availableRooms: '' }
+    ]
   });
   
   const [formErrors, setFormErrors] = useState({});
@@ -124,6 +130,13 @@ const HotelsPage = () => {
     }
   };
 
+  const handleUpdateRoomTypeChange = (idx, field, value) => {
+    setUpdateFormData(prev => ({
+      ...prev,
+      roomTypes: prev.roomTypes.map((rt, i) => i === idx ? { ...rt, [field]: value } : rt)
+    }));
+  };
+
   // Form validation
   const validateForm = () => {
     const errors = {};
@@ -163,6 +176,19 @@ const HotelsPage = () => {
     } else if (!/^[0-9-+().\s]+$/.test(updateFormData.phone)) {
       errors.phone = 'Please enter a valid phone number';
     }
+
+    // Validate roomTypes numeric constraints
+    updateFormData.roomTypes.forEach((rt, idx) => {
+      if (rt.pricePerNight !== '' || rt.totalRooms !== '' || rt.availableRooms !== '') {
+        const price = parseFloat(rt.pricePerNight);
+        const total = parseInt(rt.totalRooms);
+        const avail = parseInt(rt.availableRooms);
+        if (isNaN(price) || price <= 0) errors[`room_${idx}_price`] = 'Enter valid price';
+        if (isNaN(total) || total < 0) errors[`room_${idx}_total`] = 'Enter valid total';
+        if (isNaN(avail) || avail < 0) errors[`room_${idx}_avail`] = 'Enter valid available';
+        if (!isNaN(total) && !isNaN(avail) && avail > total) errors[`room_${idx}_avail`] = 'Available cannot exceed total';
+      }
+    });
 
     setUpdateErrors(errors);
     return Object.keys(errors).length === 0;
@@ -216,7 +242,17 @@ const HotelsPage = () => {
         phone: hotel.phone,
         checkInTime: hotel.checkInTime,
         checkOutTime: hotel.checkOutTime,
-        status: hotel.status || 'active'
+        status: hotel.status || 'active',
+        roomTypes: Array.isArray(hotel.roomTypes) ? hotel.roomTypes.map(rt => ({
+          type: rt.type,
+          pricePerNight: String(rt.pricePerNight ?? ''),
+          totalRooms: String(rt.totalRooms ?? ''),
+          availableRooms: String(rt.availableRooms ?? '')
+        })) : [
+          { type: 'luxury', pricePerNight: '', totalRooms: '', availableRooms: '' },
+          { type: 'deluxe', pricePerNight: '', totalRooms: '', availableRooms: '' },
+          { type: 'normal', pricePerNight: '', totalRooms: '', availableRooms: '' }
+        ]
       });
       setShowUpdateModal(true);
     }
@@ -235,7 +271,15 @@ const HotelsPage = () => {
         phone: updateFormData.phone,
         checkInTime: updateFormData.checkInTime,
         checkOutTime: updateFormData.checkOutTime,
-        status: updateFormData.status
+        status: updateFormData.status,
+        roomTypes: updateFormData.roomTypes
+          .filter(rt => rt.pricePerNight !== '' || rt.totalRooms !== '' || rt.availableRooms !== '')
+          .map(rt => ({
+            type: rt.type,
+            pricePerNight: rt.pricePerNight,
+            totalRooms: rt.totalRooms,
+            availableRooms: rt.availableRooms
+          }))
       });
       // Re-fetch hotels to update the list
       await fetchHotels();
@@ -246,7 +290,12 @@ const HotelsPage = () => {
         phone: '',
         checkInTime: '',
         checkOutTime: '',
-        status: 'active'
+        status: 'active',
+        roomTypes: [
+          { type: 'luxury', pricePerNight: '', totalRooms: '', availableRooms: '' },
+          { type: 'deluxe', pricePerNight: '', totalRooms: '', availableRooms: '' },
+          { type: 'normal', pricePerNight: '', totalRooms: '', availableRooms: '' }
+        ]
       });
       setUpdateErrors({});
       setError('');
@@ -774,6 +823,55 @@ const HotelsPage = () => {
                   </div>
                 </div>
 
+                {/* Room Types Editing */}
+                <div className="md:col-span-2">
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">Room Types</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {updateFormData.roomTypes.map((rt, idx) => (
+                      <div key={rt.type} className="border rounded-lg p-4">
+                        <div className="mb-2 text-sm font-semibold uppercase text-slate-700">{rt.type}</div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Nightly Price</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={rt.pricePerNight}
+                          onChange={(e) => handleUpdateRoomTypeChange(idx, 'pricePerNight', e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-lg ${updateErrors[`room_${idx}_price`] ? 'border-red-500' : 'border-slate-300'}`}
+                          placeholder="e.g., 120"
+                        />
+                        {updateErrors[`room_${idx}_price`] && <p className="text-red-500 text-xs mt-1">{updateErrors[`room_${idx}_price`]}</p>}
+
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Total</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={rt.totalRooms}
+                              onChange={(e) => handleUpdateRoomTypeChange(idx, 'totalRooms', e.target.value)}
+                              className={`w-full px-3 py-2 border rounded-lg ${updateErrors[`room_${idx}_total`] ? 'border-red-500' : 'border-slate-300'}`}
+                              placeholder="e.g., 10"
+                            />
+                            {updateErrors[`room_${idx}_total`] && <p className="text-red-500 text-xs mt-1">{updateErrors[`room_${idx}_total`]}</p>}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Available</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={rt.availableRooms}
+                              onChange={(e) => handleUpdateRoomTypeChange(idx, 'availableRooms', e.target.value)}
+                              className={`w-full px-3 py-2 border rounded-lg ${updateErrors[`room_${idx}_avail`] ? 'border-red-500' : 'border-slate-300'}`}
+                              placeholder="e.g., 8"
+                            />
+                            {updateErrors[`room_${idx}_avail`] && <p className="text-red-500 text-xs mt-1">{updateErrors[`room_${idx}_avail`]}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 {/* Total Rooms */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Total Rooms *</label>
