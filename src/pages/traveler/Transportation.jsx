@@ -183,7 +183,7 @@ const Transportation = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredTransportation.map((transport) => (
                         <Card
-                            key={transport.id}
+                            key={transport._id || transport.id}
                             className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                             hover={true}
                             padding="none"
@@ -267,7 +267,7 @@ const Transportation = () => {
                                         <Button 
                                             variant="outline" 
                                             size="sm"
-                                            onClick={() => navigate(`/user/transportation/${transport.id}`)}
+                                            onClick={() => navigate(`/user/transportation/${transport._id || transport.id}`)}
                                         >
                                             Details
                                         </Button>

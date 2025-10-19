@@ -11,7 +11,8 @@ const api = axios.create({
 // Request interceptor to add token to headers
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    // Check for token in multiple possible keys
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     
     // Setting the header to identify the platform in the backend
     config.headers['x-platform'] = 'web';
@@ -23,15 +24,23 @@ api.interceptors.request.use(
       url: config.url,
       fullURL: `${config.baseURL}${config.url}`
     });
-    console.log('Token from localStorage:', token ? 'Found' : 'Not found');
+    
+    // Debug token availability
+    const authToken = localStorage.getItem('authToken');
+    const regularToken = localStorage.getItem('token');
+    console.log('Token availability:', {
+      authToken: authToken ? 'Found' : 'Not found',
+      token: regularToken ? 'Found' : 'Not found',
+      using: token ? 'authToken or token' : 'None'
+    });
     console.log('Request URL:', config.baseURL + config.url);
-    // console.log('X-Client-Type:', config.headers['X-Client-Type']); // DEBUGGING
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('✅ Authorization header added:', `Bearer ${token.substring(0, 20)}...`);
     } else {
-      console.log('❌ No token found, Authorization header not added');
+      console.log('❌ No token found in localStorage, Authorization header not added');
+      console.log('Available localStorage keys:', Object.keys(localStorage));
     }
     
     console.log('Request headers:', config.headers);
@@ -52,12 +61,18 @@ api.interceptors.response.use(
   (error) => {
     console.error('❌ Response error:', error.response?.status, error.response?.data);
     
-    if (error.response?.status === 401) {
-      console.log('🚪 Token expired or invalid, redirecting to login...');
-      // Token expired or invalid
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.log('🚪 Token expired, invalid, or insufficient permissions. Redirecting to login...');
+      // Token expired, invalid, or insufficient permissions
+      localStorage.removeItem('authToken');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/auth';
+      
+      // Show user-friendly message
+      alert('Your session has expired. Please log in again.');
+      
+      // Redirect to login page
+      window.location.href = '/auth/login';
     }
     return Promise.reject(error);
   }

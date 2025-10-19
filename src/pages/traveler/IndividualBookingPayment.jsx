@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button, Card } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
+import { bookingsAPI } from '../../services/api';
 
 const IndividualBookingPayment = () => {
   const navigate = useNavigate();
@@ -115,25 +116,135 @@ const IndividualBookingPayment = () => {
     setIsProcessing(true);
     
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Clear the booking data after successful payment
-      localStorage.removeItem('directBookingData');
-      
-      setPaymentSuccess(true);
-      setTimeout(() => {
-        navigate('/user/mybookings', { 
-          state: { 
-            paymentSuccess: true,
-            bookingId: bookingData.id
-          }
-        });
-      }, 2000);
+      // Get authentication token
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Please log in to continue with your booking');
+      }
+
+      // Prepare booking request according to your architecture
+      const bookingRequest = {
+        serviceType: bookingData.type,
+        serviceId: bookingData.serviceId,
+        serviceName: bookingData.name,
+        serviceProvider: bookingData.provider,
+        totalAmount: bookingData.totalPrice,
+        
+        // Service-specific booking details
+        bookingDetails: {
+          currency: 'LKR',
+          
+          // Accommodation specific
+          ...(bookingData.type === 'accommodation' && {
+            checkInDate: bookingData.checkIn,
+            checkOutDate: bookingData.checkOut,
+            rooms: bookingData.rooms,
+            adults: bookingData.adults,
+            children: bookingData.children,
+            nights: bookingData.nights
+          }),
+          
+          // Transportation specific
+          ...(bookingData.type === 'transportation' && {
+            startDate: bookingData.startDate,
+            days: bookingData.days,
+            passengers: bookingData.passengers,
+            pickupLocation: bookingData.pickupLocation,
+            dropoffLocation: bookingData.dropoffLocation,
+            estimatedDistance: bookingData.estimatedDistance,
+            pricingPerKm: bookingData.pricingPerKm
+          }),
+          
+          // Guide service specific
+          ...(bookingData.type === 'guide' && {
+            tourDate: bookingData.tourDate,
+            duration: bookingData.duration,
+            groupSize: bookingData.groupSize,
+            specialRequests: bookingData.specialRequests
+          })
+        },
+        
+        // Payment details for processing
+        paymentDetails: {
+          cardNumber: paymentData.cardNumber,
+          expiryDate: paymentData.expiryDate,
+          cvv: paymentData.cvv,
+          cardholderName: paymentData.cardholderName,
+          billingAddress: paymentData.billingAddress
+        },
+        
+        // Contact information
+        contactInfo: paymentData.contactInfo
+      };
+
+      console.log('Sending booking request to API Gateway:', bookingRequest);
+
+      // Send request to API Gateway at /api/booking/addBooking
+      // API Gateway will:
+      // 1. Authenticate the request
+      // 2. Log the request  
+      // 3. Route to Booking Service
+      const result = await bookingsAPI.create(bookingRequest);
+      console.log('Booking service response:', result);
+
+      // Check if booking was successful
+      if (result && (result.success !== false)) {
+        // Booking Service has:
+        // 1. Created a pending booking record
+        // 2. Used adapter layer to check availability with service
+        // 3. Temporarily reserved the service  
+        // 4. Processed payment via Payment Service adapter
+        // 5. Updated booking status to confirmed
+        // 6. Finalized reservation in the service
+        // 7. Returned booking confirmation
+
+        // Clear the booking data after successful payment
+        localStorage.removeItem('directBookingData');
+        
+        // Extract booking data from response (handle different response structures)
+        const bookingData = result.data || result;
+        
+        // Store booking confirmation for reference
+        localStorage.setItem('latestBooking', JSON.stringify({
+          bookingId: bookingData.bookingId,
+          reservationId: bookingData.reservationId, 
+          confirmationNumber: bookingData.confirmationNumber,
+          timestamp: new Date().toISOString()
+        }));
+        
+        setPaymentSuccess(true);
+        setTimeout(() => {
+          navigate('/user/mybookings', { 
+            state: { 
+              paymentSuccess: true,
+              bookingId: bookingData.bookingId,
+              confirmationNumber: bookingData.confirmationNumber,
+              message: 'Your booking has been confirmed successfully!'
+            }
+          });
+        }, 2000);
+        
+      } else {
+        throw new Error(result.message || 'Booking confirmation not received');
+      }
       
     } catch (error) {
-      console.error('Payment failed:', error);
-      alert('Payment failed. Please try again.');
+      console.error('Booking/Payment failed:', error);
+      
+      // Show appropriate error message based on error type
+      let errorMessage = 'Booking failed. Please try again.';
+      if (error.message.includes('log in') || error.message.includes('Authentication')) {
+        errorMessage = 'Please log in to continue with your booking.';
+        setTimeout(() => navigate('/auth/login'), 2000);
+      } else if (error.message.includes('available') || error.message.includes('availability')) {
+        errorMessage = 'Sorry, this service is no longer available for the selected dates.';
+      } else if (error.message.includes('payment') || error.message.includes('Payment')) {
+        errorMessage = 'Payment processing failed. Please check your card details and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsProcessing(false);
     }
