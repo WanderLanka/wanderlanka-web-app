@@ -42,56 +42,51 @@ const MyBookings = () => {
                 console.log('🔍 [DEBUG] Fetching bookings for user ID:', userId);
                 const response = await bookingsAPI.getUserBookings();
                 console.log('📦 [DEBUG] Raw Bookings API Response:', response);
-                console.log('📊 [DEBUG] Response Type:', typeof response);
-                console.log('📋 [DEBUG] Response Data Type:', typeof response.data);
-                console.log('📋 [DEBUG] Response Data:', response.data);
-                console.log('📋 [DEBUG] Response Data Length:', response.data?.length);
-                
-                // Debug: Log each booking individually
-                if (response.data && Array.isArray(response.data)) {
-                    console.log('📝 [DEBUG] Processing array of bookings:');
-                    response.data.forEach((booking, index) => {
-                        console.log(`📝 [DEBUG] Booking ${index + 1}:`, {
-                            id: booking._id || booking.id,
-                            serviceType: booking.serviceType,
-                            serviceName: booking.serviceName,
-                            serviceProvider: booking.serviceProvider,
-                            bookingDetails: booking.bookingDetails,
-                            totalAmount: booking.totalAmount,
-                            status: booking.status,
-                            createdAt: booking.createdAt,
-                            fullBooking: booking
-                        });
-                    });
-                } else if (response.data && typeof response.data === 'object') {
-                    console.log('📝 [DEBUG] Processing single booking object:', response.data);
-                }
                 
                 // Transform API response to match our component structure
                 const transformedBookings = (response.data || response || []).map(booking => {
+                    // Determine the primary date based on service type
+                    let primaryDate = null;
+                    let checkInDate = null;
+                    let checkOutDate = null;
+                    
+                    if (booking.serviceType === 'accommodation') {
+                        checkInDate = booking.bookingDetails?.checkInDate;
+                        checkOutDate = booking.bookingDetails?.checkOutDate;
+                        primaryDate = checkInDate;
+                    } else if (booking.serviceType === 'transportation') {
+                        primaryDate = booking.bookingDetails?.startDate;
+                    } else if (booking.serviceType === 'guide') {
+                        primaryDate = booking.bookingDetails?.tourDate;
+                    }
+                    
                     const transformed = {
                         id: booking._id || booking.id,
                         type: booking.serviceType || booking.type,
                         title: booking.serviceName || booking.title,
                         provider: booking.serviceProvider || booking.provider,
                         location: booking.bookingDetails?.location || booking.location,
-                        dates: booking.bookingDetails || booking.dates,
+                        dates: {
+                            checkIn: checkInDate,
+                            checkOut: checkOutDate,
+                            startDate: booking.bookingDetails?.startDate,
+                            tourDate: booking.bookingDetails?.tourDate,
+                            date: primaryDate // Primary date for display
+                        },
                         guests: booking.bookingDetails?.adults || booking.guests,
                         passengers: booking.bookingDetails?.passengers || booking.passengers,
                         participants: booking.bookingDetails?.groupSize || booking.participants,
-                        price: booking.totalAmount || booking.price,
+                        price: booking.totalAmount || booking.price || 0,
+                        currency: booking.currency || 'LKR',
                         status: booking.status || 'confirmed',
                         image: booking.image || '/api/placeholder/300/200',
-                        bookingRef: booking.bookingReference || booking.bookingRef || `REF${booking._id?.slice(-6) || '000000'}`,
+                        bookingRef: booking.bookingId || booking.confirmationNumber || `REF${booking._id?.slice(-6) || '000000'}`,
                         // Store full booking data for modal
                         fullBookingData: booking
                     };
                     
-                    console.log('🔄 [DEBUG] Transformed booking:', transformed);
                     return transformed;
                 });
-                
-                console.log('✅ [DEBUG] Final transformed bookings:', transformedBookings);
                 setBookings(transformedBookings);
             } catch (err) {
                 console.error('Failed to fetch bookings:', err);
@@ -220,7 +215,6 @@ const MyBookings = () => {
                                     </thead>
                                     <tbody className="bg-white divide-y divide-slate-200">
                                         {filterBookings(activeTab).map((booking) => {
-                                            console.log('🎯 [DEBUG] Rendering booking in table:', booking);
                                             return (
                                                 <tr key={booking.id} className="hover:bg-slate-50 transition-colors">
                                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -239,17 +233,27 @@ const MyBookings = () => {
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                                                         {booking.dates?.checkIn ? (
                                                             <div>
-                                                                <div>{new Date(booking.dates.checkIn).toLocaleDateString()}</div>
+                                                                <div className="font-medium">{new Date(booking.dates.checkIn).toLocaleDateString()}</div>
                                                                 <div className="text-xs text-slate-400">
-                                                                    to {new Date(booking.dates.checkOut).toLocaleDateString()}
+                                                                    Check-out: {new Date(booking.dates.checkOut).toLocaleDateString()}
+                                                                </div>
+                                                            </div>
+                                                        ) : booking.dates?.startDate ? (
+                                                            <div>
+                                                                <div className="font-medium">{new Date(booking.dates.startDate).toLocaleDateString()}</div>
+                                                                <div className="text-xs text-slate-400">
+                                                                    {booking.dates?.days || 1} day(s)
+                                                                </div>
+                                                            </div>
+                                                        ) : booking.dates?.tourDate ? (
+                                                            <div>
+                                                                <div className="font-medium">{new Date(booking.dates.tourDate).toLocaleDateString()}</div>
+                                                                <div className="text-xs text-slate-400">
+                                                                    Tour booking
                                                                 </div>
                                                             </div>
                                                         ) : booking.dates?.date ? (
-                                                            new Date(booking.dates.date).toLocaleDateString()
-                                                        ) : booking.dates?.startDate ? (
-                                                            new Date(booking.dates.startDate).toLocaleDateString()
-                                                        ) : booking.dates?.tourDate ? (
-                                                            new Date(booking.dates.tourDate).toLocaleDateString()
+                                                            <div className="font-medium">{new Date(booking.dates.date).toLocaleDateString()}</div>
                                                         ) : (
                                                             'N/A'
                                                         )}
@@ -261,7 +265,7 @@ const MyBookings = () => {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="text-sm font-medium text-slate-900">
-                                                            LKR {booking.price}
+                                                            {booking.currency || 'LKR'} {booking.price?.toLocaleString() || '0'}
                                                         </div>
                                                         <div className="text-xs text-slate-500">
                                                             Ref: {booking.bookingRef}

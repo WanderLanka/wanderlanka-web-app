@@ -22,7 +22,7 @@ import { itineraryAPI, bookingsAPI } from '../../services/api';
 const BookingPayment = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { planningBookings, getTotalAmount, clearTripPlanning } = useTripPlanning();
+  const { planningBookings, getTotalAmount, clearTripPlanning, getPaymentSummary } = useTripPlanning();
   
   // Get trip data from navigation state, localStorage, or direct booking
   const getTripData = () => {
@@ -89,6 +89,7 @@ const BookingPayment = () => {
     const params = new URLSearchParams(window.location.search);
     const bookingStatus = params.get('bookingStatus');
     const sessionId = params.get('sessionId');
+    const paymentRecordFailed = params.get('paymentRecordFailed');
     
     // Check if this session has already been processed
     const processedKey = `processed_${sessionId}`;
@@ -97,6 +98,10 @@ const BookingPayment = () => {
     }
     
     if (bookingStatus === 'success') {
+      // Log payment record status for debugging
+      if (paymentRecordFailed === 'true') {
+        console.warn('Payment was successful but payment record creation failed. Trip will still be stored.');
+      }
       try {
         const pending = localStorage.getItem('pendingTripPayment');
         
@@ -297,6 +302,9 @@ const BookingPayment = () => {
       
       try { localStorage.setItem('pendingTripPayment', JSON.stringify(pendingPayload)); } catch {}
 
+      // Get payment breakdown from trip planning context
+      const paymentSummary = getPaymentSummary();
+      
       // Create Stripe checkout session via booking-service
       const sessionPayload = {
         accommodationId: 'trip_total',
@@ -308,7 +316,48 @@ const BookingPayment = () => {
           lastName: paymentData.cardholderName?.split(' ')?.slice(1).join(' ') || '',
           email: paymentData.contactInfo?.email || 'guest@example.com',
           phone: paymentData.contactInfo?.phone || 'N/A'
-        }
+        },
+        // Add service breakdown for payment splitting
+        serviceBreakdown: {
+          accommodationAmount: paymentSummary.breakdown.accommodations.subtotal,
+          transportAmount: paymentSummary.breakdown.transportation.subtotal,
+          guideAmount: paymentSummary.breakdown.guides.subtotal,
+          totalAmount: paymentSummary.totalAmount
+        },
+        // Add all provider information for each service (multiple providers supported)
+        accommodationProviders: paymentSummary.breakdown.accommodations.items.map((item, index) => {
+          const amount = item.price || item.totalPrice || item.cost || 0;
+          console.log(`[Payment] Accommodation ${index}:`, { name: item.name, price: item.price, totalPrice: item.totalPrice, cost: item.cost, finalAmount: amount });
+          return {
+            providerId: item.provider || `unknown_provider_${index}`,
+            providerName: item.name || `Accommodation Provider ${index + 1}`,
+            serviceId: item.serviceId || `trip_accommodation_${index}`,
+            amount: amount,
+            index: index
+          };
+        }),
+        transportProviders: paymentSummary.breakdown.transportation.items.map((item, index) => {
+          const amount = item.price || item.totalPrice || item.cost || 0;
+          console.log(`[Payment] Transport ${index}:`, { name: item.name, price: item.price, totalPrice: item.totalPrice, cost: item.cost, finalAmount: amount });
+          return {
+            providerId: item.provider || `unknown_provider_${index}`,
+            providerName: item.name || `Transport Provider ${index + 1}`,
+            serviceId: item.serviceId || `trip_transport_${index}`,
+            amount: amount,
+            index: index
+          };
+        }),
+        guideProviders: paymentSummary.breakdown.guides.items.map((item, index) => {
+          const amount = item.price || item.totalPrice || item.cost || 0;
+          console.log(`[Payment] Guide ${index}:`, { name: item.name, price: item.price, totalPrice: item.totalPrice, cost: item.cost, finalAmount: amount });
+          return {
+            providerId: item.provider || `unknown_provider_${index}`,
+            providerName: item.name || `Guide Provider ${index + 1}`,
+            serviceId: item.serviceId || `trip_guide_${index}`,
+            amount: amount,
+            index: index
+          };
+        })
       };
       
       const session = await bookingsAPI.createCheckoutSession(sessionPayload);
@@ -640,11 +689,53 @@ const BookingPayment = () => {
                 })}
               </div>
 
-              {/* Total */}
+              {/* Payment Breakdown */}
               <div className="border-t pt-4 mt-6">
-                <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Breakdown</h3>
+                <div className="space-y-2">
+                  {(() => {
+                    const summary = getPaymentSummary();
+                    const breakdown = summary.breakdown;
+                    
+                    return Object.entries(breakdown).map(([type, data]) => {
+                      if (data.subtotal > 0) {
+                        const typeName = type.charAt(0).toUpperCase() + type.slice(1, -1); // Remove 's' and capitalize
+                        const itemCount = data.items.length;
+                        
+                        return (
+                          <div key={type} className="space-y-1">
+                            {/* Service type header */}
+                            <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                              <span className="text-sm font-medium text-gray-700">
+                                {typeName} {itemCount > 1 && `(${itemCount} providers)`}
+                              </span>
+                              <span className="text-sm font-semibold text-gray-900">{formatCurrency(data.subtotal)}</span>
+                            </div>
+                            
+                            {/* Individual providers (if multiple) */}
+                            {itemCount > 1 && data.items.map((item, index) => (
+                              <div key={`${type}-${index}`} className="flex items-center justify-between py-1 px-3 ml-4 bg-gray-25 rounded border-l-2 border-gray-300">
+                                <span className="text-xs text-gray-600 truncate max-w-[200px]" title={item.name}>
+                                  {item.name}
+                                </span>
+                                <span className="text-xs font-medium text-gray-800">{formatCurrency(item.price)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }).filter(Boolean);
+                  })()}
+                </div>
+                
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-4">
                   <span className="text-lg font-semibold text-gray-900">Total Amount</span>
                   <span className="text-2xl font-bold text-emerald-600">{formatCurrency(getCalculatedTotalAmount())}</span>
+                </div>
+                
+                <div className="mt-2 text-xs text-gray-500">
+                  <p>💡 Your payment will be automatically split and sent to each service provider</p>
                 </div>
               </div>
             </Card>

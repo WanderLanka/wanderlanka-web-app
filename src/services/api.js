@@ -148,96 +148,6 @@ export const testimonialsAPI = {
 };
 
 // Bookings endpoints  
-export const bookingsAPI = {
-  // Create new booking (original endpoint)
-  create: async (bookingData) => {
-    try {
-      const response = await api.post('/booking/addBooking', bookingData);
-      return response.data;
-    } catch (error) {
-      console.error('Create booking failed:', error.response?.data || error.message);
-      throw error;
-    }
-  },
-
-  // Create enhanced booking with complete flow
-  createEnhanced: async (bookingData) => {
-    try {
-      const response = await api.post('/booking/enhanced', bookingData);
-      return response.data;
-    } catch (error) {
-      console.error('Create enhanced booking failed:', error.response?.data || error.message);
-      throw error;
-    }
-  },
-
-  // Create Stripe Checkout session
-  createCheckoutSession: async (bookingData) => {
-    try {
-      const response = await api.post('/booking/payments/create-session', bookingData);
-      return response.data;
-    } catch (error) {
-      console.error('Create checkout session failed:', error.response?.data || error.message);
-      throw error;
-    }
-  },
-
-  // Get enhanced booking details
-  getEnhanced: async (bookingId) => {
-    try {
-      const response = await api.get(`/bookings/enhanced/${bookingId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Get enhanced booking failed:', error.response?.data || error.message);
-      throw error;
-    }
-  },
-
-  // Cancel enhanced booking
-  cancelEnhanced: async (bookingId, reason) => {
-    try {
-      const response = await api.post(`/bookings/enhanced/${bookingId}/cancel`, { reason });
-      return response.data;
-    } catch (error) {
-      console.error('Cancel enhanced booking failed:', error.response?.data || error.message);
-      throw error;
-    }
-  },
-
-  // Get user bookings
-  getUserBookings: async () => {
-    try {
-      const response = await api.get('/bookings/userBookings');
-      return response.data;
-    } catch (error) {
-      console.error('Get user bookings failed:', error.response?.data || error.message);
-      throw error;
-    }
-  },
-
-  // Get booking by ID
-  getById: async (id) => {
-    try {
-      const response = await api.get(`/bookings/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Get booking failed:', error.response?.data || error.message);
-      throw error;
-    }
-  },
-
-  // Provider bookings (filtered by serviceType)
-  getProviderBookings: async (serviceType) => {
-    try {
-      const q = serviceType ? `?serviceType=${encodeURIComponent(serviceType)}` : '';
-      const response = await api.get(`/booking/provider/bookings${q}`);
-      return response.data;
-    } catch (error) {
-      console.error('Get provider bookings failed:', error.response?.data || error.message);
-      throw error;
-    }
-  }
-};
 
 // Newsletter subscription
 export const newsletterAPI = {
@@ -494,6 +404,63 @@ export const itineraryAPI = {
       return response.data;
     } catch (error) {
       console.error('Get place details failed:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
+// Bookings endpoints
+export const bookingsAPI = {
+  // Get user bookings with pagination and filtering
+  getUserBookings: async (params = {}) => {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      // Add query parameters
+      if (params.page) queryParams.append('page', params.page);
+      if (params.limit) queryParams.append('limit', params.limit);
+      if (params.serviceType) queryParams.append('serviceType', params.serviceType);
+      if (params.status) queryParams.append('status', params.status);
+      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+      
+      const response = await api.get(`/booking/userBookings?${queryParams}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get user bookings failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Create enhanced booking
+  createEnhanced: async (bookingData) => {
+    try {
+      const response = await api.post('/booking/s/enhanced', bookingData);
+      return response.data;
+    } catch (error) {
+      console.error('Create enhanced booking failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Create Stripe checkout session
+  createCheckoutSession: async (sessionData) => {
+    try {
+      const response = await api.post('/booking/payments/create-session', sessionData);
+      return response.data;
+    } catch (error) {
+      console.error('Create checkout session failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get provider bookings
+  getProviderBookings: async (serviceType) => {
+    try {
+      const response = await api.get(`/booking/provider/bookings?serviceType=${serviceType}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get provider bookings failed:', error.response?.data || error.message);
       throw error;
     }
   }
