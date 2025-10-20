@@ -191,6 +191,20 @@ const AdminDashboard = () => {
           ))}
         </div>
       </section>
+
+      {/* README Link */}
+      <footer className="max-w-7xl mx-auto px-6 pb-10">
+        <div className="border-t border-slate-200 pt-6 text-center">
+          <a
+            href="/README.md"
+            target="_blank"
+            rel="noreferrer"
+            className="text-slate-500 hover:text-slate-700 underline"
+          >
+            View project README (architecture, APIs)
+          </a>
+        </div>
+      </footer>
     </div>
   );
 };
