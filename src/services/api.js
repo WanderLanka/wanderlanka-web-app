@@ -502,5 +502,115 @@ export const itineraryAPI = {
   }
 };
 
+// AI Bot API endpoints
+export const aiBotAPI = {
+  // Send message to AI bot
+  sendMessage: async (message) => {
+    try {
+      const response = await api.post('/ai/chat', { message });
+      return response.data;
+    } catch (error) {
+      console.error('AI bot message failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get AI bot conversation history
+  getConversationHistory: async () => {
+    try {
+      const response = await api.get('/ai/conversation-history');
+      return response.data;
+    } catch (error) {
+      console.error('Get AI conversation history failed:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
+// Chat API endpoints
+export const chatAPI = {
+  // Get user conversations
+  getConversations: async () => {
+    try {
+      const response = await api.get('/chat/conversations');
+      return response.data;
+    } catch (error) {
+      console.error('Get conversations failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Create or get conversation
+  createConversation: async (conversationData) => {
+    try {
+      const response = await api.post('/chat/conversations', conversationData);
+      return response.data;
+    } catch (error) {
+      console.error('Create conversation failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get conversation by ID
+  getConversation: async (conversationId) => {
+    try {
+      const response = await api.get(`/chat/conversations/${conversationId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get conversation failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get messages for conversation
+  getMessages: async (conversationId, page = 1, limit = 50) => {
+    try {
+      const response = await api.get(`/chat/conversations/${conversationId}/messages`, {
+        params: { page, limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Get messages failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Send message
+  sendMessage: async (conversationId, content, messageType = 'text') => {
+    try {
+      const response = await api.post(`/chat/conversations/${conversationId}/messages`, {
+        content,
+        messageType
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Send message failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Mark messages as read
+  markAsRead: async (conversationId) => {
+    try {
+      const response = await api.put(`/chat/conversations/${conversationId}/read`);
+      return response.data;
+    } catch (error) {
+      console.error('Mark as read failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Close conversation
+  closeConversation: async (conversationId) => {
+    try {
+      const response = await api.put(`/chat/conversations/${conversationId}/close`);
+      return response.data;
+    } catch (error) {
+      console.error('Close conversation failed:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
 // Export the configured axios instance for direct use if needed
 export { api as axiosInstance };
