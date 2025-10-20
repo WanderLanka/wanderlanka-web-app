@@ -49,10 +49,12 @@ function TransportationDetails() {
     // Fetch vehicle data by ID
     useEffect(() => {
         const fetchVehicle = async () => {
-            console.log('TransportationDetails: ID from params:', id);
+            console.log('🚗 [DEBUG] Starting to fetch transportation data...');
+            console.log('🚗 [DEBUG] Transportation ID from params:', id);
+            console.log('🚗 [DEBUG] Location state:', location.state);
             
             if (!id) {
-                console.error('No vehicle ID provided');
+                console.error('❌ [DEBUG] No vehicle ID provided');
                 setError('No vehicle ID specified. Please navigate from the transportation list.');
                 setLoading(false);
                 return;
@@ -60,24 +62,61 @@ function TransportationDetails() {
 
             try {
                 setLoading(true);
-                console.log('Fetching vehicle with ID:', id);
+                setError(null);
+                
+                console.log('🚗 [DEBUG] Calling transportationAPI.getById with ID:', id);
                 const response = await transportationAPI.getById(id);
-                console.log('API Response received:', response);
+                
+                console.log('🚗 [DEBUG] Raw API response:', response);
+                console.log('🚗 [DEBUG] Response type:', typeof response);
+                console.log('🚗 [DEBUG] Response keys:', response ? Object.keys(response) : 'No response');
                 
                 // Extract vehicle data from nested response structure
                 const vehicleData = response?.data || response;
-                console.log('Vehicle data extracted:', vehicleData);
+                console.log('🚗 [DEBUG] Vehicle data extracted:', vehicleData);
+                console.log('🚗 [DEBUG] Vehicle data type:', typeof vehicleData);
+                console.log('🚗 [DEBUG] Vehicle data keys:', vehicleData ? Object.keys(vehicleData) : 'No vehicle data');
+                
+                if (vehicleData) {
+                    console.log('🚗 [DEBUG] Transportation details:');
+                    console.log('  - ID:', vehicleData._id || vehicleData.id);
+                    console.log('  - Name:', vehicleData.name);
+                    console.log('  - Location:', vehicleData.location);
+                    console.log('  - Provider:', vehicleData.provider);
+                    console.log('  - Price per KM:', vehicleData.pricePerKm);
+                    console.log('  - Vehicle Type:', vehicleData.vehicleType);
+                    console.log('  - Fuel Type:', vehicleData.fuelType);
+                    console.log('  - Transmission:', vehicleData.transmission);
+                    console.log('  - Seating Capacity:', vehicleData.seatingCapacity);
+                    console.log('  - Rating:', vehicleData.rating);
+                    console.log('  - Reviews count:', vehicleData.reviews?.length || 0);
+                    console.log('  - Features:', vehicleData.features);
+                    console.log('  - Images:', vehicleData.images?.length || 0);
+                    console.log('  - Description:', vehicleData.description?.substring(0, 100) + '...');
+                    console.log('  - Policies:', vehicleData.policies);
+                    console.log('  - Availability:', vehicleData.availability);
+                    console.log('  - Full data object:', vehicleData);
+                }
                 
                 setVehicle(vehicleData);
-                setError(null);
+                console.log('🚗 [DEBUG] Vehicle state set successfully');
             } catch (err) {
-                console.error('Failed to fetch vehicle:', err);
+                console.error('❌ [DEBUG] Failed to fetch vehicle:', err);
+                console.error('❌ [DEBUG] Error details:', {
+                    message: err.message,
+                    status: err.response?.status,
+                    statusText: err.response?.statusText,
+                    data: err.response?.data,
+                    config: err.config
+                });
                 setError('Failed to load vehicle details. Please try again.');
             } finally {
                 setLoading(false);
+                console.log('🚗 [DEBUG] Loading state set to false');
             }
         };
 
+        console.log('🚗 [DEBUG] ID exists, fetching transportation...');
         fetchVehicle();
     }, [id]);
 
@@ -134,7 +173,11 @@ function TransportationDetails() {
             };
             
             addToTripPlanning(planningBooking, 'transportation');
-            alert('Added to your trip planning! Continue adding more services or review your summary.');
+            
+            console.log('✅ Transportation added to trip planning:', planningBooking);
+            
+            // Show success popup and let user navigate back manually
+            alert('✅ Transportation added to your itinerary successfully! You can now go back to the planning page to view your summary.');
         } else {
             // Navigate to payment page for direct booking
             const directBooking = {
