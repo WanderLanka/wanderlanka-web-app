@@ -20,6 +20,7 @@ import {
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import PaymentModal from '../../components/PaymentModal';
+import TripSummaryModal from '../../components/TripSummaryModal';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import { accommodationAPI, bookingsAPI } from '../../services/api';
 import { authUtils } from '../../utils/authUtils';
@@ -31,8 +32,26 @@ const AccommodationDetails = () => {
     const location = useLocation();
     const { addToTripPlanning } = useTripPlanning();
     
+    // Check if user came from trip planning page
+    const isFromTripPlanning = location.state?.fromTripPlanning === true;
+    
+    // Set default dates when coming from trip planning
+    useEffect(() => {
+        if (isFromTripPlanning && location.state?.selectedDateValue) {
+            const selectedDate = location.state.selectedDateValue; // This is the specific date user clicked
+            
+            setBookingData(prev => ({
+                ...prev,
+                checkIn: selectedDate,
+                checkOut: selectedDate // User can modify this
+            }));
+        }
+    }, [isFromTripPlanning, location.state]);
+    
     const [currentImage, setCurrentImage] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showSummaryModal, setShowSummaryModal] = useState(false);
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [accommodation, setAccommodation] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -48,9 +67,6 @@ const AccommodationDetails = () => {
             specialRequests: ''
         }
     });
-
-    // Check if user came from trip planning page
-    const isFromTripPlanning = location.state?.fromTripPlanning === true;
 
     // Set default dates when coming from trip planning
     useEffect(() => {
@@ -262,42 +278,79 @@ const AccommodationDetails = () => {
             return;
         }
 
-        const bookingDataToSend = {
-            accommodationId: accommodation._id || accommodation.id,
-            accommodationProviderId: accommodation.userId, // Include accommodation provider ID
-            checkInDate: bookingData.checkIn,
-            checkOutDate: bookingData.checkOut,
-            selectedRooms: bookingData.selectedRooms.map(room => ({
-                roomType: room.type,
-                quantity: room.quantity,
-                pricePerNight: room.pricePerNight
-            })),
-            guestDetails: bookingData.guestDetails
-        };
-
-        try {
-            // Check authentication using utility
-            const authDebug = authUtils.debugAuth();
+        if (isFromTripPlanning) {
+            // Add to trip planning summary
+            const planningBooking = {
+                id: `acc_${accommodation._id || accommodation.id}_${Date.now()}`,
+                serviceId: accommodation._id || accommodation.id,
+                name: accommodation?.name || 'Accommodation',
+                provider: accommodation?.userId || 'Accommodation Owner',
+                location: accommodation?.location || 'Location not specified',
+                type: 'accommodation',
+                checkIn: bookingData.checkIn,
+                checkOut: bookingData.checkOut,
+                selectedRooms: bookingData.selectedRooms.map(room => ({
+                    roomType: room.type,
+                    quantity: room.quantity,
+                    pricePerNight: room.pricePerNight
+                })),
+                guestDetails: bookingData.guestDetails,
+                totalPrice: calculateTotal(),
+                image: accommodation.images?.[0] || '/placeholder-accommodation.jpg',
+                selectedDate: location.state?.selectedDateValue || bookingData.checkIn // Store the specific selected date
+            };
             
-            if (!authUtils.isAuthenticated()) {
-                alert(`Please log in to make a booking.\n\nAvailable localStorage keys: ${authDebug.availableKeys.join(', ')}`);
-                return;
-            }
+            addToTripPlanning(planningBooking, 'accommodation');
+            
+            console.log('✅ Accommodation added to trip planning:', planningBooking);
+            
+            // Show success message without alert - user stays on the same page
+            console.log('✅ Accommodation successfully added to trip planning!');
+            setShowSuccessMessage(true);
+            
+            // Hide success message after 3 seconds
+            setTimeout(() => {
+                setShowSuccessMessage(false);
+            }, 3000);
+        } else {
+            // Direct booking - proceed with payment
+            const bookingDataToSend = {
+                accommodationId: accommodation._id || accommodation.id,
+                accommodationProviderId: accommodation.userId, // Include accommodation provider ID
+                checkInDate: bookingData.checkIn,
+                checkOutDate: bookingData.checkOut,
+                selectedRooms: bookingData.selectedRooms.map(room => ({
+                    roomType: room.type,
+                    quantity: room.quantity,
+                    pricePerNight: room.pricePerNight
+                })),
+                guestDetails: bookingData.guestDetails
+            };
 
-            // Initiate Stripe Checkout via backend (session URL redirect)
-            const session = await bookingsAPI.createCheckoutSession(bookingDataToSend);
-            if (session?.success && session.url) {
-                window.location.href = session.url;
-                return;
-            }
-            alert('Failed to initiate payment. Please try again.');
-        } catch (error) {
-            console.error('Error creating booking:', error);
-            if (error.response) {
-                console.error('Error response:', error.response.data);
-                alert(`Failed to create booking: ${error.response.data.error || error.response.data.message || 'Unknown error'}`);
-            } else {
-                alert('Failed to create booking. Please try again.');
+            try {
+                // Check authentication using utility
+                const authDebug = authUtils.debugAuth();
+                
+                if (!authUtils.isAuthenticated()) {
+                    alert(`Please log in to make a booking.\n\nAvailable localStorage keys: ${authDebug.availableKeys.join(', ')}`);
+                    return;
+                }
+
+                // Initiate Stripe Checkout via backend (session URL redirect)
+                const session = await bookingsAPI.createCheckoutSession(bookingDataToSend);
+                if (session?.success && session.url) {
+                    window.location.href = session.url;
+                    return;
+                }
+                alert('Failed to initiate payment. Please try again.');
+            } catch (error) {
+                console.error('Error creating booking:', error);
+                if (error.response) {
+                    console.error('Error response:', error.response.data);
+                    alert(`Failed to create booking: ${error.response.data.error || error.response.data.message || 'Unknown error'}`);
+                } else {
+                    alert('Failed to create booking. Please try again.');
+                }
             }
         }
     };
@@ -678,6 +731,19 @@ const AccommodationDetails = () => {
                                     )}
                                 </div>
 
+                                {/* Success Message */}
+                                {showSuccessMessage && (
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                                        <div className="flex items-center">
+                                            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                                            <div>
+                                                <p className="text-green-800 font-medium">Successfully added to your trip!</p>
+                                                <p className="text-green-600 text-sm">You can continue adding more services or view your trip summary.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Guest Details Form */}
                                 <div className="space-y-4">
                                     <h4 className="text-lg font-semibold text-slate-800">Guest Details</h4>
@@ -814,6 +880,18 @@ const AccommodationDetails = () => {
                                     }
                                 </p>
                                 
+                                {/* Summary Button for Trip Planning */}
+                                {isFromTripPlanning && (
+                                    <Button
+                                        variant="outline"
+                                        size="lg"
+                                        className="w-full mt-3"
+                                        onClick={() => setShowSummaryModal(true)}
+                                    >
+                                        📋 View Trip Summary
+                                    </Button>
+                                )}
+                                
                                 {/* Debug Authentication Button (remove in production) */}
                                 <Button
                                     variant="outline"
@@ -840,6 +918,16 @@ const AccommodationDetails = () => {
                 onClose={() => setShowPaymentModal(false)}
                 bookingData={accommodation}
                 totalAmount={calculateTotal()}
+            />
+
+            {/* Trip Summary Modal */}
+            <TripSummaryModal
+                isOpen={showSummaryModal}
+                onClose={() => setShowSummaryModal(false)}
+                tripData={null} // Will be populated from localStorage
+                dayNotes={{}}
+                dayChecklists={{}}
+                dayPlaces={{}}
             />
         </div>
     );
