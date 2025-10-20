@@ -31,6 +31,8 @@ import {
   TourGuides,
   AccommodationDetails,
   TransportationDetails,
+  TransportTrips,
+
   TourGuideDetails
 } from '../pages';
 import AddNewTransport from '../pages/transport/AddNewTransport';
@@ -58,6 +60,7 @@ const AppRoutes = () => {
           <Route path="vehicles" element={<VehiclesPage />} />
           <Route path="add-new" element={<AddNewTransport />} />
           <Route path="drivers" element={<Drivers />} />
+          <Route path="trips" element={<TransportTrips/>}/>
         </Route>
       </Route>
 

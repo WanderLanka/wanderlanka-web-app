@@ -171,6 +171,17 @@ export const bookingsAPI = {
     }
   },
 
+  // Create Stripe Checkout session
+  createCheckoutSession: async (bookingData) => {
+    try {
+      const response = await api.post('/booking/payments/create-session', bookingData);
+      return response.data;
+    } catch (error) {
+      console.error('Create checkout session failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
   // Get enhanced booking details
   getEnhanced: async (bookingId) => {
     try {
@@ -211,6 +222,18 @@ export const bookingsAPI = {
       return response.data;
     } catch (error) {
       console.error('Get booking failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Provider bookings (filtered by serviceType)
+  getProviderBookings: async (serviceType) => {
+    try {
+      const q = serviceType ? `?serviceType=${encodeURIComponent(serviceType)}` : '';
+      const response = await api.get(`/booking/provider/bookings${q}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get provider bookings failed:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -302,8 +325,16 @@ export const transportationAPI = {
     try {
       const response = await api.get(`/transport/transportation/${id}`);
       console.log('Transportation API Response:', response.data);
+      console.log('Response data structure:', {
+        hasData: !!response.data.data,
+        hasSuccess: !!response.data.success,
+        userId: response.data.data?.userId,
+        _id: response.data.data?._id
+      });
       // Extract the actual data from the response structure
-      return response.data.data || response.data;
+      const extractedData = response.data.data || response.data;
+      console.log('Extracted data:', extractedData);
+      return extractedData;
     } catch (error) {
       console.error('Get transportation failed:', error.response?.data || error.message);
       throw error;

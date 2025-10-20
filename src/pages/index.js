@@ -20,6 +20,7 @@ export { default as AddNewAccommodation } from './accommodation/AddNewAccommodat
 // Transport pages
 export { default as TransportDashboard } from './transport/TransportDashboard.jsx';
 export { default as VehiclesPage } from './transport/VehiclesPage.jsx';
+export { default as TransportTrips } from './transport/TransportTrips.jsx';
 
 // User pages
 export { default as TravelerDashboard } from './traveler/TravelerDashboard.jsx';

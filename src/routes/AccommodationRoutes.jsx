@@ -5,9 +5,9 @@ import {
   AccommodationPayments,
   HotelsPage,
   Rooms,
-  Bookings,
   AddNewAccommodation
 } from '../pages';
+import { ProviderBookings } from '../pages/accommodation';
 
 const AccommodationRoutes = () => {
   return (
@@ -25,7 +25,7 @@ const AccommodationRoutes = () => {
       <Route path="hotels/:hotelid" element={<Rooms />} />
       
       {/* Bookings Management */}
-      <Route path="bookings" element={<Bookings />} />
+      <Route path="bookings" element={<ProviderBookings />} />
       
       {/* Payments Management */}
       <Route path="payments" element={<AccommodationPayments />} />
