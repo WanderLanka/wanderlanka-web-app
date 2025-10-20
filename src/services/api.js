@@ -400,10 +400,17 @@ export const itineraryAPI = {
   // Store completed trip data
   storeCompletedTrip: async (tripData) => {
     try {
+      console.log('[FE][itineraryAPI] POST /itinerary/store-completed-trip payload:', {
+        keys: Object.keys(tripData || {}),
+        hasTripData: !!tripData?.tripData,
+        hasPlanningBookings: !!tripData?.planningBookings,
+        hasDayPlaces: !!tripData?.dayPlaces
+      });
       const response = await api.post('/itinerary/store-completed-trip', tripData);
+      console.log('[FE][itineraryAPI] Response status:', response.status, 'data:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Store completed trip failed:', error.response?.data || error.message);
+      console.error('[FE][itineraryAPI] Store completed trip failed. Status:', error.response?.status, 'Data:', error.response?.data);
       throw error;
     }
   },
