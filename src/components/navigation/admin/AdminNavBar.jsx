@@ -73,7 +73,7 @@ const AdminNavbar = () => {
                 variant="danger" 
                 size="sm"
                 onClick={handleLogout}
-                className="focus:ring-red-500 focus:ring-offset-2"
+                className="focus:ring-red-500 focus:ring-offset-2 border border-white"
               >
                 Sign Out
               </Button>
