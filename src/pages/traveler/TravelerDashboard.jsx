@@ -1,15 +1,43 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Plane, Camera, Heart, Star, Clock, Users, Search, ArrowRight, Hotel, Car, Utensils, Plus, Zap } from 'lucide-react';
-import { Button, Card, Input, Breadcrumb } from '../../components/common';
+import { ArrowRight, Calendar, Camera, Car, Clock, Heart, Hotel, MapPin, Plane, Plus, Search, Star, Users, Utensils, Zap } from 'lucide-react';
+import { Breadcrumb, Button, Card, Input } from '../../components/common';
+import { useEffect, useState } from 'react';
+
+import PlacesAutocomplete from '../../components/common/PlacesAutocomplete';
 import { TravelerFooter } from '../../components/traveler';
+import { useNavigate } from 'react-router-dom';
+import { useScript } from '../../hooks/useScript';
 
 const TravelerDashboard = () => {
     const navigate = useNavigate();
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [startingDestination, setStartingDestination] = useState('');
     const [selectedDestination, setSelectedDestination] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
+    
+    // Load Google Maps API
+    const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    
+    // Check if API key is available
+    useEffect(() => {
+        if (!googleMapsApiKey) {
+            console.error('❌ VITE_GOOGLE_MAPS_API_KEY is not set in .env.development');
+        } else {
+            console.log('✅ Google Maps API Key is configured');
+        }
+    }, [googleMapsApiKey]);
+    
+    const googleMapsLoaded = useScript(
+        googleMapsApiKey ? `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places` : null
+    );
+
+    // Debug: Log when Google Maps API is loaded
+    useEffect(() => {
+        if (googleMapsLoaded) {
+            console.log('✅ Google Maps Script Loaded');
+            console.log('✅ API Key:', googleMapsApiKey ? '(Set)' : '(Missing)');
+        }
+    }, [googleMapsLoaded, googleMapsApiKey]);
 
     // Handle start date change and validate end date
     const handleStartDateChange = (newStartDate) => {
@@ -27,6 +55,10 @@ const TravelerDashboard = () => {
         const errors = {};
         
         // Validate required fields
+        if (!startingDestination.trim()) {
+            errors.startingDestination = 'Please enter a starting location';
+        }
+        
         if (!selectedDestination.trim()) {
             errors.destination = 'Please enter a destination';
         }
@@ -60,6 +92,7 @@ const TravelerDashboard = () => {
         // Navigate to trip planning page with form data
         navigate('/user/trip-planning', {
             state: {
+                startingDestination,
                 destination: selectedDestination,
                 startDate,
                 endDate,
@@ -221,36 +254,33 @@ const TravelerDashboard = () => {
 
                     <form onSubmit={handleTripPlanningSubmit} className="max-w-4xl mx-auto flex flex-col items-center mb-2">
                         <div className="flex flex-col md:flex-row gap-4 mb-3">
+                            {/* Starting Destination */}
                             <div className="relative flex-1">
-                                
                                 <div className="relative p-4">
-                                    <label className="block text-white/90 text-sm font-medium mb-2">
-                                        <MapPin className="inline w-4 h-4 mr-2" />
-                                        Destination
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={selectedDestination}
-                                        onChange={(e) => {
-                                            setSelectedDestination(e.target.value);
-                                            // Clear destination error when user starts typing
-                                            if (validationErrors.destination) {
-                                                setValidationErrors(prev => ({ ...prev, destination: null }));
-                                            }
-                                        }}
-                                        placeholder="Where do you want to go?"
-                                        required
-                                        className={`w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-0 rounded-xl text-slate-800 placeholder-slate-500 focus:ring-2 focus:outline-none transition-all duration-200 ${
-                                            validationErrors.destination 
-                                                ? 'focus:ring-red-500 ring-2 ring-red-500/50' 
-                                                : 'focus:ring-white/50'
-                                        }`}
+                                    <PlacesAutocomplete
+                                        value={startingDestination}
+                                        onChange={setStartingDestination}
+                                        placeholder="Where are you starting from?"
+                                        label="Starting Location"
+                                        error={validationErrors.startingDestination}
+                                        onClearError={() => setValidationErrors(prev => ({ ...prev, startingDestination: null }))}
+                                        required={true}
                                     />
-                                    {validationErrors.destination && (
-                                        <p className="text-red-300 text-sm mt-1 ml-1">
-                                            {validationErrors.destination}
-                                        </p>
-                                    )}
+                                </div>
+                            </div>
+
+                            {/* Destination */}
+                            <div className="relative flex-1">
+                                <div className="relative p-4">
+                                    <PlacesAutocomplete
+                                        value={selectedDestination}
+                                        onChange={setSelectedDestination}
+                                        placeholder="Where do you want to go?"
+                                        label="Destination"
+                                        error={validationErrors.destination}
+                                        onClearError={() => setValidationErrors(prev => ({ ...prev, destination: null }))}
+                                        required={true}
+                                    />
                                 </div>
                             </div>
 

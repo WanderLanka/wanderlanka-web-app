@@ -1,32 +1,37 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { 
-  MapPin, 
-  Calendar, 
-  Users, 
-  Hotel, 
-  Car, 
-  Camera,
-  Star,
-  Heart,
+import {
   ArrowLeft,
-  Plus,
-  Filter,
-  Grid,
+  Calendar,
+  Camera,
+  Car,
   ChevronLeft,
   ChevronRight,
+  Filter,
+  Grid,
+  Heart,
+  Home,
+  Hotel,
+  MapPin,
   Maximize2,
   Minimize2,
-  X,
+  Plus,
+  Star,
   UserCheck,
-  Home
+  Users,
+  X
 } from 'lucide-react';
 import { Button, Card, Modal } from '../../components/common';
-import { useTripPlanning } from '../../hooks/useTripPlanning';
+import { accommodationAPI, tourGuideAPI, transportationAPI } from '../../services/api';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+
 import NavigationWarningModal from '../../components/NavigationWarningModal';
+import PlacesSearchAutocomplete from '../../components/common/PlacesSearchAutocomplete';
+import RouteButtons from '../../components/common/RouteButtons';
 import Toast from '../../components/Toast';
+import TripMap from '../../components/common/TripMap';
 import TripSummaryModal from '../../components/TripSummaryModal';
-import { accommodationAPI, transportationAPI, tourGuideAPI } from '../../services/api';
+import WaypointCard from '../../components/common/WaypointCard';
+import { useTripPlanning } from '../../hooks/useTripPlanning';
 
 const TripPlanning = () => {
   const location = useLocation();
@@ -56,9 +61,14 @@ const TripPlanning = () => {
   const [checklistItems, setChecklistItems] = useState([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
   
-  // Places state
+  // Places state - Enhanced for waypoints with Google Places API
   const [dayPlaces, setDayPlaces] = useState({});
-  const [newPlaceName, setNewPlaceName] = useState('');
+  const [newPlaceName, setNewPlaceName] = useState(''); // Kept for backward compatibility
+  const [placeSearchInput, setPlaceSearchInput] = useState(''); // New: for Places API search
+  
+  // Route visualization state - NEW
+  const [selectedRouteType, setSelectedRouteType] = useState(null); // 'recommended', 'shortest', or 'scenic'
+  const [routeWaypoints, setRouteWaypoints] = useState([]); // Collected waypoints for route calculation
   
 
   // Helper function to render activity cards
@@ -373,12 +383,24 @@ const TripPlanning = () => {
   
   const tripData = useMemo(() => {
     return location.state || {
+      startingDestination: 'Colombo, Sri Lanka', // Default starting location
       destination: 'Sri Lanka',
       startDate: defaultDates.startDate,
       endDate: defaultDates.endDate,
       travelers: 2
     };
   }, [location.state, defaultDates]);
+
+  // Debug: Log tripData to verify starting and destination are retrieved
+  useEffect(() => {
+    console.log('📍 Trip Data Retrieved:', {
+      startingDestination: tripData.startingDestination,
+      destination: tripData.destination,
+      startDate: tripData.startDate,
+      endDate: tripData.endDate,
+      travelers: tripData.travelers
+    });
+  }, [tripData]);
 
   // Check if user accessed this page directly without proper form submission
   useEffect(() => {
@@ -528,7 +550,7 @@ const TripPlanning = () => {
     setToastMessage('');
   };
 
-  // Place management functions
+  // Place management functions - Enhanced for Google Places API waypoints
   const handleAddPlace = (dayNumber) => {
     if (newPlaceName.trim()) {
       const selectedDate = tripDays[selectedDateIndex]?.toISOString().split('T')[0];
@@ -555,6 +577,32 @@ const TripPlanning = () => {
       setToastMessage('Place added successfully!');
       setShowToast(true);
     }
+  };
+
+  // New: Handle adding waypoint from Google Places API
+  const handleAddWaypoint = (dayNumber, placeDetails) => {
+    const selectedDate = tripDays[selectedDateIndex]?.toISOString().split('T')[0];
+    const newWaypoint = {
+      ...placeDetails,
+      id: placeDetails.id || Date.now().toString(),
+      selectedDate: selectedDate,
+      dayNumber: dayNumber,
+      addedAt: new Date().toISOString()
+    };
+    
+    console.log('📍 Adding waypoint for day:', dayNumber, 'place:', placeDetails.name);
+    
+    setDayPlaces(prev => {
+      const newPlaces = {
+        ...prev,
+        [dayNumber]: [...(prev[dayNumber] || []), newWaypoint]
+      };
+      console.log('📍 Updated dayPlaces with waypoint:', newPlaces);
+      return newPlaces;
+    });
+    
+    setToastMessage(`${placeDetails.name} added to Day ${dayNumber}!`);
+    setShowToast(true);
   };
 
   const removePlaceFromDay = (dayNumber, placeId) => {
@@ -711,6 +759,46 @@ const TripPlanning = () => {
     setShowToast(true);
   };
 
+  // NEW: Handle route type selection
+  const handleRouteSelect = (routeType) => {
+    console.log('📍 Route type selected:', routeType);
+    setSelectedRouteType(routeType);
+    
+    // Collect all waypoints from the itinerary
+    const allWaypoints = collectWaypointsFromItinerary();
+    setRouteWaypoints(allWaypoints);
+    
+    console.log('📍 Collected waypoints:', allWaypoints.length);
+  };
+
+  // NEW: Collect all waypoints from all days in chronological order
+  const collectWaypointsFromItinerary = () => {
+    const waypoints = [];
+    
+    // Sort trip days chronologically
+    const sortedDays = [...tripDays].sort((a, b) => new Date(a) - new Date(b));
+    
+    // For each day, get all places
+    sortedDays.forEach((day, dayIndex) => {
+      const dayNumber = dayIndex + 1;
+      const placesForDay = dayPlaces[dayNumber] || [];
+      
+      // Add each place as a waypoint
+      placesForDay.forEach(place => {
+        if (place && (place.address || place.name)) {
+          waypoints.push({
+            name: place.name,
+            address: place.address || place.name,
+            day: dayNumber,
+            date: day
+          });
+        }
+      });
+    });
+    
+    return waypoints;
+  };
+
 
 
 
@@ -756,7 +844,18 @@ const TripPlanning = () => {
           
           <div className="mb-4">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold">Plan Your Trip</h1>
+              <div>
+                <h1 className="text-2xl font-bold">Plan Your Trip</h1>
+                {/* Display Route: Starting Location → Destination */}
+                {tripData.startingDestination && tripData.destination && (
+                  <div className="flex items-center mt-2 text-sm text-gray-600">
+                    <MapPin className="w-4 h-4 mr-1 text-emerald-600" />
+                    <span className="font-medium">{tripData.startingDestination}</span>
+                    <span className="mx-2">→</span>
+                    <span className="font-medium">{tripData.destination}</span>
+                  </div>
+                )}
+              </div>
               {/* Date Chips */}
               {tripDays.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -902,47 +1001,50 @@ const TripPlanning = () => {
 
                             {/* Places Container */}
                             <div className="p-4 space-y-3">
-                              {/* User Added Places */}
+                              {/* User Added Places/Waypoints */}
                               {dayPlaces[dayNumber] && dayPlaces[dayNumber].length > 0 && (
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                   {dayPlaces[dayNumber].map((place) => (
-                                    <div key={place.id} className="flex items-center bg-emerald-50 rounded-lg p-3 border border-emerald-200">
-                                      <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
-                                        <MapPin className="w-5 h-5 text-emerald-600" />
+                                    // Check if place has Google Places API data (waypoint) or is simple place
+                                    place.photo || place.rating || place.openingHours ? (
+                                      // Render WaypointCard for places with full details
+                                      <WaypointCard
+                                        key={place.id}
+                                        place={place}
+                                        onRemove={() => removePlaceFromDay(dayNumber, place.id)}
+                                      />
+                                    ) : (
+                                      // Render simple card for backward compatibility
+                                      <div key={place.id} className="flex items-center bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                                          <MapPin className="w-5 h-5 text-emerald-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                          <h5 className="font-semibold text-gray-800 text-sm">{place.name}</h5>
+                                          <p className="text-xs text-gray-500">Added {new Date(place.addedAt).toLocaleDateString()}</p>
+                                        </div>
+                                        <button
+                                          onClick={() => removePlaceFromDay(dayNumber, place.id)}
+                                          className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </button>
                                       </div>
-                                      <div className="flex-1">
-                                        <h5 className="font-semibold text-gray-800 text-sm">{place.name}</h5>
-                                        <p className="text-xs text-gray-500">Added {new Date(place.addedAt).toLocaleDateString()}</p>
-                                      </div>
-                                      <button
-                                        onClick={() => removePlaceFromDay(dayNumber, place.id)}
-                                        className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </button>
-                      </div>
-                    ))}
-                  </div>
+                                    )
+                                  ))}
+                                </div>
                               )}
 
-                              {/* Add Place Input */}
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  value={newPlaceName}
-                                  onChange={(e) => setNewPlaceName(e.target.value)}
-                                  placeholder="Enter place name..."
-                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
-                                  onKeyPress={(e) => e.key === 'Enter' && handleAddPlace(dayNumber)}
+                              {/* Add Place/Waypoint Search with Google Places API */}
+                              <div>
+                                <PlacesSearchAutocomplete
+                                  value={placeSearchInput}
+                                  onChange={setPlaceSearchInput}
+                                  onPlaceSelect={(placeDetails) => handleAddWaypoint(dayNumber, placeDetails)}
+                                  placeholder="Search for places to visit (e.g., Sigiriya, Temple of the Tooth)..."
+                                  apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
                                 />
-                                <button
-                                  onClick={() => handleAddPlace(dayNumber)}
-                                  disabled={!newPlaceName.trim()}
-                                  className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-                </div>
+                              </div>
                             </div>
 
                             {/* Notes Section */}
@@ -1061,6 +1163,15 @@ const TripPlanning = () => {
                       })()}
                     </div>
                   )}
+
+                  {/* Route Buttons - NEW */}
+                  <div className="mt-8 p-6 bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-lg">
+                    <RouteButtons
+                      onRouteSelect={handleRouteSelect}
+                      selectedRoute={selectedRouteType}
+                      disabled={Object.keys(dayPlaces).length === 0 || Object.values(dayPlaces).every(places => places.length === 0)}
+                    />
+                  </div>
 
                   {/* Finalize Button */}
                   <div className="mt-8 p-4 bg-white border-t border-gray-200">
@@ -1241,6 +1352,7 @@ const TripPlanning = () => {
 
       {/* Right Panel - Map */}
       {!isPanelExpanded && (
+
         <div className="relative w-1/2">
           {/* Google Maps Embedded Frame */}
           <div className="fixed top-0 right-0 w-full h-full" style={{ width: '50%' }}>
@@ -1255,6 +1367,18 @@ const TripPlanning = () => {
               title="Sri Lanka Map"
               className="absolute inset-0"
             ></iframe>
+
+        <div className="w-1/2 relative">
+          {/* Google Maps with Route Display */}
+          <div className="h-full w-full fixed right-0 top-0" style={{ width: '50%' }}>
+            <TripMap
+              startingDestination={tripData.startingDestination}
+              destination={tripData.destination}
+              apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+              waypoints={routeWaypoints}
+              routePreference={selectedRouteType}
+            />
+
           </div>
         </div>
       )}
