@@ -16,20 +16,14 @@ export { default as AccommodationPayments } from './accommodation/AccommodationP
 export { default as HotelsPage } from './accommodation/HotelsPage.jsx';
 export { default as Rooms } from './accommodation/Rooms.jsx';
 export { default as AddNewAccommodation } from './accommodation/AddNewAccommodation.jsx';
-<<<<<<< HEAD
 export { default as AccommodationReportComplain } from './accommodation/ReportComplain.jsx';
-=======
 export { default as AccommodationProfile } from './accommodation/AccommodationProfile.jsx';
->>>>>>> main
 
 // Transport pages
 export { default as TransportDashboard } from './transport/TransportDashboard.jsx';
 export { default as VehiclesPage } from './transport/VehiclesPage.jsx';
-<<<<<<< HEAD
 export { default as TransportReportComplain } from './transport/ReportComplain.jsx';
-=======
 export { default as TransportTrips } from './transport/TransportTrips.jsx';
->>>>>>> main
 
 // User pages
 export { default as TravelerDashboard } from './traveler/TravelerDashboard.jsx';

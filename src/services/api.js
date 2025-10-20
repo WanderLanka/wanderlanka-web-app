@@ -395,17 +395,7 @@ export const tourGuideAPI = {
   }
 };
 
-<<<<<<< HEAD
-// Chat API endpoints
-export const chatAPI = {
-  // Get user conversations
-  getConversations: async () => {
-    try {
-      const response = await api.get('/chat/conversations');
-      return response.data;
-    } catch (error) {
-      console.error('Get conversations failed:', error.response?.data || error.message);
-=======
+
 // Itinerary endpoints
 export const itineraryAPI = {
   // Store completed trip data
@@ -415,20 +405,11 @@ export const itineraryAPI = {
       return response.data;
     } catch (error) {
       console.error('Store completed trip failed:', error.response?.data || error.message);
->>>>>>> main
       throw error;
     }
   },
 
-<<<<<<< HEAD
-  // Create or get conversation
-  createConversation: async (conversationData) => {
-    try {
-      const response = await api.post('/chat/conversations', conversationData);
-      return response.data;
-    } catch (error) {
-      console.error('Create conversation failed:', error.response?.data || error.message);
-=======
+
   // Create new itinerary
   create: async (itineraryData) => {
     try {
@@ -436,20 +417,11 @@ export const itineraryAPI = {
       return response.data;
     } catch (error) {
       console.error('Create itinerary failed:', error.response?.data || error.message);
->>>>>>> main
       throw error;
     }
   },
 
-<<<<<<< HEAD
-  // Get conversation by ID
-  getConversation: async (conversationId) => {
-    try {
-      const response = await api.get(`/chat/conversations/${conversationId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Get conversation failed:', error.response?.data || error.message);
-=======
+
   // Get user itineraries
   getUserItineraries: async (status = null) => {
     try {
@@ -458,22 +430,10 @@ export const itineraryAPI = {
       return response.data;
     } catch (error) {
       console.error('Get user itineraries failed:', error.response?.data || error.message);
->>>>>>> main
       throw error;
     }
   },
 
-<<<<<<< HEAD
-  // Get messages for conversation
-  getMessages: async (conversationId, page = 1, limit = 50) => {
-    try {
-      const response = await api.get(`/chat/conversations/${conversationId}/messages`, {
-        params: { page, limit }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Get messages failed:', error.response?.data || error.message);
-=======
   // Get itinerary by ID
   getById: async (id) => {
     try {
@@ -481,23 +441,11 @@ export const itineraryAPI = {
       return response.data;
     } catch (error) {
       console.error('Get itinerary failed:', error.response?.data || error.message);
->>>>>>> main
       throw error;
     }
   },
 
-<<<<<<< HEAD
-  // Send message
-  sendMessage: async (conversationId, content, messageType = 'text') => {
-    try {
-      const response = await api.post(`/chat/conversations/${conversationId}/messages`, {
-        content,
-        messageType
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Send message failed:', error.response?.data || error.message);
-=======
+
   // Update itinerary
   update: async (id, updates) => {
     try {
@@ -505,20 +453,10 @@ export const itineraryAPI = {
       return response.data;
     } catch (error) {
       console.error('Update itinerary failed:', error.response?.data || error.message);
->>>>>>> main
       throw error;
     }
   },
 
-<<<<<<< HEAD
-  // Mark messages as read
-  markAsRead: async (conversationId) => {
-    try {
-      const response = await api.put(`/chat/conversations/${conversationId}/read`);
-      return response.data;
-    } catch (error) {
-      console.error('Mark as read failed:', error.response?.data || error.message);
-=======
   // Delete itinerary
   delete: async (id) => {
     try {
@@ -526,45 +464,9 @@ export const itineraryAPI = {
       return response.data;
     } catch (error) {
       console.error('Delete itinerary failed:', error.response?.data || error.message);
->>>>>>> main
       throw error;
     }
   },
-
-<<<<<<< HEAD
-  // Close conversation
-  closeConversation: async (conversationId) => {
-    try {
-      const response = await api.put(`/chat/conversations/${conversationId}/close`);
-      return response.data;
-    } catch (error) {
-      console.error('Close conversation failed:', error.response?.data || error.message);
-      throw error;
-    }
-  }
-};
-
-// AI Bot API endpoints
-export const aiBotAPI = {
-  // Send message to AI bot
-  sendMessage: async (message) => {
-    try {
-      const response = await api.post('/ai/chat', { message });
-      return response.data;
-    } catch (error) {
-      console.error('AI bot message failed:', error.response?.data || error.message);
-      throw error;
-    }
-  },
-
-  // Get AI bot conversation history
-  getConversationHistory: async () => {
-    try {
-      const response = await api.get('/ai/conversation-history');
-      return response.data;
-    } catch (error) {
-      console.error('Get AI conversation history failed:', error.response?.data || error.message);
-=======
   // Search places
   searchPlaces: async (query, location = null) => {
     try {
@@ -588,7 +490,6 @@ export const aiBotAPI = {
       return response.data;
     } catch (error) {
       console.error('Get place details failed:', error.response?.data || error.message);
->>>>>>> main
       throw error;
     }
   }

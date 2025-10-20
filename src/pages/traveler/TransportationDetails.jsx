@@ -27,9 +27,8 @@ import PaymentModal from '../../components/PaymentModal';
 import ChatBox from '../../components/common/ChatBox';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import { useChat } from '../../contexts/ChatContext';
-import { transportationAPI } from '../../services/api';
-import TripSummaryModal from '../../components/TripSummaryModal';
 import { transportationAPI, bookingsAPI } from '../../services/api';
+import TripSummaryModal from '../../components/TripSummaryModal';
 
 function TransportationDetails() {
     const { id } = useParams();

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import "../../styles/AccommodationPayments.css";
 // import api from "../../services/axiosConfig"; // You'll uncomment this when using real API
 
 const AccommodationPayments = () => {

@@ -21,18 +21,13 @@ import {
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import PaymentModal from '../../components/PaymentModal';
-<<<<<<< HEAD
 import ChatBox from '../../components/common/ChatBox';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import { useChat } from '../../contexts/ChatContext';
-import { accommodationAPI } from '../../services/api';
-=======
-import TripSummaryModal from '../../components/TripSummaryModal';
-import { useTripPlanning } from '../../hooks/useTripPlanning';
 import { accommodationAPI, bookingsAPI } from '../../services/api';
+import TripSummaryModal from '../../components/TripSummaryModal';
 import { authUtils } from '../../utils/authUtils';
 import api from '../../services/axiosConfig';
->>>>>>> main
 
 const AccommodationDetails = () => {
     const { id } = useParams();
@@ -59,12 +54,9 @@ const AccommodationDetails = () => {
     
     const [currentImage, setCurrentImage] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-<<<<<<< HEAD
     const [showChat, setShowChat] = useState(false);
-=======
     const [showSummaryModal, setShowSummaryModal] = useState(false);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
->>>>>>> main
     const [accommodation, setAccommodation] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -948,7 +940,6 @@ const AccommodationDetails = () => {
                 totalAmount={calculateTotal()}
             />
 
-<<<<<<< HEAD
             {/* Chat Box */}
             <ChatBox 
                 isOpen={showChat}
@@ -956,8 +947,8 @@ const AccommodationDetails = () => {
                 serviceType="accommodation"
                 serviceId={accommodation?._id || accommodation?.id}
                 bookingId={null}
-=======
-            {/* Trip Summary Modal */}
+           />
+           
             <TripSummaryModal
                 isOpen={showSummaryModal}
                 onClose={() => setShowSummaryModal(false)}
@@ -965,7 +956,6 @@ const AccommodationDetails = () => {
                 dayNotes={{}}
                 dayChecklists={{}}
                 dayPlaces={{}}
->>>>>>> main
             />
         </div>
     );

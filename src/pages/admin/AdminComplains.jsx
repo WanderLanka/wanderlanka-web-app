@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
 import api from "../../services/axiosConfig.js";
-// import "../styles/AdminComplains.css"; // Converted to Tailwind CSS
-=======
->>>>>>> main
-
 const AdminComplaints = () => {
   const [complaints, setComplaints] = useState([]);
   const [filteredComplaints, setFilteredComplaints] = useState([]);
@@ -29,10 +24,7 @@ const AdminComplaints = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
 
-<<<<<<< HEAD
   // Mock complaints data - kept for fallback if API fails
-=======
->>>>>>> main
   const mockComplaints = [
     {
       id: "COMP-001",
@@ -100,16 +92,12 @@ const AdminComplaints = () => {
     }
   ];
 
-<<<<<<< HEAD
   // Fetch complaints from backend (accommodation + transport)
-=======
->>>>>>> main
   useEffect(() => {
     const fetchComplaints = async () => {
       setLoading(true);
       setError("");
       try {
-<<<<<<< HEAD
         // Parallel fetch from services via API gateway
         const [accRes, transRes] = await Promise.all([
           api.get('/accommodation/complaints'),
@@ -151,9 +139,7 @@ const AdminComplaints = () => {
       } catch (err) {
         console.error('Failed to fetch complaints:', err);
         setError("Failed to fetch complaints data. Please try again.");
-=======
         await new Promise(resolve => setTimeout(resolve, 1000));
->>>>>>> main
         setComplaints(mockComplaints);
         setFilteredComplaints(mockComplaints);
       } finally {
@@ -279,7 +265,6 @@ const AdminComplaints = () => {
     return names[category] || category;
   };
 
-<<<<<<< HEAD
   const handleComplaintClick = (complaint) => {
     setSelectedComplaint(complaint);
     setShowModal(true);
@@ -304,8 +289,6 @@ const AdminComplaints = () => {
     setSelectedImage(null);
   };
 
-=======
->>>>>>> main
   const truncateText = (text, maxLength) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
@@ -616,11 +599,8 @@ const AdminComplaints = () => {
         )}
       </section>
 
-<<<<<<< HEAD
       {/* Admin privileges required to respond. Modal */}
-=======
       {/* Modal */}
->>>>>>> main
       {showModal && selectedComplaint && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -629,7 +609,6 @@ const AdminComplaints = () => {
               <button className="text-2xl text-slate-500 hover:text-slate-700" onClick={() => setShowModal(false)}>×</button>
             </div>
             
-<<<<<<< HEAD
             <div className="modal-body">
               <div className="complaint-details">
                 {/* Basic Information */}
@@ -774,33 +753,6 @@ const AdminComplaints = () => {
               )}
 
               
-=======
-            <div className="p-6 space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Complaint Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 p-4 rounded-lg">
-                    <p className="text-xs font-semibold text-slate-600 uppercase mb-1">ID</p>
-                    <p className="text-sm font-mono font-semibold text-slate-900">{selectedComplaint.id}</p>
-                  </div>
-                  <div className="bg-slate-50 p-4 rounded-lg">
-                    <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Category</p>
-                    <p className="text-sm text-slate-900">{getCategoryIcon(selectedComplaint.category)} {getCategoryName(selectedComplaint.category)}</p>
-                  </div>
-                  <div className="bg-slate-50 p-4 rounded-lg">
-                    <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Status</p>
-                    <span className={`inline-block text-xs font-semibold px-2 py-1 rounded ${getStatusColor(selectedComplaint.status)}`}>
-                      {selectedComplaint.status.charAt(0).toUpperCase() + selectedComplaint.status.slice(1)}
-                    </span>
-                  </div>
-                  <div className="bg-slate-50 p-4 rounded-lg">
-                    <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Priority</p>
-                    <span className={`inline-block text-xs font-semibold px-2 py-1 rounded ${getPriorityColor(selectedComplaint.priority)}`}>
-                      {selectedComplaint.priority.charAt(0).toUpperCase() + selectedComplaint.priority.slice(1)}
-                    </span>
-                  </div>
-                </div>
->>>>>>> main
               </div>
 
               <div>
@@ -860,16 +812,6 @@ const AdminComplaints = () => {
       )}
     </div>
   );
-
-  function handleImageClick(image) {
-    setSelectedImage(image);
-    setShowImageModal(true);
-  }
-
-  function closeImageModal() {
-    setShowImageModal(false);
-    setSelectedImage(null);
-  }
 };
 
 export default AdminComplaints;
