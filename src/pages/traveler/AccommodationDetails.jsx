@@ -15,14 +15,17 @@ import {
     Wifi,
     Coffee,
     Home,
-    Car
+    Car,
+    MessageCircle
 } from 'lucide-react';
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import PaymentModal from '../../components/PaymentModal';
-import TripSummaryModal from '../../components/TripSummaryModal';
+import ChatBox from '../../components/common/ChatBox';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
+import { useChat } from '../../contexts/ChatContext';
 import { accommodationAPI, bookingsAPI } from '../../services/api';
+import TripSummaryModal from '../../components/TripSummaryModal';
 import { authUtils } from '../../utils/authUtils';
 import api from '../../services/axiosConfig';
 
@@ -31,6 +34,7 @@ const AccommodationDetails = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { addToTripPlanning } = useTripPlanning();
+    const { openChatWithProvider } = useChat();
     
     // Check if user came from trip planning page
     const isFromTripPlanning = location.state?.fromTripPlanning === true;
@@ -50,6 +54,7 @@ const AccommodationDetails = () => {
     
     const [currentImage, setCurrentImage] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showChat, setShowChat] = useState(false);
     const [showSummaryModal, setShowSummaryModal] = useState(false);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [accommodation, setAccommodation] = useState(null);
@@ -391,6 +396,12 @@ const AccommodationDetails = () => {
         return nights > 0 ? nights : 0;
     };
 
+    const handleContactProvider = () => {
+        if (accommodation) {
+            setShowChat(true);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
             {/* Header */}
@@ -407,6 +418,15 @@ const AccommodationDetails = () => {
                             {isFromTripPlanning ? 'Back to Planning' : 'Back to Accommodations'}
                         </Button>
                         <div className="flex items-center gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex items-center"
+                                onClick={handleContactProvider}
+                            >
+                                <MessageCircle className="w-4 h-4 mr-2" />
+                                Contact Provider
+                            </Button>
                             <Button variant="outline" size="sm" className="flex items-center">
                                 <Share2 className="w-4 h-4 mr-2" />
                                 Share
@@ -920,7 +940,15 @@ const AccommodationDetails = () => {
                 totalAmount={calculateTotal()}
             />
 
-            {/* Trip Summary Modal */}
+            {/* Chat Box */}
+            <ChatBox 
+                isOpen={showChat}
+                onClose={() => setShowChat(false)}
+                serviceType="accommodation"
+                serviceId={accommodation?._id || accommodation?.id}
+                bookingId={null}
+           />
+           
             <TripSummaryModal
                 isOpen={showSummaryModal}
                 onClose={() => setShowSummaryModal(false)}

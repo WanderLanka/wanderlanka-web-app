@@ -16,6 +16,7 @@ import {
     Camera,
     Shield,
     Calendar,
+    MessageCircle,
     Phone
 } from 'lucide-react';
 
@@ -23,18 +24,26 @@ import Breadcrumb from '../../components/common/Breadcrumb';
 import { Button, Card, Input } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import PaymentModal from '../../components/PaymentModal';
-import TripSummaryModal from '../../components/TripSummaryModal';
+import ChatBox from '../../components/common/ChatBox';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
+import { useChat } from '../../contexts/ChatContext';
 import { transportationAPI, bookingsAPI } from '../../services/api';
+import TripSummaryModal from '../../components/TripSummaryModal';
 
 function TransportationDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { addToTripPlanning } = useTripPlanning();
+    const { selectedDate } = location.state || {};
+    
+    const { addService } = useTripPlanning();
+    const { openChatWithProvider } = useChat();
     
     const [currentImage, setCurrentImage] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showChat, setShowChat] = useState(false);
+    const [transportationData, setTransportationData] = useState([]);
+    const { addToTripPlanning } = useTripPlanning();
     const [showSummaryModal, setShowSummaryModal] = useState(false);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [vehicle, setVehicle] = useState(null);
@@ -242,6 +251,12 @@ function TransportationDetails() {
         return distancePrice + serviceFee;
     };
 
+    const handleContactProvider = () => {
+        if (transportationData.length > 0) {
+            setShowChat(true);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
             {/* Loading State */}
@@ -307,6 +322,15 @@ function TransportationDetails() {
                             {isFromTripPlanning ? 'Back to Planning' : 'Back to Transportation'}
                         </Button>
                         <div className="flex items-center gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex items-center"
+                                onClick={handleContactProvider}
+                            >
+                                <MessageCircle className="w-4 h-4 mr-2" />
+                                Contact Provider
+                            </Button>
                             <Button variant="outline" size="sm" className="flex items-center">
                                 <Share2 className="w-4 h-4 mr-2" />
                                 Share
@@ -833,6 +857,15 @@ function TransportationDetails() {
                 totalAmount={calculateTotal()}
             />
 
+            {/* Chat Box */}
+            <ChatBox 
+                isOpen={showChat}
+                onClose={() => setShowChat(false)}
+                serviceType="transport"
+                serviceId={vehicle?.id}
+                bookingId={null}
+            />
+    
             {/* Trip Summary Modal */}
             <TripSummaryModal
                 isOpen={showSummaryModal}

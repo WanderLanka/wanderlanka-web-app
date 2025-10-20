@@ -19,7 +19,10 @@ export {
   Container, 
   Header, 
   Input, 
-  Modal 
+  Modal,
+  ChatButton,
+  ChatBox,
+  ChatWidget
 } from './common';
 
 // Other Components

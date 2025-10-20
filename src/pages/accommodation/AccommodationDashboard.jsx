@@ -1,4 +1,5 @@
 // import "../styles/TransportDashboard.css"; // Converted to Tailwind CSS
+import "../../styles/AccomodationDashboard.css";
 
 const AccommodationDashboard = () => {
   return (

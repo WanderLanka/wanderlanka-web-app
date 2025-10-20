@@ -177,3 +177,191 @@ body {
 .animation-delay-700 {
   animation-delay: 700ms;
 }
+
+/* Admin pages Tailwind component mappings */
+@layer components {
+  /* Layout containers */
+  .complaints-management,
+  .access-requests,
+  .payment-analytics {
+    @apply space-y-6;
+  }
+
+  /* Page header */
+  .page-header { @apply bg-white border border-slate-200 rounded-lg shadow-sm; }
+  .header-content { @apply flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6; }
+  .header-text { @apply space-y-1; }
+  .page-title { @apply text-2xl font-bold text-slate-800; }
+  .page-subtitle { @apply text-slate-600; }
+
+  /* Header stats */
+  .header-stats { @apply w-full md:w-auto; }
+  .stats-grid { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3; }
+  .stat-item { @apply flex items-center gap-3 bg-slate-50 rounded-lg border border-slate-200 p-4; }
+  .stat-item .stat-icon { @apply text-xl; }
+  .stat-item .stat-content { @apply leading-tight; }
+  .stat-item .stat-number { @apply text-lg font-semibold text-slate-800; }
+  .stat-item .stat-label { @apply text-xs text-slate-500; }
+  .stat-item--primary { @apply bg-blue-50 border-blue-200; }
+  .stat-item--warning { @apply bg-amber-50 border-amber-200; }
+  .stat-item--error { @apply bg-rose-50 border-rose-200; }
+  .stat-item--success { @apply bg-emerald-50 border-emerald-200; }
+
+  /* Filters */
+  .filters-section { @apply bg-white border border-slate-200 rounded-lg shadow-sm; }
+  .filters-container { @apply p-4 md:p-6; }
+  .filters-group { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4; }
+  .filter-item { @apply flex flex-col gap-1; }
+  .filter-label { @apply text-xs font-medium text-slate-600; }
+  .search-input,
+  .filter-select { @apply mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500; }
+  .results-info { @apply mt-4 text-sm text-slate-600; }
+  .results-count { @apply font-medium; }
+
+  /* Error */
+  .error-message { @apply flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-md; }
+  .error-icon { @apply text-lg; }
+
+  /* Empty state */
+  .empty-state { @apply text-center bg-slate-50 border border-slate-200 rounded-lg p-10; }
+  .empty-icon { @apply text-3xl mb-2; }
+  .empty-title { @apply text-lg font-semibold text-slate-800; }
+  .empty-description { @apply text-slate-600; }
+
+  /* Badges */
+  .status-badge { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border; }
+  .status-badge--warning { @apply bg-amber-50 text-amber-700 border-amber-200; }
+  .status-badge--success { @apply bg-emerald-50 text-emerald-700 border-emerald-200; }
+  .status-badge--error { @apply bg-rose-50 text-rose-700 border-rose-200; }
+  .status-badge--new { @apply bg-blue-50 text-blue-700 border-blue-200; }
+  .status-badge--neutral { @apply bg-slate-100 text-slate-700 border-slate-200; }
+
+  .priority-badge { @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border; }
+  .priority-badge--low { @apply bg-slate-100 text-slate-700 border-slate-200; }
+  .priority-badge--medium { @apply bg-amber-50 text-amber-700 border-amber-200; }
+  .priority-badge--high { @apply bg-orange-50 text-orange-700 border-orange-200; }
+  .priority-badge--urgent { @apply bg-rose-50 text-rose-700 border-rose-200; }
+
+  /* Complaints grid */
+  .complaints-section { @apply space-y-4; }
+  .complaints-grid { @apply grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4; }
+  .complaint-card { @apply bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer; }
+  .card-header { @apply flex items-start justify-between gap-3; }
+  .complaint-meta { @apply flex items-center gap-3; }
+  .complaint-id { @apply text-xs font-semibold text-slate-600 bg-slate-100 rounded px-2 py-0.5; }
+  .badges { @apply flex items-center gap-2; }
+  .category-info { @apply flex items-center gap-2 text-slate-600; }
+  .category-name { @apply text-sm; }
+  .card-content { @apply mt-3 space-y-3; }
+  .complaint-topic { @apply text-base font-semibold text-slate-800; }
+  .complaint-preview { @apply text-sm text-slate-600; }
+  .user-info { @apply flex items-center justify-between text-sm text-slate-600; }
+  .user-details { @apply flex flex-col; }
+  .user-name { @apply font-medium text-slate-800; }
+  .user-email { @apply text-slate-500; }
+  .submission-date { @apply text-slate-500; }
+  .photos-preview { @apply mt-2; }
+  .photos-indicator { @apply flex items-center gap-2 text-slate-600 text-sm; }
+  .photos-thumbnails { @apply mt-2 flex items-center gap-2; }
+  .photo-thumbnail { @apply w-12 h-12 rounded-md overflow-hidden border border-slate-200; }
+  .photo-thumbnail img { @apply w-full h-full object-cover; }
+  .more-photos { @apply text-xs bg-slate-100 text-slate-700 rounded-md px-2 py-1; }
+  .card-footer { @apply mt-4 flex items-center justify-between; }
+  .service-provider { @apply text-sm text-slate-600; }
+  .provider-label { @apply font-medium text-slate-700; }
+  .provider-name { @apply text-slate-600; }
+  .response-required .response-indicator { @apply text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-full px-2 py-0.5; }
+
+  /* Pagination */
+  .pagination { @apply flex items-center justify-between bg-white border border-slate-200 rounded-lg p-3; }
+  .pagination-info { @apply text-sm text-slate-600; }
+  .page-numbers, .items-info { @apply text-sm; }
+  .pagination-btn { @apply inline-flex items-center rounded-md bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed; }
+
+  /* Modal */
+  .modal-overlay,
+  .image-modal-overlay { @apply fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4; }
+  .modal-content,
+  .image-modal-content { @apply bg-white rounded-xl shadow-xl w-full max-w-4xl border border-slate-200; }
+  .modal-header { @apply flex items-center justify-between px-6 py-4 border-b border-slate-200; }
+  .modal-title { @apply text-lg font-semibold text-slate-800; }
+  .modal-close,
+  .image-modal-close { @apply text-slate-500 hover:text-slate-700 text-xl; }
+  .modal-body { @apply p-6; }
+  .modal-footer { @apply px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3; }
+
+  /* Details sections */
+  .details-section { @apply mb-6; }
+  .section-title { @apply text-sm font-semibold text-slate-700 mb-3; }
+  .details-grid { @apply grid grid-cols-1 sm:grid-cols-2 gap-4; }
+  .detail-item { @apply flex items-center justify-between bg-slate-50 border border-slate-200 rounded-md px-3 py-2; }
+  .detail-label { @apply text-xs font-medium text-slate-600; }
+  .detail-value { @apply text-sm text-slate-800; }
+  .complaint-topic-detail { @apply text-base font-semibold text-slate-800; }
+  .complaint-description { @apply text-sm text-slate-700; }
+
+  .photos-gallery { @apply grid grid-cols-2 sm:grid-cols-3 gap-3; }
+  .gallery-item { @apply relative rounded-lg overflow-hidden border border-slate-200 cursor-pointer; }
+  .gallery-item img { @apply w-full h-32 object-cover; }
+  .photo-caption { @apply absolute bottom-0 inset-x-0 bg-black/50 text-white text-xs px-2 py-1; }
+  .image-caption { @apply mt-2 text-center text-sm text-slate-600; }
+
+  /* Tables (Requests / Payments) */
+  .requests-table-container,
+  .payments-table-container { @apply bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden; }
+  .requests-table,
+  .payments-table { @apply w-full border-collapse; }
+  .requests-table thead th,
+  .payments-table thead th { @apply bg-slate-50 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide px-4 py-3 border-b border-slate-200; }
+  .requests-table tbody td,
+  .payments-table tbody td { @apply px-4 py-3 border-b border-slate-100 align-middle; }
+  .request-row,
+  .payment-row { @apply hover:bg-slate-50/60; }
+
+  .request-id { @apply text-xs font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded; }
+  .applicant-info { @apply space-y-0.5; }
+  .applicant-name { @apply font-medium text-slate-800; }
+  .applicant-email { @apply text-sm text-slate-500; }
+  .provider-type { @apply inline-flex items-center gap-2 text-slate-700; }
+  .role-icon { @apply text-base; }
+  .role-text { @apply text-sm; }
+  .business-info { @apply space-y-0.5; }
+  .business-name { @apply font-medium text-slate-800; }
+  .business-address { @apply text-sm text-slate-500; }
+  .date-info { @apply text-sm text-slate-600; }
+
+  .view-btn,
+  .action-btn,
+  .pagination-btn { @apply select-none; }
+  .view-btn { @apply inline-flex items-center rounded-md bg-blue-600 text-white px-3 py-1.5 text-sm font-medium shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500; }
+  .approve-btn { @apply inline-flex items-center rounded-md bg-emerald-600 text-white px-3 py-1.5 text-sm font-medium shadow hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500; }
+  .reject-btn { @apply inline-flex items-center rounded-md bg-rose-600 text-white px-3 py-1.5 text-sm font-medium shadow hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500; }
+
+  /* Payments specific */
+  .transaction-info { @apply space-y-0.5; }
+  .transaction-id { @apply font-mono text-sm text-slate-800; }
+  .transaction-ref { @apply text-xs text-slate-500; }
+  .payment-type { @apply inline-flex items-center gap-2; }
+  .type-icon { @apply text-base; }
+  .type-text { @apply text-sm font-medium; }
+  .type-text--received { @apply text-emerald-700; }
+  .type-text--sent { @apply text-blue-700; }
+  .amount { @apply font-semibold; }
+  .amount--received { @apply text-emerald-700; }
+  .amount--sent { @apply text-blue-700; }
+  .parties-info { @apply grid grid-cols-2 gap-2; }
+  .party-item { @apply flex items-center gap-2; }
+  .party-label { @apply text-xs text-slate-500; }
+  .party-name { @apply text-sm text-slate-800; }
+  .service-info { @apply flex items-start gap-2; }
+  .service-icon { @apply text-base; }
+  .service-details { @apply space-y-0.5; }
+  .service-name { @apply text-sm font-medium text-slate-800; }
+  .service-reference { @apply text-xs text-slate-500; }
+  .payment-method { @apply text-sm text-slate-700; }
+
+  /* Generic loading */
+  .loading-container { @apply flex items-center justify-center p-10; }
+  .loading-spinner { @apply h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-blue-500; }
+  .loading-text { @apply ml-3 text-slate-600; }
+}

@@ -13,6 +13,7 @@ const TransportNavbar = () => {
     { path: '/transport/trips', label: 'Operations' },
     { path: '/transport/drivers', label: 'Personnel' },
     { path: '/transport/payments', label: 'Financial' },
+    { path: '/transport/complains/report', label: 'Report a Complain' },
     { path: '/transport/profile', label: 'Account' }
   ];
 
