@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Plane, Camera, Heart, Star, Clock, Users, Search, ArrowRight, Hotel, Car, Utensils, Plus, Zap } from 'lucide-react';
-import { Button, Card, Input, Breadcrumb } from '../../components/common';
-import { TravelerFooter } from '../../components/traveler';
+import { ArrowRight, Calendar, Camera, Car, Clock, Heart, Hotel, MapPin, Plane, Plus, Search, Star, Users, Utensils, Zap } from 'lucide-react';
+import { Breadcrumb, Button, Card, Input } from '../../components/common';
+import { useEffect, useState } from 'react';
+
 import PlacesAutocomplete from '../../components/common/PlacesAutocomplete';
+import { TravelerFooter } from '../../components/traveler';
+import { useNavigate } from 'react-router-dom';
 import { useScript } from '../../hooks/useScript';
 
 const TravelerDashboard = () => {

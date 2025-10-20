@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { MapPin, X, Loader } from 'lucide-react';
+import { Loader, MapPin, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 const PlacesAutocomplete = ({ 
     value, 
