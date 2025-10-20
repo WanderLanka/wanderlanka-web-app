@@ -62,6 +62,30 @@ export const authAPI = {
   }
 };
 
+export const adminAPI={
+  requests:async()=>{
+    try{
+      const response = await api.get('/auth/requests');
+      return response.data;
+    }
+    catch (error) {
+      console.error('Get requests failed:', error.response?.data || error.message);
+      throw error;
+  }
+}
+,
+updateRequestStatus:async(requestid,action)=>{
+  try{
+    const response = await api.put('/auth/updateRequestStatus', { requestId: requestid, action });
+    return response.data;
+  }
+  catch (error) {
+    console.error('Update request status failed:', error.response?.data || error.message);
+    throw error;    
+}
+}
+};
+
 // Destinations endpoints
 export const destinationsAPI = {
   // Get all destinations
@@ -125,10 +149,10 @@ export const testimonialsAPI = {
 
 // Bookings endpoints  
 export const bookingsAPI = {
-  // Create new booking
+  // Create new booking (original endpoint)
   create: async (bookingData) => {
     try {
-      const response = await api.post('/bookings', bookingData);
+      const response = await api.post('/booking/addBooking', bookingData);
       return response.data;
     } catch (error) {
       console.error('Create booking failed:', error.response?.data || error.message);
@@ -136,10 +160,54 @@ export const bookingsAPI = {
     }
   },
 
+  // Create enhanced booking with complete flow
+  createEnhanced: async (bookingData) => {
+    try {
+      const response = await api.post('/booking/enhanced', bookingData);
+      return response.data;
+    } catch (error) {
+      console.error('Create enhanced booking failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Create Stripe Checkout session
+  createCheckoutSession: async (bookingData) => {
+    try {
+      const response = await api.post('/booking/payments/create-session', bookingData);
+      return response.data;
+    } catch (error) {
+      console.error('Create checkout session failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get enhanced booking details
+  getEnhanced: async (bookingId) => {
+    try {
+      const response = await api.get(`/bookings/enhanced/${bookingId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get enhanced booking failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Cancel enhanced booking
+  cancelEnhanced: async (bookingId, reason) => {
+    try {
+      const response = await api.post(`/bookings/enhanced/${bookingId}/cancel`, { reason });
+      return response.data;
+    } catch (error) {
+      console.error('Cancel enhanced booking failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
   // Get user bookings
   getUserBookings: async () => {
     try {
-      const response = await api.get('/bookings/user');
+      const response = await api.get('/bookings/userBookings');
       return response.data;
     } catch (error) {
       console.error('Get user bookings failed:', error.response?.data || error.message);
@@ -154,6 +222,18 @@ export const bookingsAPI = {
       return response.data;
     } catch (error) {
       console.error('Get booking failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Provider bookings (filtered by serviceType)
+  getProviderBookings: async (serviceType) => {
+    try {
+      const q = serviceType ? `?serviceType=${encodeURIComponent(serviceType)}` : '';
+      const response = await api.get(`/booking/provider/bookings${q}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get provider bookings failed:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -245,8 +325,16 @@ export const transportationAPI = {
     try {
       const response = await api.get(`/transport/transportation/${id}`);
       console.log('Transportation API Response:', response.data);
+      console.log('Response data structure:', {
+        hasData: !!response.data.data,
+        hasSuccess: !!response.data.success,
+        userId: response.data.data?.userId,
+        _id: response.data.data?._id
+      });
       // Extract the actual data from the response structure
-      return response.data.data || response.data;
+      const extractedData = response.data.data || response.data;
+      console.log('Extracted data:', extractedData);
+      return extractedData;
     } catch (error) {
       console.error('Get transportation failed:', error.response?.data || error.message);
       throw error;
@@ -307,6 +395,7 @@ export const tourGuideAPI = {
   }
 };
 
+<<<<<<< HEAD
 // Chat API endpoints
 export const chatAPI = {
   // Get user conversations
@@ -316,10 +405,22 @@ export const chatAPI = {
       return response.data;
     } catch (error) {
       console.error('Get conversations failed:', error.response?.data || error.message);
+=======
+// Itinerary endpoints
+export const itineraryAPI = {
+  // Store completed trip data
+  storeCompletedTrip: async (tripData) => {
+    try {
+      const response = await api.post('/itinerary/store-completed-trip', tripData);
+      return response.data;
+    } catch (error) {
+      console.error('Store completed trip failed:', error.response?.data || error.message);
+>>>>>>> main
       throw error;
     }
   },
 
+<<<<<<< HEAD
   // Create or get conversation
   createConversation: async (conversationData) => {
     try {
@@ -327,10 +428,20 @@ export const chatAPI = {
       return response.data;
     } catch (error) {
       console.error('Create conversation failed:', error.response?.data || error.message);
+=======
+  // Create new itinerary
+  create: async (itineraryData) => {
+    try {
+      const response = await api.post('/itinerary/create', itineraryData);
+      return response.data;
+    } catch (error) {
+      console.error('Create itinerary failed:', error.response?.data || error.message);
+>>>>>>> main
       throw error;
     }
   },
 
+<<<<<<< HEAD
   // Get conversation by ID
   getConversation: async (conversationId) => {
     try {
@@ -338,10 +449,21 @@ export const chatAPI = {
       return response.data;
     } catch (error) {
       console.error('Get conversation failed:', error.response?.data || error.message);
+=======
+  // Get user itineraries
+  getUserItineraries: async (status = null) => {
+    try {
+      const url = status ? `/itinerary/user?status=${status}` : '/itinerary/user';
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Get user itineraries failed:', error.response?.data || error.message);
+>>>>>>> main
       throw error;
     }
   },
 
+<<<<<<< HEAD
   // Get messages for conversation
   getMessages: async (conversationId, page = 1, limit = 50) => {
     try {
@@ -351,10 +473,20 @@ export const chatAPI = {
       return response.data;
     } catch (error) {
       console.error('Get messages failed:', error.response?.data || error.message);
+=======
+  // Get itinerary by ID
+  getById: async (id) => {
+    try {
+      const response = await api.get(`/itinerary/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get itinerary failed:', error.response?.data || error.message);
+>>>>>>> main
       throw error;
     }
   },
 
+<<<<<<< HEAD
   // Send message
   sendMessage: async (conversationId, content, messageType = 'text') => {
     try {
@@ -365,10 +497,20 @@ export const chatAPI = {
       return response.data;
     } catch (error) {
       console.error('Send message failed:', error.response?.data || error.message);
+=======
+  // Update itinerary
+  update: async (id, updates) => {
+    try {
+      const response = await api.put(`/itinerary/${id}`, updates);
+      return response.data;
+    } catch (error) {
+      console.error('Update itinerary failed:', error.response?.data || error.message);
+>>>>>>> main
       throw error;
     }
   },
 
+<<<<<<< HEAD
   // Mark messages as read
   markAsRead: async (conversationId) => {
     try {
@@ -376,10 +518,20 @@ export const chatAPI = {
       return response.data;
     } catch (error) {
       console.error('Mark as read failed:', error.response?.data || error.message);
+=======
+  // Delete itinerary
+  delete: async (id) => {
+    try {
+      const response = await api.delete(`/itinerary/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete itinerary failed:', error.response?.data || error.message);
+>>>>>>> main
       throw error;
     }
   },
 
+<<<<<<< HEAD
   // Close conversation
   closeConversation: async (conversationId) => {
     try {
@@ -412,6 +564,31 @@ export const aiBotAPI = {
       return response.data;
     } catch (error) {
       console.error('Get AI conversation history failed:', error.response?.data || error.message);
+=======
+  // Search places
+  searchPlaces: async (query, location = null) => {
+    try {
+      const params = new URLSearchParams({ query });
+      if (location) {
+        params.append('latitude', location.latitude);
+        params.append('longitude', location.longitude);
+      }
+      const response = await api.get(`/itinerary/places/search?${params}`);
+      return response.data;
+    } catch (error) {
+      console.error('Search places failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get place details
+  getPlaceDetails: async (placeId) => {
+    try {
+      const response = await api.get(`/itinerary/places/${placeId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get place details failed:', error.response?.data || error.message);
+>>>>>>> main
       throw error;
     }
   }

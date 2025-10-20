@@ -1,11 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, MapPin, Calendar, Users, Plane, Hotel, Car, UserCheck, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from './common';
 import { useTripPlanning } from '../hooks/useTripPlanning';
 
-const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
+const TripSummaryModal = ({ isOpen, onClose, tripData, dayNotes = {}, dayChecklists = {}, dayPlaces = {} }) => {
+  const navigate = useNavigate();
   const { planningBookings, removeFromTripPlanning, getTotalAmount, clearTripPlanning } = useTripPlanning();
   const [collapsedDays, setCollapsedDays] = useState(new Set());
+  const [tripSummaryData, setTripSummaryData] = useState({
+    dayPlaces: {},
+    dayNotes: {},
+    dayChecklists: {},
+    planningBookings: {}
+  });
+
+  // Store all trip data when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const currentTripData = {
+        dayPlaces: dayPlaces,
+        dayNotes: dayNotes,
+        dayChecklists: dayChecklists,
+        planningBookings: planningBookings,
+        tripData: tripData,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Store in localStorage for persistence
+      localStorage.setItem('tripSummaryData', JSON.stringify(currentTripData));
+      setTripSummaryData(currentTripData);
+      
+      console.log('Trip Summary Data Stored:', currentTripData);
+    }
+  }, [isOpen, dayPlaces, dayNotes, dayChecklists, planningBookings, tripData]);
+
+  // Load trip data from localStorage when component mounts
+  useEffect(() => {
+    const savedTripData = localStorage.getItem('tripSummaryData');
+    if (savedTripData) {
+      try {
+        const parsedData = JSON.parse(savedTripData);
+        setTripSummaryData(parsedData);
+        console.log('Trip Summary Data Loaded:', parsedData);
+      } catch (error) {
+        console.error('Error loading trip summary data:', error);
+      }
+    }
+  }, []);
 
   if (!isOpen) return null;
 
@@ -62,6 +104,9 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
   };
 
   const hasBookings = Object.values(planningBookings).some(bookings => bookings.length > 0);
+  const hasUserData = Object.keys(dayPlaces).length > 0 || 
+                     Object.keys(dayNotes).length > 0 || 
+                     Object.keys(dayChecklists).length > 0;
 
   return (
     <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -109,7 +154,7 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {!hasBookings ? (
+          {!hasBookings && !hasUserData ? (
             <div className="text-center py-8">
               <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4">
                 <MapPin className="w-8 h-8 text-gray-400" />
@@ -143,19 +188,54 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                   };
                 });
 
+                // Also create entries for days that have user data but no bookings
+                const allDayNumbers = new Set([
+                  ...Object.keys(dailyBookings).map(Number),
+                  ...Object.keys(dayPlaces).map(Number),
+                  ...Object.keys(dayNotes).map(Number),
+                  ...Object.keys(dayChecklists).map(Number)
+                ]);
+
+                allDayNumbers.forEach(dayNum => {
+                  if (!dailyBookings[dayNum]) {
+                    // Create a day entry for user data only
+                    dailyBookings[dayNum] = {
+                      date: new Date(), // Default date, could be improved
+                      destinations: [],
+                      accommodations: [],
+                      transportation: [],
+                      guides: []
+                    };
+                  }
+                });
+
                 // Distribute bookings to their respective days
                 Object.entries(planningBookings).forEach(([type, bookings]) => {
                   bookings.forEach(booking => {
-                    const day = booking.selectedDay || 1;
-                    if (dailyBookings[day]) {
-                      if (type === 'destinations') {
-                        dailyBookings[day].destinations.push(booking);
-                      } else if (type === 'accommodations') {
-                        dailyBookings[day].accommodations.push(booking);
-                      } else if (type === 'transportation') {
-                        dailyBookings[day].transportation.push(booking);
-                      } else if (type === 'guides') {
-                        dailyBookings[day].guides.push(booking);
+                    // Find the matching day based on selectedDate
+                    let matchingDayNum = 1; // default to day 1
+                    
+                    if (booking.selectedDate) {
+                      try {
+                        // Find which day this booking belongs to by comparing dates
+                        const bookingDate = new Date(booking.selectedDate).toISOString().split('T')[0];
+                        tripDays.forEach((tripDay, index) => {
+                          const tripDayStr = tripDay.toISOString().split('T')[0];
+                          if (bookingDate === tripDayStr) {
+                            matchingDayNum = index + 1;
+                          }
+                        });
+                      } catch (error) {
+                        console.warn('Error parsing booking date:', booking.selectedDate, error);
+                        // Keep default matchingDayNum = 1
+                      }
+                    }
+                    
+                    // Add booking to the appropriate day and type
+                    if (dailyBookings[matchingDayNum]) {
+                      const targetArray = dailyBookings[matchingDayNum][type] || dailyBookings[matchingDayNum]['destinations'];
+                      if (targetArray) {
+                        targetArray.push(booking);
                       }
                     }
                   });
@@ -166,8 +246,12 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                                       dayData.accommodations.length > 0 || 
                                       dayData.transportation.length > 0 || 
                                       dayData.guides.length > 0;
+                  
+                  const hasUserData = (dayPlaces[dayNum] && dayPlaces[dayNum].length > 0) ||
+                                    dayNotes[dayNum] ||
+                                    (dayChecklists[dayNum] && dayChecklists[dayNum].length > 0);
 
-                  if (!hasActivities) return null;
+                  if (!hasActivities && !hasUserData) return null;
 
                   const isCollapsed = collapsedDays.has(parseInt(dayNum));
                   
@@ -189,18 +273,26 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                                 {isCollapsed && (
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">
-                                      {dayData.destinations.length + dayData.accommodations.length + dayData.transportation.length + dayData.guides.length} items
+                                      {dayData.destinations.length + dayData.accommodations.length + dayData.transportation.length + dayData.guides.length + 
+                                       (dayPlaces[dayNum] ? dayPlaces[dayNum].length : 0) + 
+                                       (dayNotes[dayNum] ? 1 : 0) + 
+                                       (dayChecklists[dayNum] ? dayChecklists[dayNum].length : 0)} items
                                     </span>
-                                    {dayData.destinations.length > 0 && (
+                                    {(dayData.destinations.length > 0 || (dayPlaces[dayNum] && dayPlaces[dayNum].length > 0)) && (
                                       <div className="flex gap-1 max-w-[200px] overflow-hidden">
                                         {dayData.destinations.slice(0, 2).map(place => (
                                           <span key={place.id} className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full truncate">
                                             {place.name}
                                           </span>
                                         ))}
-                                        {dayData.destinations.length > 2 && (
+                                        {dayPlaces[dayNum] && dayPlaces[dayNum].slice(0, 2).map(place => (
+                                          <span key={place.id} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full truncate">
+                                            {place.name}
+                                          </span>
+                                        ))}
+                                        {(dayData.destinations.length + (dayPlaces[dayNum] ? dayPlaces[dayNum].length : 0)) > 2 && (
                                           <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full">
-                                            +{dayData.destinations.length - 2}
+                                            +{(dayData.destinations.length + (dayPlaces[dayNum] ? dayPlaces[dayNum].length : 0)) - 2}
                                           </span>
                                         )}
                                       </div>
@@ -244,6 +336,29 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                                 <div className="flex items-center bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">
                                   <UserCheck className="w-3 h-3 mr-1" />
                                   {dayData.guides.length}
+                                </div>
+                              )}
+                              {/* User-added data badges */}
+                              {dayPlaces[dayNum] && dayPlaces[dayNum].length > 0 && (
+                                <div className="flex items-center bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                                  <MapPin className="w-3 h-3 mr-1" />
+                                  {dayPlaces[dayNum].length} places
+                                </div>
+                              )}
+                              {dayNotes[dayNum] && (
+                                <div className="flex items-center bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
+                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  Notes
+                                </div>
+                              )}
+                              {dayChecklists[dayNum] && dayChecklists[dayNum].length > 0 && (
+                                <div className="flex items-center bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs">
+                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  {dayChecklists[dayNum].length} lists
                                 </div>
                               )}
                             </div>
@@ -335,6 +450,89 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                             </div>
                           </div>
                         )}
+
+                        {/* User Added Places for this day */}
+                        {dayPlaces[dayNum] && dayPlaces[dayNum].length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                              <MapPin className="w-4 h-4 text-emerald-600 mr-1" />
+                              Added Places
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {dayPlaces[dayNum].map((place) => (
+                                <div 
+                                  key={place.id}
+                                  className="flex items-center bg-emerald-100 text-emerald-800 px-3 py-2 rounded-full text-sm font-medium"
+                                >
+                                  <MapPin className="w-3 h-3 mr-1" />
+                                  <span>{place.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Notes for this day */}
+                        {dayNotes[dayNum] && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                              <svg className="w-4 h-4 text-emerald-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              Notes
+                            </h4>
+                            <div className="bg-emerald-50 rounded-lg p-3 border-l-4 border-emerald-600">
+                              <p className="text-sm text-gray-700 whitespace-pre-wrap">{dayNotes[dayNum].text}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Checklists for this day */}
+                        {dayChecklists[dayNum] && dayChecklists[dayNum].length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                              <svg className="w-4 h-4 text-emerald-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Checklists
+                            </h4>
+                            <div className="space-y-2">
+                              {dayChecklists[dayNum].map((checklist) => {
+                                const completedCount = checklist.items.filter(item => item.completed).length;
+                                const totalCount = checklist.items.length;
+                                
+                                return (
+                                  <div key={checklist.id} className="bg-gray-50 rounded-lg p-3 border-l-4 border-green-500">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <h6 className="text-sm font-semibold text-gray-800">{checklist.title}</h6>
+                                      <span className="text-xs text-gray-500">{completedCount}/{totalCount} completed</span>
+                                    </div>
+                                    
+                                    <div className="space-y-1">
+                                      {checklist.items.slice(0, 3).map((item) => (
+                                        <div key={item.id} className="flex items-center">
+                                          <div className={`w-4 h-4 mr-2 ${item.completed ? 'text-green-500' : 'text-gray-400'}`}>
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                          </div>
+                                          <span className={`text-xs ${item.completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                                            {item.title}
+                                          </span>
+                                        </div>
+                                      ))}
+                                      {checklist.items.length > 3 && (
+                                        <div className="text-xs text-gray-500 ml-6">
+                                          +{checklist.items.length - 3} more items
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                         </div>
                       </div>
                     </div>
@@ -346,7 +544,7 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
         </div>
 
         {/* Footer */}
-        {hasBookings && (
+        {(hasBookings || hasUserData) && (
           <div className="border-t border-gray-200 p-6 bg-gray-50">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -354,7 +552,10 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                   Total Estimated Cost: {formatCurrency(getTotalAmount())}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {Object.values(planningBookings).reduce((total, bookings) => total + bookings.length, 0)} items selected
+                  {Object.values(planningBookings).reduce((total, bookings) => total + bookings.length, 0) + 
+                   Object.values(dayPlaces).reduce((total, places) => total + places.length, 0) + 
+                   Object.keys(dayNotes).length + 
+                   Object.values(dayChecklists).reduce((total, checklists) => total + checklists.length, 0)} items selected
                 </p>
               </div>
               <button
@@ -381,8 +582,31 @@ const TripSummaryModal = ({ isOpen, onClose, tripData }) => {
                 variant="primary"
                 className="flex-1"
                 onClick={() => {
-                  // TODO: Implement proceed to booking functionality
-                  console.log('Proceeding to booking...', planningBookings);
+                  // Store complete trip data for booking process
+                  const completeTripData = {
+                    tripData: tripData,
+                    planningBookings: planningBookings,
+                    dayPlaces: dayPlaces,
+                    dayNotes: dayNotes,
+                    dayChecklists: dayChecklists,
+                    timestamp: new Date().toISOString()
+                  };
+                  
+                  localStorage.setItem('currentTripData', JSON.stringify(completeTripData));
+                  localStorage.setItem('tripSummaryData', JSON.stringify(completeTripData));
+                  
+                  console.log('Complete trip data stored for booking:', completeTripData);
+                  
+                  // Navigate to booking payment page
+                  navigate('/user/booking-payment', { 
+                    state: { 
+                      tripData: tripData,
+                      planningBookings: planningBookings,
+                      dayPlaces: dayPlaces,
+                      dayNotes: dayNotes,
+                      dayChecklists: dayChecklists
+                    } 
+                  });
                   onClose();
                 }}
               >

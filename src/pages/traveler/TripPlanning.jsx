@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   MapPin, 
@@ -31,7 +31,7 @@ import { accommodationAPI, transportationAPI, tourGuideAPI } from '../../service
 const TripPlanning = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { getTotalItemsCount, addToTripPlanning } = useTripPlanning();
+  const { getTotalItemsCount, addToTripPlanning, planningBookings } = useTripPlanning();
   
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
@@ -43,42 +43,23 @@ const TripPlanning = () => {
   const [selectedDetailItem, setSelectedDetailItem] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
-  // Mock data for available activities
-  const mockPlaces = [
-    {
-      id: 1,
-      name: "Sigiriya Rock Fortress",
-      location: "Sigiriya",
-      type: "Historical Site",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1580910527739-556eb89f9d65?q=80&w=1074&auto=format&fit=crop",
-      price: "LKR 2,500",
-      duration: "2-3 hours",
-      description: "Ancient rock fortress and palace ruins with stunning views from the top of the rock."
-    },
-    {
-      id: 2,
-      name: "Temple of the Tooth",
-      location: "Kandy",
-      type: "Religious Site",
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1642498041677-d26b9dfc5e61?q=80&w=688&auto=format&fit=crop",
-      price: "LKR 1,500",
-      duration: "1-2 hours",
-      description: "Sacred Buddhist temple housing the tooth relic of Buddha, a UNESCO World Heritage site."
-    },
-    {
-      id: 3,
-      name: "Ella Nine Arch Bridge",
-      location: "Ella",
-      type: "Scenic Spot",
-      rating: 4.5,
-      image: "https://images.unsplash.com/photo-1586500036706-41963de24d8b?q=80&w=1172&auto=format&fit=crop",
-      price: "Free",
-      duration: "1 hour",
-      description: "Iconic railway bridge in the hill country offering spectacular views."
-    }
-  ];
+  
+  // Notes and Checklists state
+  const [dayNotes, setDayNotes] = useState({});
+  const [dayChecklists, setDayChecklists] = useState({});
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [editingNotesDay, setEditingNotesDay] = useState(null);
+  const [editingChecklistDay, setEditingChecklistDay] = useState(null);
+  const [notesText, setNotesText] = useState('');
+  const [checklistTitle, setChecklistTitle] = useState('');
+  const [checklistItems, setChecklistItems] = useState([]);
+  const [newChecklistItem, setNewChecklistItem] = useState('');
+  
+  // Places state
+  const [dayPlaces, setDayPlaces] = useState({});
+  const [newPlaceName, setNewPlaceName] = useState('');
+  
 
   // Helper function to render activity cards
   const renderActivityCard = (item, type) => (
@@ -204,42 +185,6 @@ const TripPlanning = () => {
     }
   };
 
-  const handleAddToDay = (item) => {
-    // Determine the type and prepare the booking object
-    let type;
-    let bookingData = {
-      ...item,
-      selectedDate: tripDays[selectedDateIndex]?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
-      quantity: 1,
-      addedFromPlanning: true
-    };
-
-    // Determine type based on current active tab or item properties
-    if (activeTab === 'places') {
-      type = 'destinations';
-    } else if (activeTab === 'accommodations') {
-      type = 'accommodations';
-    } else if (activeTab === 'guides') {
-      type = 'guides';
-    } else if (activeTab === 'transportation') {
-      type = 'transportation';
-    } else {
-      // Fallback: try to determine from item properties
-      if (item.type) {
-        type = item.type === 'guide' ? 'guides' : item.type + 's';
-      } else {
-        type = 'destinations'; // default
-      }
-    }
-
-    // Add to trip planning
-    addToTripPlanning(bookingData, type);
-    
-    // Show success message
-    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
-    setShowToast(true);
-    setHasUnsavedProgress(true);
-  };
   
   // New state for tab structure
   const [activeTab, setActiveTab] = useState('places');
@@ -261,19 +206,16 @@ const TripPlanning = () => {
     { id: 'transportation', label: 'Transportation', icon: Car, color: 'purple' }
   ];
 
-  // Load initial data when component mounts
-  useEffect(() => {
-    // Places will use Google Maps API, so no initial fetch needed
-  }, []);
-
   // API fetch functions
-  const fetchAccommodations = async () => {
-    if (accommodations.length > 0) return; // Only fetch if not already loaded
+  const fetchAccommodations = useCallback(async (forceRefresh = false) => {
+    if (accommodations.length > 0 && !forceRefresh) return; // Only fetch if not already loaded
     
     try {
       setLoadingAccommodations(true);
       setErrorAccommodations(null);
+      console.log('Fetching accommodations from database...');
       const response = await accommodationAPI.getAll();
+      console.log('Accommodations fetched:', response);
       setAccommodations(response || []);
     } catch (error) {
       console.error('Error fetching accommodations:', error);
@@ -282,7 +224,82 @@ const TripPlanning = () => {
     } finally {
       setLoadingAccommodations(false);
     }
+  }, [accommodations.length]);
+
+  // Load initial data when component mounts
+  useEffect(() => {
+    // Fetch accommodations immediately when component mounts
+    fetchAccommodations();
+    // Places will use Google Maps API, so no initial fetch needed
+    
+    // Load saved trip planning data from localStorage
+    loadTripPlanningData();
+  }, [fetchAccommodations]);
+
+  // Load trip planning data from localStorage
+  const loadTripPlanningData = () => {
+    try {
+      // Load individual data
+      const savedPlaces = localStorage.getItem('tripPlanning_places');
+      const savedNotes = localStorage.getItem('tripPlanning_notes');
+      const savedChecklists = localStorage.getItem('tripPlanning_checklists');
+      
+      if (savedPlaces) {
+        setDayPlaces(JSON.parse(savedPlaces));
+      }
+      if (savedNotes) {
+        setDayNotes(JSON.parse(savedNotes));
+      }
+      if (savedChecklists) {
+        setDayChecklists(JSON.parse(savedChecklists));
+      }
+
+      // Also load from trip summary data if available (for cross-page persistence)
+      const tripSummaryData = localStorage.getItem('tripSummaryData');
+      if (tripSummaryData) {
+        const parsedSummaryData = JSON.parse(tripSummaryData);
+        console.log('Loading trip summary data:', parsedSummaryData);
+        
+        // Update local state with summary data if it's more recent
+        if (parsedSummaryData.dayPlaces && Object.keys(parsedSummaryData.dayPlaces).length > 0) {
+          setDayPlaces(parsedSummaryData.dayPlaces);
+        }
+        if (parsedSummaryData.dayNotes && Object.keys(parsedSummaryData.dayNotes).length > 0) {
+          setDayNotes(parsedSummaryData.dayNotes);
+        }
+        if (parsedSummaryData.dayChecklists && Object.keys(parsedSummaryData.dayChecklists).length > 0) {
+          setDayChecklists(parsedSummaryData.dayChecklists);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading trip planning data:', error);
+    }
   };
+
+  // Save trip planning data to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('tripPlanning_places', JSON.stringify(dayPlaces));
+    } catch (error) {
+      console.error('Error saving places data:', error);
+    }
+  }, [dayPlaces]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tripPlanning_notes', JSON.stringify(dayNotes));
+    } catch (error) {
+      console.error('Error saving notes data:', error);
+    }
+  }, [dayNotes]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('tripPlanning_checklists', JSON.stringify(dayChecklists));
+    } catch (error) {
+      console.error('Error saving checklists data:', error);
+    }
+  }, [dayChecklists]);
 
   const fetchTransportation = async () => {
     if (transportation.length > 0) return; // Only fetch if not already loaded
@@ -372,6 +389,63 @@ const TripPlanning = () => {
     }
   }, [location.state]);
 
+  // Debug: Log current state to see what's happening
+  useEffect(() => {
+    console.log('🔍 TripPlanning Debug:', {
+      totalItemsCount: getTotalItemsCount(),
+      planningBookings: planningBookings,
+      showSummaryModal: showSummaryModal,
+      locationState: location.state,
+      dayPlaces: dayPlaces,
+      dayNotes: dayNotes,
+      dayChecklists: dayChecklists,
+      hasAnyContent: hasAnyContent(),
+      totalContentCount: getTotalContentCount()
+    });
+  }, [getTotalItemsCount, planningBookings, showSummaryModal, location.state, dayPlaces, dayNotes, dayChecklists]);
+
+  // Get total count of all content (bookings, places, notes, checklists)
+  const getTotalContentCount = () => {
+    const bookingCount = getTotalItemsCount();
+    const placesCount = Object.values(dayPlaces).reduce((total, places) => total + places.length, 0);
+    
+    // Notes are stored as single objects per day, not arrays
+    const notesCount = Object.keys(dayNotes).length;
+    
+    // Checklists are stored as arrays per day
+    const checklistsCount = Object.values(dayChecklists).reduce((total, checklists) => total + checklists.length, 0);
+    
+    const totalCount = bookingCount + placesCount + notesCount + checklistsCount;
+    
+    console.log('📊 Total Content Count:', {
+      bookingCount,
+      placesCount,
+      notesCount,
+      checklistsCount,
+      totalCount,
+      dayPlacesKeys: Object.keys(dayPlaces),
+      dayNotesKeys: Object.keys(dayNotes),
+      dayChecklistsKeys: Object.keys(dayChecklists),
+      dayNotesValues: Object.values(dayNotes),
+      dayChecklistsValues: Object.values(dayChecklists)
+    });
+    
+    return totalCount;
+  };
+
+  // Check if there's any content to show in summary (bookings, places, notes, checklists)
+  const hasAnyContent = () => {
+    const hasContent = getTotalContentCount() > 0;
+    console.log('🔍 hasAnyContent check:', hasContent, 'totalCount:', getTotalContentCount());
+    return hasContent;
+  };
+
+  // Debug: Track button visibility changes
+  useEffect(() => {
+    const shouldShowButton = hasAnyContent();
+    console.log('🔘 View Summary Button Visibility:', shouldShowButton);
+  }, [dayPlaces, dayNotes, dayChecklists, planningBookings]);
+
   // Calculate trip days with memoization to prevent infinite re-renders
   const tripDays = useMemo(() => {
     if (!tripData.startDate || !tripData.endDate) return [];
@@ -454,6 +528,189 @@ const TripPlanning = () => {
     setToastMessage('');
   };
 
+  // Place management functions
+  const handleAddPlace = (dayNumber) => {
+    if (newPlaceName.trim()) {
+      const selectedDate = tripDays[selectedDateIndex]?.toISOString().split('T')[0];
+      const newPlace = {
+        id: Date.now().toString(),
+        name: newPlaceName.trim(),
+        addedAt: new Date().toISOString(),
+        selectedDate: selectedDate,
+        dayNumber: dayNumber
+      };
+      
+      console.log('📍 Adding place for day:', dayNumber, 'name:', newPlaceName);
+      
+      setDayPlaces(prev => {
+        const newPlaces = {
+          ...prev,
+          [dayNumber]: [...(prev[dayNumber] || []), newPlace]
+        };
+        console.log('📍 Updated dayPlaces:', newPlaces);
+        return newPlaces;
+      });
+      
+      setNewPlaceName('');
+      setToastMessage('Place added successfully!');
+      setShowToast(true);
+    }
+  };
+
+  const removePlaceFromDay = (dayNumber, placeId) => {
+    setDayPlaces(prev => ({
+      ...prev,
+      [dayNumber]: (prev[dayNumber] || []).filter(place => place.id !== placeId)
+    }));
+    setToastMessage('Place removed successfully!');
+    setShowToast(true);
+  };
+
+  // Handle adding items to trip planning
+  const handleAddToDay = (item, type) => {
+    const selectedDate = tripDays[selectedDateIndex]?.toISOString().split('T')[0];
+    const bookingData = {
+      ...item,
+      id: item.id || item._id,
+      selectedDate: selectedDate,
+      selectedDayIndex: selectedDateIndex
+    };
+    
+    addToTripPlanning(bookingData, type);
+    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
+    setShowToast(true);
+  };
+
+
+  // Notes functions
+  const handleEditNotes = (dayNumber) => {
+    const existingNotes = dayNotes[dayNumber];
+    setNotesText(existingNotes?.text || '');
+    setEditingNotesDay(dayNumber);
+    setShowNotesModal(true);
+  };
+
+  const handleSaveNotes = () => {
+    if (editingNotesDay !== null) {
+      const selectedDate = tripDays[selectedDateIndex]?.toISOString().split('T')[0];
+      console.log('📝 Saving notes for day:', editingNotesDay, 'text:', notesText);
+      
+      setDayNotes(prev => {
+        const newNotes = {
+          ...prev,
+          [editingNotesDay]: {
+            text: notesText,
+            selectedDate: selectedDate,
+            dayNumber: editingNotesDay,
+            savedAt: new Date().toISOString()
+          }
+        };
+        console.log('📝 Updated dayNotes:', newNotes);
+        return newNotes;
+      });
+      
+      setShowNotesModal(false);
+      setNotesText('');
+      setEditingNotesDay(null);
+      setToastMessage('Notes saved successfully!');
+      setShowToast(true);
+    }
+  };
+
+  const handleCancelNotes = () => {
+    setShowNotesModal(false);
+    setNotesText('');
+    setEditingNotesDay(null);
+  };
+
+  // Checklist functions
+  const handleAddChecklist = (dayNumber) => {
+    setChecklistTitle('');
+    setChecklistItems([]);
+    setEditingChecklistDay(dayNumber);
+    setShowChecklistModal(true);
+  };
+
+  const handleSaveChecklist = () => {
+    if (editingChecklistDay !== null && checklistTitle.trim()) {
+      const selectedDate = tripDays[selectedDateIndex]?.toISOString().split('T')[0];
+      const newChecklist = {
+        id: Date.now().toString(),
+        title: checklistTitle.trim(),
+        items: checklistItems,
+        selectedDate: selectedDate,
+        dayNumber: editingChecklistDay,
+        createdAt: new Date().toISOString()
+      };
+      
+      console.log('✅ Saving checklist for day:', editingChecklistDay, 'title:', checklistTitle);
+      
+      setDayChecklists(prev => {
+        const newChecklists = {
+          ...prev,
+          [editingChecklistDay]: [...(prev[editingChecklistDay] || []), newChecklist]
+        };
+        console.log('✅ Updated dayChecklists:', newChecklists);
+        return newChecklists;
+      });
+      
+      setShowChecklistModal(false);
+      setChecklistTitle('');
+      setChecklistItems([]);
+      setEditingChecklistDay(null);
+      setNewChecklistItem('');
+      setToastMessage('Checklist saved successfully!');
+      setShowToast(true);
+    }
+  };
+
+  const handleCancelChecklist = () => {
+    setShowChecklistModal(false);
+    setChecklistTitle('');
+    setChecklistItems([]);
+    setEditingChecklistDay(null);
+    setNewChecklistItem('');
+  };
+
+  const handleAddChecklistItem = () => {
+    if (newChecklistItem.trim()) {
+      const newItem = {
+        id: Date.now().toString(),
+        title: newChecklistItem.trim(),
+        completed: false
+      };
+      setChecklistItems(prev => [...prev, newItem]);
+      setNewChecklistItem('');
+    }
+  };
+
+  const handleDeleteChecklistItem = (itemId) => {
+    setChecklistItems(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  const handleToggleChecklistItem = (itemId) => {
+    setChecklistItems(prev => prev.map(item => 
+      item.id === itemId ? { ...item, completed: !item.completed } : item
+    ));
+  };
+
+  const handleFinalizeItinerary = () => {
+    console.log('Finalize itinerary');
+    setShowSummaryModal(true);
+  };
+
+  // Clear all trip planning data
+  const clearTripPlanningData = () => {
+    setDayPlaces({});
+    setDayNotes({});
+    setDayChecklists({});
+    localStorage.removeItem('tripPlanning_places');
+    localStorage.removeItem('tripPlanning_notes');
+    localStorage.removeItem('tripPlanning_checklists');
+    setToastMessage('Trip planning data cleared successfully!');
+    setShowToast(true);
+  };
+
 
 
 
@@ -461,17 +718,17 @@ const TripPlanning = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="flex min-h-screen bg-gray-50">
       {/* Left Panel - Trip Planning */}
       <div className={`bg-white shadow-lg overflow-y-auto transition-all duration-300 ${
         isPanelExpanded ? 'w-full' : 'w-1/2'
       }`}>
         {/* Header */}
-        <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 text-white p-6">
+        <div className="p-6 text-white bg-gradient-to-br from-gray-900 via-gray-800 to-green-900">
           <div className="flex items-center justify-between mb-4">
             <button 
               onClick={() => handleSafeNavigation(() => navigate(-1))}
-              className="flex items-center text-white/90 hover:text-white transition-colors"
+              className="flex items-center transition-colors text-white/90 hover:text-white"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Dashboard
@@ -480,7 +737,7 @@ const TripPlanning = () => {
             {/* Panel Toggle Button */}
             <button
               onClick={() => setIsPanelExpanded(!isPanelExpanded)}
-              className="flex items-center text-white/90 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
+              className="flex items-center p-2 transition-colors rounded-lg text-white/90 hover:text-white hover:bg-white/10"
               title={isPanelExpanded ? 'Show Map' : 'Hide Map'}
             >
               {isPanelExpanded ? (
@@ -498,11 +755,10 @@ const TripPlanning = () => {
           </div>
           
           <div className="mb-4">
-            <h1 className="text-2xl font-bold mb-4">Plan Your Trip</h1>
-            {/* Date Chips */}
-            {tripDays.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-white/90 mb-3">Select Date to Plan</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-bold">Plan Your Trip</h1>
+              {/* Date Chips */}
+              {tripDays.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {tripDays.map((day, dayIndex) => {
                     const dayNumber = dayIndex + 1;
@@ -532,9 +788,13 @@ const TripPlanning = () => {
                     );
                   })}
                 </div>
-                
-                {/* Selected Date Info */}
-                <div className="mt-3 text-xs text-white/70">
+              )}
+            </div>
+            
+            {/* Selected Date Info */}
+            {tripDays.length > 0 && (
+              <div className="mb-6">
+                <div className="text-sm text-white/70">
                   Planning for Day {selectedDateIndex + 1} - {tripDays[selectedDateIndex]?.toLocaleDateString('en-US', { 
                     weekday: 'long', 
                     month: 'long', 
@@ -545,8 +805,8 @@ const TripPlanning = () => {
             )}
 
             {/* Service Selection Tabs */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <h3 className="text-sm font-medium text-white/90 mb-3">Add Services to Your Trip</h3>
+            <div className="p-4 rounded-lg bg-white/10 backdrop-blur-sm">
+              <h3 className="mb-3 text-sm font-medium text-white/90">Add Services to Your Trip</h3>
               
               {/* Tab Navigation */}
               <div className="flex flex-wrap gap-2 mb-4">
@@ -558,7 +818,7 @@ const TripPlanning = () => {
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  <MapPin className="h-4 w-4 inline mr-2" />
+                  <MapPin className="inline w-4 h-4 mr-2" />
                   Places
                 </button>
                 
@@ -570,9 +830,9 @@ const TripPlanning = () => {
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  <Home className="h-4 w-4 inline mr-2" />
+                  <Home className="inline w-4 h-4 mr-2" />
                   Accommodations
-                  {loadingAccommodations && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
+                  {loadingAccommodations && <div className="inline-block w-3 h-3 ml-2 border border-white rounded-full border-t-transparent animate-spin"></div>}
                 </button>
                 
                 <button
@@ -583,9 +843,9 @@ const TripPlanning = () => {
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  <Car className="h-4 w-4 inline mr-2" />
+                  <Car className="inline w-4 h-4 mr-2" />
                   Transportation
-                  {loadingTransportation && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
+                  {loadingTransportation && <div className="inline-block w-3 h-3 ml-2 border border-white rounded-full border-t-transparent animate-spin"></div>}
                 </button>
                 
                 <button
@@ -596,9 +856,9 @@ const TripPlanning = () => {
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
-                  <UserCheck className="h-4 w-4 inline mr-2" />
+                  <UserCheck className="inline w-4 h-4 mr-2" />
                   Tour Guides
-                  {loadingTourGuides && <div className="inline-block w-3 h-3 ml-2 border border-white border-t-transparent rounded-full animate-spin"></div>}
+                  {loadingTourGuides && <div className="inline-block w-3 h-3 ml-2 border border-white rounded-full border-t-transparent animate-spin"></div>}
                 </button>
               </div>
 
@@ -608,61 +868,273 @@ const TripPlanning = () => {
         {/* Content Area - Service Selection */}
         <div className="p-6">
           {/* Service Content Based on Active Tab */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
             <div className="p-6">
               {/* Tab Content */}
               {activeTab === 'places' && (
                 <div>
-                  <div className="flex items-center mb-6">
-                    <MapPin className="h-6 w-6 text-emerald-600 mr-3" />
-                    <h2 className="text-xl font-bold text-gray-900">Places to Visit</h2>
+
+                  {/* Selected Day Itinerary */}
+                  {tripDays.length > 0 && (
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                      {(() => {
+                        const selectedDay = tripDays[selectedDateIndex];
+                        const dayNumber = selectedDateIndex + 1;
+                        const dayDate = selectedDay.toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        });
+
+                        return (
+                          <>
+                            {/* Day Header */}
+                            <div className="flex items-center p-4 border-b border-gray-200">
+                              <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center mr-3">
+                                <span className="text-white font-bold text-sm">{dayNumber}</span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {mockPlaces.map(place => (
-                      <div key={place.id}>
-                        {renderActivityCard(place, 'places')}
+                              <div className="flex-1">
+                                <h4 className="text-lg font-semibold text-gray-800">Day {dayNumber}</h4>
+                                <p className="text-sm text-gray-500">{dayDate}</p>
+                              </div>
+                            </div>
+
+                            {/* Places Container */}
+                            <div className="p-4 space-y-3">
+                              {/* User Added Places */}
+                              {dayPlaces[dayNumber] && dayPlaces[dayNumber].length > 0 && (
+                                <div className="space-y-2">
+                                  {dayPlaces[dayNumber].map((place) => (
+                                    <div key={place.id} className="flex items-center bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                                      <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                                        <MapPin className="w-5 h-5 text-emerald-600" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <h5 className="font-semibold text-gray-800 text-sm">{place.name}</h5>
+                                        <p className="text-xs text-gray-500">Added {new Date(place.addedAt).toLocaleDateString()}</p>
+                                      </div>
+                                      <button
+                                        onClick={() => removePlaceFromDay(dayNumber, place.id)}
+                                        className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
                       </div>
                     ))}
+                  </div>
+                              )}
+
+                              {/* Add Place Input */}
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={newPlaceName}
+                                  onChange={(e) => setNewPlaceName(e.target.value)}
+                                  placeholder="Enter place name..."
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
+                                  onKeyPress={(e) => e.key === 'Enter' && handleAddPlace(dayNumber)}
+                                />
+                                <button
+                                  onClick={() => handleAddPlace(dayNumber)}
+                                  disabled={!newPlaceName.trim()}
+                                  className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                </div>
+                            </div>
+
+                            {/* Notes Section */}
+                            <div className="p-4 border-t border-gray-200">
+                              <div className="flex items-center mb-2">
+                                <div className="flex items-center flex-1">
+                                  <div className="w-5 h-5 text-gray-600 mr-2">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-700">Notes</span>
+                                </div>
+                                <button
+                                  onClick={() => handleEditNotes(dayNumber)}
+                                  className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                </button>
+                              </div>
+                              {dayNotes[dayNumber] ? (
+                                <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-emerald-600">
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{dayNotes[dayNumber].text}</p>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleEditNotes(dayNumber)}
+                                  className="flex items-center justify-center w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-3 text-gray-600 hover:bg-gray-100 transition-colors"
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  <span className="text-sm font-medium">Add notes for this day</span>
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Checklists Section */}
+                            <div className="p-4 border-t border-gray-200">
+                              <div className="flex items-center mb-2">
+                                <div className="flex items-center flex-1">
+                                  <div className="w-5 h-5 text-gray-600 mr-2">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-700">Checklists</span>
+                                </div>
+                                <button
+                                  onClick={() => handleAddChecklist(dayNumber)}
+                                  className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                              
+                              {/* Dynamic Checklists */}
+                              {dayChecklists[dayNumber] && dayChecklists[dayNumber].length > 0 ? (
+                                <div className="space-y-2">
+                                  {dayChecklists[dayNumber].map((checklist) => {
+                                    const completedCount = checklist.items.filter(item => item.completed).length;
+                                    const totalCount = checklist.items.length;
+                                    
+                                    return (
+                                      <div key={checklist.id} className="bg-gray-50 rounded-lg p-3 border-l-4 border-green-500">
+                                        <div className="flex items-center justify-between mb-2">
+                                          <h6 className="text-sm font-semibold text-gray-800">{checklist.title}</h6>
+                                          <div className="flex items-center space-x-1">
+                                            <button className="p-1 text-emerald-600 hover:bg-emerald-50 rounded">
+                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                              </svg>
+                                            </button>
+                                            <button className="p-1 text-red-500 hover:bg-red-50 rounded">
+                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                              </svg>
+                                            </button>
+                                          </div>
+                                        </div>
+                                        
+                                        <div className="space-y-1">
+                                          {checklist.items.map((item) => (
+                                            <div key={item.id} className="flex items-center">
+                                              <div className={`w-5 h-5 mr-2 ${item.completed ? 'text-green-500' : 'text-gray-400'}`}>
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                              </div>
+                                              <span className={`text-sm ${item.completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                                                {item.title}
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        
+                                        <div className="mt-2 text-right">
+                                          <span className="text-xs text-gray-500">{completedCount} of {totalCount} completed</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : null}
+
+                              <button
+                                onClick={() => handleAddChecklist(dayNumber)}
+                                className="flex items-center justify-center w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-3 text-gray-600 hover:bg-gray-100 transition-colors"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                <span className="text-sm font-medium">Add checklist for this day</span>
+                              </button>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  {/* Finalize Button */}
+                  <div className="mt-8 p-4 bg-white border-t border-gray-200">
+                    <div className="flex gap-3">
+                      <button
+                        onClick={clearTripPlanningData}
+                        className="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+                      >
+                        Clear All Data
+                      </button>
+                      <button
+                        onClick={handleFinalizeItinerary}
+                        className="flex-1 bg-emerald-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-emerald-700 transition-colors"
+                      >
+                        Finalize Itinerary
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {activeTab === 'accommodations' && (
                 <div>
-                  <div className="flex items-center mb-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center">
                     <Home className="h-6 w-6 text-blue-600 mr-3" />
                     <h2 className="text-xl font-bold text-gray-900">Accommodations</h2>
+                    </div>
+                    <button
+                      onClick={() => fetchAccommodations(true)}
+                      disabled={loadingAccommodations}
+                      className="flex items-center px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className={`w-4 h-4 mr-2 ${loadingAccommodations ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Refresh
+                    </button>
                   </div>
                   {loadingAccommodations ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-emerald-600"></div>
                       <span className="ml-3 text-gray-600">Loading accommodations...</span>
                     </div>
                   ) : errorAccommodations ? (
                     <div className="flex flex-col items-center justify-center py-12">
-                      <div className="text-red-500 mb-4">
-                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="mb-4 text-red-500">
+                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <p className="text-gray-600 text-center mb-4">{errorAccommodations}</p>
+                      <p className="mb-4 text-center text-gray-600">{errorAccommodations}</p>
                       <button 
                         onClick={() => {
                           setAccommodations([]);
                           fetchAccommodations();
                         }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        className="px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
                       >
                         Try Again
                       </button>
                     </div>
                   ) : accommodations.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {accommodations.map(accommodation => (
-                        <div key={accommodation.id || accommodation._id}>
-                          {renderActivityCard(accommodation, 'accommodations')}
-                        </div>
-                      ))}
+                    <div>
+                      <div className="mb-4 text-sm text-gray-600">
+                        Found {accommodations.length} accommodation{accommodations.length !== 1 ? 's' : ''} from database
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {accommodations.map(accommodation => (
+                          <div key={accommodation.id || accommodation._id}>
+                            {renderActivityCard(accommodation, 'accommodations')}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center py-12">
@@ -675,34 +1147,34 @@ const TripPlanning = () => {
               {activeTab === 'transportation' && (
                 <div>
                   <div className="flex items-center mb-6">
-                    <Car className="h-6 w-6 text-purple-600 mr-3" />
+                    <Car className="w-6 h-6 mr-3 text-purple-600" />
                     <h2 className="text-xl font-bold text-gray-900">Transportation</h2>
                   </div>
                   {loadingTransportation ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-emerald-600"></div>
                       <span className="ml-3 text-gray-600">Loading transportation...</span>
                     </div>
                   ) : errorTransportation ? (
                     <div className="flex flex-col items-center justify-center py-12">
-                      <div className="text-red-500 mb-4">
-                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="mb-4 text-red-500">
+                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <p className="text-gray-600 text-center mb-4">{errorTransportation}</p>
+                      <p className="mb-4 text-center text-gray-600">{errorTransportation}</p>
                       <button 
                         onClick={() => {
                           setTransportation([]);
                           fetchTransportation();
                         }}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                        className="px-4 py-2 text-white transition-colors bg-purple-600 rounded-lg hover:bg-purple-700"
                       >
                         Try Again
                       </button>
                     </div>
                   ) : transportation.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                       {transportation.map(transport => (
                         <div key={transport.id || transport._id}>
                           {renderActivityCard(transport, 'transport')}
@@ -720,34 +1192,34 @@ const TripPlanning = () => {
               {activeTab === 'guides' && (
                 <div>
                   <div className="flex items-center mb-6">
-                    <UserCheck className="h-6 w-6 text-orange-600 mr-3" />
+                    <UserCheck className="w-6 h-6 mr-3 text-orange-600" />
                     <h2 className="text-xl font-bold text-gray-900">Tour Guides</h2>
                   </div>
                   {loadingTourGuides ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <div className="w-8 h-8 border-b-2 rounded-full animate-spin border-emerald-600"></div>
                       <span className="ml-3 text-gray-600">Loading tour guides...</span>
                     </div>
                   ) : errorTourGuides ? (
                     <div className="flex flex-col items-center justify-center py-12">
-                      <div className="text-red-500 mb-4">
-                        <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="mb-4 text-red-500">
+                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <p className="text-gray-600 text-center mb-4">{errorTourGuides}</p>
+                      <p className="mb-4 text-center text-gray-600">{errorTourGuides}</p>
                       <button 
                         onClick={() => {
                           setTourGuides([]);
                           fetchTourGuides();
                         }}
-                        className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                        className="px-4 py-2 text-white transition-colors bg-orange-600 rounded-lg hover:bg-orange-700"
                       >
                         Try Again
                       </button>
                     </div>
                   ) : tourGuides.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                       {tourGuides.map(guide => (
                         <div key={guide.id || guide._id}>
                           {renderActivityCard(guide, 'guides')}
@@ -769,9 +1241,9 @@ const TripPlanning = () => {
 
       {/* Right Panel - Map */}
       {!isPanelExpanded && (
-        <div className="w-1/2 relative">
+        <div className="relative w-1/2">
           {/* Google Maps Embedded Frame */}
-          <div className="h-full w-full fixed right-0 top-0" style={{ width: '50%' }}>
+          <div className="fixed top-0 right-0 w-full h-full" style={{ width: '50%' }}>
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2024842.5462878644!2d79.6956!3d7.8731!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae2593cf65a1e9d%3A0xe13da4b400e2d38c!2sSri%20Lanka!5e0!3m2!1sen!2sus!4v1697461234567!5m2!1sen!2sus"
               width="100%"
@@ -788,16 +1260,16 @@ const TripPlanning = () => {
       )}
 
       {/* Floating Trip Summary Button */}
-      {getTotalItemsCount() > 0 && (
+      {hasAnyContent() && (
         <div className="fixed bottom-6 right-6 z-40">
           <Button
             variant="primary"
             size="lg"
             onClick={() => setShowSummaryModal(true)}
-            className="shadow-lg hover:shadow-xl transition-all duration-300 flex items-center bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 font-semibold hover:scale-105"
+            className="flex items-center font-semibold text-white transition-all duration-300 shadow-lg hover:shadow-xl bg-emerald-600 hover:bg-emerald-700 border-emerald-600 hover:scale-105"
           >
             <span className="bg-white text-emerald-600 rounded-full px-2 py-1 text-sm font-bold mr-2 animate-pulse">
-              {getTotalItemsCount()}
+              {getTotalContentCount()}
             </span>
             View Summary
           </Button>
@@ -806,12 +1278,12 @@ const TripPlanning = () => {
 
       {/* Floating Map Toggle Button (when panel is expanded) */}
       {isPanelExpanded && (
-        <div className="fixed bottom-6 left-6 z-40">
+        <div className="fixed z-40 bottom-6 left-6">
           <Button
             variant="secondary"
             size="lg"
             onClick={() => setIsPanelExpanded(false)}
-            className="shadow-lg hover:shadow-xl transition-shadow flex items-center bg-white text-gray-700 border border-gray-300"
+            className="flex items-center text-gray-700 transition-shadow bg-white border border-gray-300 shadow-lg hover:shadow-xl"
           >
             <Minimize2 className="w-5 h-5 mr-2" />
             Show Map
@@ -838,6 +1310,9 @@ const TripPlanning = () => {
         isOpen={showSummaryModal}
         onClose={() => setShowSummaryModal(false)}
         tripData={tripData}
+        dayNotes={dayNotes}
+        dayChecklists={dayChecklists}
+        dayPlaces={dayPlaces}
       />
 
       {/* Activity Detail Modal */}
@@ -850,15 +1325,15 @@ const TripPlanning = () => {
         {selectedDetailItem && (
           <div className="p-6 max-h-[70vh] overflow-y-auto">
             {/* Image */}
-            <div className="relative h-64 mb-6 rounded-lg overflow-hidden">
+            <div className="relative h-64 mb-6 overflow-hidden rounded-lg">
               <img 
                 src={selectedDetailItem.image} 
                 alt={selectedDetailItem.name}
-                className="w-full h-full object-cover"
+                className="object-cover w-full h-full"
               />
               <div className="absolute top-4 right-4">
-                <div className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-full flex items-center">
-                  <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                <div className="flex items-center px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm">
+                  <Star className="w-4 h-4 mr-1 text-yellow-500" />
                   <span className="text-sm font-medium">{selectedDetailItem.rating}</span>
                 </div>
               </div>
@@ -867,12 +1342,12 @@ const TripPlanning = () => {
             {/* Content */}
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{selectedDetailItem.name}</h3>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">{selectedDetailItem.name}</h3>
                 <p className="text-gray-600">{selectedDetailItem.description}</p>
               </div>
 
               {/* Details based on type */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {selectedDetailItem.type === 'places' && (
                   <>
                     <div>
@@ -912,7 +1387,7 @@ const TripPlanning = () => {
                       <span className="text-sm font-medium text-gray-500">Amenities:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {selectedDetailItem.amenities?.map((amenity, index) => (
-                          <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                          <span key={index} className="px-2 py-1 text-xs text-blue-700 bg-blue-100 rounded-full">
                             {amenity}
                           </span>
                         ))}
@@ -939,7 +1414,7 @@ const TripPlanning = () => {
                       <span className="text-sm font-medium text-gray-500">Features:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {selectedDetailItem.features?.map((feature, index) => (
-                          <span key={index} className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                          <span key={index} className="px-2 py-1 text-xs text-purple-700 bg-purple-100 rounded-full">
                             {feature}
                           </span>
                         ))}
@@ -966,7 +1441,7 @@ const TripPlanning = () => {
                       <span className="text-sm font-medium text-gray-500">Languages:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {selectedDetailItem.languages?.map((language, index) => (
-                          <span key={index} className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">
+                          <span key={index} className="px-2 py-1 text-xs text-orange-700 bg-orange-100 rounded-full">
                             {language}
                           </span>
                         ))}
@@ -989,7 +1464,7 @@ const TripPlanning = () => {
                   variant="primary"
                   className="flex-1"
                   onClick={() => {
-                    handleAddToDay(selectedDetailItem);
+                    handleAddToDay(selectedDetailItem, selectedDetailItem.type || 'accommodations');
                     setShowDetailModal(false);
                   }}
                 >
@@ -1001,6 +1476,165 @@ const TripPlanning = () => {
         )}
       </Modal>
 
+      {/* Notes Modal */}
+      {showNotesModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Notes for Day {editingNotesDay}</h3>
+              <button
+                onClick={handleCancelNotes}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Add your notes for this day
+                </label>
+                <textarea
+                  value={notesText}
+                  onChange={(e) => setNotesText(e.target.value)}
+                  placeholder="Enter your notes for this day..."
+                  className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleCancelNotes}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  className="flex-1"
+                  onClick={handleSaveNotes}
+                >
+                  Save Notes
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Checklist Modal */}
+      {showChecklistModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">New Checklist - Day {editingChecklistDay}</h3>
+              <button
+                onClick={handleCancelChecklist}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Checklist Title
+                </label>
+                <input
+                  type="text"
+                  value={checklistTitle}
+                  onChange={(e) => setChecklistTitle(e.target.value)}
+                  placeholder="e.g., Packing List, Things to Do"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Checklist Items
+                </label>
+                
+                {/* Existing Items */}
+                {checklistItems.length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    {checklistItems.map((item) => (
+                      <div key={item.id} className="flex items-center p-2 bg-gray-50 rounded-lg">
+                        <button
+                          onClick={() => handleToggleChecklistItem(item.id)}
+                          className="mr-3"
+                        >
+                          <div className={`w-5 h-5 ${item.completed ? 'text-green-500' : 'text-gray-400'}`}>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                        </button>
+                        <span className={`flex-1 text-sm ${item.completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                          {item.title}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteChecklistItem(item.id)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add New Item */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newChecklistItem}
+                    onChange={(e) => setNewChecklistItem(e.target.value)}
+                    placeholder="Add new item..."
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddChecklistItem()}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={handleAddChecklistItem}
+                    disabled={!newChecklistItem.trim()}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleCancelChecklist}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  className="flex-1"
+                  onClick={handleSaveChecklist}
+                  disabled={!checklistTitle.trim()}
+                >
+                  Save Checklist
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* Trip Summary Modal */}
+      <TripSummaryModal
+        isOpen={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        tripData={tripData}
+        dayNotes={dayNotes}
+        dayChecklists={dayChecklists}
+        dayPlaces={dayPlaces}
+      />
 
     </div>
   );

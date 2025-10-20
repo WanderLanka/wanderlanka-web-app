@@ -21,10 +21,18 @@ import {
 import { Button, Card, Input, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import PaymentModal from '../../components/PaymentModal';
+<<<<<<< HEAD
 import ChatBox from '../../components/common/ChatBox';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import { useChat } from '../../contexts/ChatContext';
 import { accommodationAPI } from '../../services/api';
+=======
+import TripSummaryModal from '../../components/TripSummaryModal';
+import { useTripPlanning } from '../../hooks/useTripPlanning';
+import { accommodationAPI, bookingsAPI } from '../../services/api';
+import { authUtils } from '../../utils/authUtils';
+import api from '../../services/axiosConfig';
+>>>>>>> main
 
 const AccommodationDetails = () => {
     const { id } = useParams();
@@ -33,43 +41,126 @@ const AccommodationDetails = () => {
     const { addToTripPlanning } = useTripPlanning();
     const { openChatWithProvider } = useChat();
     
+    // Check if user came from trip planning page
+    const isFromTripPlanning = location.state?.fromTripPlanning === true;
+    
+    // Set default dates when coming from trip planning
+    useEffect(() => {
+        if (isFromTripPlanning && location.state?.selectedDateValue) {
+            const selectedDate = location.state.selectedDateValue; // This is the specific date user clicked
+            
+            setBookingData(prev => ({
+                ...prev,
+                checkIn: selectedDate,
+                checkOut: selectedDate // User can modify this
+            }));
+        }
+    }, [isFromTripPlanning, location.state]);
+    
     const [currentImage, setCurrentImage] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+<<<<<<< HEAD
     const [showChat, setShowChat] = useState(false);
+=======
+    const [showSummaryModal, setShowSummaryModal] = useState(false);
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+>>>>>>> main
     const [accommodation, setAccommodation] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [bookingData, setBookingData] = useState({
         checkIn: '',
         checkOut: '',
-        adults: 1,
-        children: 0,
-        rooms: 1
+        selectedRooms: [], // Array of {type, quantity, pricePerNight}
+        guestDetails: {
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            specialRequests: ''
+        }
     });
 
-    // Check if user came from trip planning page
-    const isFromTripPlanning = location.state?.fromTripPlanning === true;
+    // Set default dates when coming from trip planning
+    useEffect(() => {
+        if (isFromTripPlanning && location.state?.selectedDateValue) {
+            const selectedDate = location.state.selectedDateValue; // This is the specific date user clicked
+            // Calculate check-out date (next day for single day booking)
+            const checkInDate = new Date(selectedDate);
+            const checkOutDate = new Date(checkInDate);
+            checkOutDate.setDate(checkOutDate.getDate() + 1);
+            
+            setBookingData(prev => ({
+                ...prev,
+                checkIn: selectedDate,
+                checkOut: checkOutDate.toISOString().split('T')[0]
+            }));
+        }
+    }, [isFromTripPlanning, location.state]);
 
     // Fetch accommodation data
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
+                console.log('🏨 [DEBUG] Starting to fetch accommodation data...');
+                console.log('🏨 [DEBUG] Accommodation ID from params:', id);
+                console.log('🏨 [DEBUG] Location state:', location.state);
+                console.log('🏨 [DEBUG] Is from trip planning:', isFromTripPlanning);
+                
                 setLoading(true);
-                const data = await accommodationAPI.getById(id);
-                setAccommodation(data);
                 setError(null);
+                
+                console.log('🏨 [DEBUG] Calling accommodationAPI.getById with ID:', id);
+                const data = await accommodationAPI.getById(id);
+                
+                console.log('🏨 [DEBUG] Raw API response data:', data);
+                console.log('🏨 [DEBUG] Data type:', typeof data);
+                console.log('🏨 [DEBUG] Data keys:', data ? Object.keys(data) : 'No data');
+                
+                if (data) {
+                    console.log('🏨 [DEBUG] Accommodation details:');
+                    console.log('  - ID:', data._id || data.id);
+                    console.log('  - Name:', data.name);
+                    console.log('  - Location:', data.location);
+                    console.log('  - Provider:', data.provider);
+                    console.log('  - Price per night:', data.pricePerNight);
+                    console.log('  - Rating:', data.rating);
+                    console.log('  - Reviews count:', data.reviews?.length || 0);
+                    console.log('  - Amenities:', data.amenities);
+                    console.log('  - Images:', data.images?.length || 0);
+                    console.log('  - Description:', data.description?.substring(0, 100) + '...');
+                    console.log('  - Policies:', data.policies);
+                    console.log('  - Availability:', data.availability);
+                    console.log('  - Full data object:', data);
+                }
+                
+                setAccommodation(data);
+                console.log('🏨 [DEBUG] Accommodation state set successfully');
             } catch (err) {
-                console.error('Failed to fetch accommodation:', err);
+                console.error('❌ [DEBUG] Failed to fetch accommodation:', err);
+                console.error('❌ [DEBUG] Error details:', {
+                    message: err.message,
+                    status: err.response?.status,
+                    statusText: err.response?.statusText,
+                    data: err.response?.data,
+                    config: err.config
+                });
                 setError('Failed to load accommodation details. Please try again.');
             } finally {
                 setLoading(false);
+                console.log('🏨 [DEBUG] Loading state set to false');
             }
         };
 
         if (id) {
+            console.log('🏨 [DEBUG] ID exists, fetching accommodation...');
             fetchAccommodation();
+        } else {
+            console.log('❌ [DEBUG] No ID provided, skipping fetch');
         }
-    }, [id]);
+    }, [id, isFromTripPlanning, location.state]);
+
+    // (Reverted) No dynamic availability fetch; rely on roomType.availableRooms from backend
 
     // Loading state
     if (loading) {
@@ -132,41 +223,177 @@ const AccommodationDetails = () => {
         }
     };
 
-    const handleBookingSubmit = () => {
+    // Room management functions
+    const addRoomType = (roomType) => {
+        setBookingData(prev => {
+            const existingRoom = prev.selectedRooms.find(room => room.type === roomType.type);
+            if (existingRoom) {
+                if (roomType.availableRooms <= existingRoom.quantity) return prev;
+                return {
+                    ...prev,
+                    selectedRooms: prev.selectedRooms.map(room =>
+                        room.type === roomType.type
+                            ? { ...room, quantity: room.quantity + 1 }
+                            : room
+                    )
+                };
+            } else {
+                if ((roomType.availableRooms || 0) <= 0) return prev;
+                return {
+                    ...prev,
+                    selectedRooms: [...prev.selectedRooms, { type: roomType.type, quantity: 1, pricePerNight: roomType.pricePerNight }]
+                };
+            }
+        });
+    };
+
+    const removeRoomType = (roomType) => {
+        setBookingData(prev => {
+            const existingRoom = prev.selectedRooms.find(room => room.type === roomType.type);
+            if (existingRoom && existingRoom.quantity > 1) {
+                return {
+                    ...prev,
+                    selectedRooms: prev.selectedRooms.map(room =>
+                        room.type === roomType.type
+                            ? { ...room, quantity: room.quantity - 1 }
+                            : room
+                    )
+                };
+            } else {
+                return {
+                    ...prev,
+                    selectedRooms: prev.selectedRooms.filter(room => room.type !== roomType.type)
+                };
+            }
+        });
+    };
+
+    const getTotalRooms = () => {
+        return bookingData.selectedRooms.reduce((total, room) => total + room.quantity, 0);
+    };
+
+    const handleBookingSubmit = async () => {
+        // Validate booking data
+        if (!bookingData.checkIn || !bookingData.checkOut || bookingData.selectedRooms.length === 0) {
+            alert('Please select check-in/check-out dates and at least one room type.');
+            return;
+        }
+
+        if (getNights() <= 0) {
+            alert('Check-out date must be after check-in date.');
+            return;
+        }
+
+        // Validate guest details
+        if (!bookingData.guestDetails.firstName || !bookingData.guestDetails.lastName || 
+            !bookingData.guestDetails.email || !bookingData.guestDetails.phone) {
+            alert('Please fill in all guest details.');
+            return;
+        }
+
         if (isFromTripPlanning) {
             // Add to trip planning summary
             const planningBooking = {
                 id: `acc_${accommodation._id || accommodation.id}_${Date.now()}`,
                 serviceId: accommodation._id || accommodation.id,
-                name: accommodation.name,
-                provider: accommodation.userId || 'Property Owner',
-                location: accommodation.location,
+                name: accommodation?.name || 'Accommodation',
+                provider: accommodation?.userId || 'Accommodation Owner',
+                location: accommodation?.location || 'Location not specified',
                 type: 'accommodation',
                 checkIn: bookingData.checkIn,
                 checkOut: bookingData.checkOut,
-                adults: bookingData.adults,
-                children: bookingData.children,
-                rooms: bookingData.rooms,
-                nights: getNights(),
-                pricePerNight: accommodation?.price || 0,
+                selectedRooms: bookingData.selectedRooms.map(room => ({
+                    roomType: room.type,
+                    quantity: room.quantity,
+                    pricePerNight: room.pricePerNight
+                })),
+                guestDetails: bookingData.guestDetails,
                 totalPrice: calculateTotal(),
-                image: accommodation?.images?.[0] || '/placeholder-hotel.jpg'
+                image: accommodation.images?.[0] || '/placeholder-accommodation.jpg',
+                selectedDate: location.state?.selectedDateValue || bookingData.checkIn // Store the specific selected date
             };
             
-            addToTripPlanning(planningBooking, 'accommodations');
-            alert('Added to your trip planning! Continue adding more services or review your summary.');
+            addToTripPlanning(planningBooking, 'accommodation');
+            
+            console.log('✅ Accommodation added to trip planning:', planningBooking);
+            
+            // Show success message without alert - user stays on the same page
+            console.log('✅ Accommodation successfully added to trip planning!');
+            setShowSuccessMessage(true);
+            
+            // Hide success message after 3 seconds
+            setTimeout(() => {
+                setShowSuccessMessage(false);
+            }, 3000);
         } else {
-            // Open payment modal for direct booking
-            setShowPaymentModal(true);
+            // Direct booking - proceed with payment
+            const bookingDataToSend = {
+                accommodationId: accommodation._id || accommodation.id,
+                accommodationProviderId: accommodation.userId, // Include accommodation provider ID
+                checkInDate: bookingData.checkIn,
+                checkOutDate: bookingData.checkOut,
+                selectedRooms: bookingData.selectedRooms.map(room => ({
+                    roomType: room.type,
+                    quantity: room.quantity,
+                    pricePerNight: room.pricePerNight
+                })),
+                guestDetails: bookingData.guestDetails
+            };
+
+            try {
+                // Check authentication using utility
+                const authDebug = authUtils.debugAuth();
+                
+                if (!authUtils.isAuthenticated()) {
+                    alert(`Please log in to make a booking.\n\nAvailable localStorage keys: ${authDebug.availableKeys.join(', ')}`);
+                    return;
+                }
+
+                // Initiate Stripe Checkout via backend (session URL redirect)
+                const session = await bookingsAPI.createCheckoutSession(bookingDataToSend);
+                if (session?.success && session.url) {
+                    window.location.href = session.url;
+                    return;
+                }
+                alert('Failed to initiate payment. Please try again.');
+            } catch (error) {
+                console.error('Error creating booking:', error);
+                if (error.response) {
+                    console.error('Error response:', error.response.data);
+                    alert(`Failed to create booking: ${error.response.data.error || error.response.data.message || 'Unknown error'}`);
+                } else {
+                    alert('Failed to create booking. Please try again.');
+                }
+            }
         }
     };
 
     const calculateTotal = () => {
-        if (!bookingData.checkIn || !bookingData.checkOut) return 0;
+        if (!bookingData.checkIn || !bookingData.checkOut || bookingData.selectedRooms.length === 0) return 0;
         const checkIn = new Date(bookingData.checkIn);
         const checkOut = new Date(bookingData.checkOut);
         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-        return nights > 0 ? ((accommodation?.price || 0) * nights * bookingData.rooms) + 25 : 0;
+        
+        if (nights <= 0) return 0;
+        
+        const roomCost = bookingData.selectedRooms.reduce((total, room) => {
+            return total + (room.pricePerNight * room.quantity * nights);
+        }, 0);
+        
+        return roomCost + 25; // Add service fee
+    };
+
+    const calculateSubtotal = () => {
+        if (!bookingData.checkIn || !bookingData.checkOut || bookingData.selectedRooms.length === 0) return 0;
+        const checkIn = new Date(bookingData.checkIn);
+        const checkOut = new Date(bookingData.checkOut);
+        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+        
+        if (nights <= 0) return 0;
+        
+        return bookingData.selectedRooms.reduce((total, room) => {
+            return total + (room.pricePerNight * room.quantity * nights);
+        }, 0);
     };
 
     const getNights = () => {
@@ -290,26 +517,25 @@ const AccommodationDetails = () => {
                         <Card className="p-6">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex-1">
-                                    <h1 className="text-3xl font-bold text-slate-800 mb-2">{accommodation?.name || 'Accommodation Details'}</h1>
+                                    <h1 className="text-3xl font-bold text-slate-800 mb-2">{accommodation?.name}</h1>
                                     <div className="flex items-center text-slate-600 mb-2">
                                         <MapPin className="w-4 h-4 mr-2" />
-                                        <span>{accommodation?.location || 'Location not specified'}</span>
+                                        <span>{accommodation?.location}</span>
                                     </div>
-                                    <p className="text-slate-500">by {accommodation?.userId || 'Property Owner'}</p>
                                     <div className="flex items-center mt-2">
                                         <Home className="w-4 h-4 mr-2 text-blue-500" />
-                                        <span className="text-sm font-medium text-slate-700">{accommodation?.accommodationType || 'Hotel'}</span>
+                                        <span className="text-sm font-medium text-slate-700 capitalize">{accommodation?.accommodationType}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                                    <span className="font-semibold text-slate-800">{accommodation?.rating || '4.0'}</span>
-                                    <span className="text-slate-500">({accommodation?.reviews || '0'} reviews)</span>
+                                    <span className="font-semibold text-slate-800">{accommodation?.rating}</span>
+                                    <span className="text-slate-500">({accommodation?.reviews} reviews)</span>
                                 </div>
                             </div>
                             
                             <div className="text-3xl font-bold text-blue-600 mb-4">
-                                ${accommodation?.price || '0'}
+                                ${accommodation?.price}
                                 <span className="text-lg font-normal text-slate-500">/night</span>
                             </div>
                         </Card>
@@ -317,161 +543,100 @@ const AccommodationDetails = () => {
                         {/* Description */}
                         <Card className="p-6">
                             <h2 className="text-2xl font-bold text-slate-800 mb-4">About this property</h2>
-                            <p className="text-slate-600 leading-relaxed">{accommodation?.description || 'No description available for this accommodation.'}</p>
+                            <p className="text-slate-600 leading-relaxed">{accommodation?.description}</p>
                         </Card>
 
                         {/* Room Types */}
-                        <Card className="p-6">
-                            <h2 className="text-2xl font-bold text-slate-800 mb-4">Room Types</h2>
-                            <div className="space-y-4">
-                                {(accommodation?.roomTypes || []).map((room, index) => (
-                                    <div key={index} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-slate-800">{room?.name || 'Standard Room'}</h3>
-                                            <p className="text-sm text-slate-600">{room?.size || 'Medium'} • Up to {room?.occupancy || '2'} guests</p>
+                        {accommodation?.roomTypes && accommodation.roomTypes.length > 0 && (
+                            <Card className="p-6">
+                                <h2 className="text-2xl font-bold text-slate-800 mb-4">Room Types</h2>
+                                <div className="space-y-4">
+                                    {accommodation.roomTypes.map((room, index) => (
+                                        <div key={index} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold text-slate-800 capitalize">{room.type}</h3>
+                                                <p className="text-sm text-slate-600">{room.size} • Up to {room.occupancy} guests</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-lg font-bold text-blue-600">${room.pricePerNight}/night</p>
+                                                <p className="text-sm text-slate-500">{room.availableRooms} of {room.totalRooms} available</p>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-bold text-blue-600">${room?.price || accommodation?.price || '0'}/night</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                {(!accommodation?.roomTypes || accommodation.roomTypes.length === 0) && (
-                                    <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-slate-800">Standard Room</h3>
-                                            <p className="text-sm text-slate-600">Comfortable accommodation • Up to 2 guests</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-bold text-blue-600">${accommodation?.price || '0'}/night</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </Card>
+                                    ))}
+                                </div>
+                            </Card>
+                        )}
 
                         {/* Amenities */}
+                        {accommodation?.amenities && accommodation.amenities.length > 0 && (
+                            <Card className="p-6">
+                                <h2 className="text-2xl font-bold text-slate-800 mb-4">Amenities</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {accommodation.amenities.map((amenity, index) => (
+                                        <div key={index} className="flex items-center space-x-3">
+                                            <CheckCircle className="w-5 h-5 text-green-500" />
+                                            <span className="text-slate-700">{amenity}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        )}
+
+                        {/* Nearby Attractions */}
+                        {accommodation?.nearbyAttractions && accommodation.nearbyAttractions.length > 0 && (
+                            <Card className="p-6">
+                                <h2 className="text-2xl font-bold text-slate-800 mb-4">Nearby Attractions</h2>
+                                <div className="space-y-3">
+                                    {accommodation.nearbyAttractions.map((attraction, index) => (
+                                        <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                            <div className="flex items-center space-x-3">
+                                                <MapPin className="w-4 h-4 text-blue-500" />
+                                                <div>
+                                                    <p className="font-medium text-slate-800">{attraction.name}</p>
+                                                    <p className="text-sm text-slate-500">{attraction.type}</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-600">{attraction.distance}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        )}
+
+                        {/* Policies */}
+                        {accommodation?.policies && accommodation.policies.length > 0 && (
+                            <Card className="p-6">
+                                <h2 className="text-2xl font-bold text-slate-800 mb-4">Policies</h2>
+                                <div className="space-y-3">
+                                    {accommodation.policies.map((policy, index) => (
+                                        <div key={index} className="flex items-start space-x-3">
+                                            <CheckCircle className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                                            <span className="text-slate-700">{policy}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        )}
+
+                        {/* Property Information */}
                         <Card className="p-6">
-                            <h2 className="text-2xl font-bold text-slate-800 mb-4">Amenities</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {(accommodation?.amenities || ['WiFi', 'Air Conditioning', 'Room Service', 'Free Parking']).map((amenity, index) => (
-                                    <div key={index} className="flex items-center space-x-3">
-                                        <CheckCircle className="w-5 h-5 text-green-500" />
-                                        <span className="text-slate-700">{amenity}</span>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 mt-6 border-t border-slate-200">
+                            <h2 className="text-2xl font-bold text-slate-800 mb-4">Property Information</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="text-center">
                                     <Clock className="w-6 h-6 text-blue-500 mx-auto mb-2" />
                                     <p className="text-sm font-medium text-slate-700">Check-in</p>
-                                    <p className="text-sm text-slate-500">{accommodation?.checkInTime || '14:00'}</p>
+                                    <p className="text-sm text-slate-500">{accommodation?.checkInTime}</p>
                                 </div>
                                 <div className="text-center">
                                     <Clock className="w-6 h-6 text-blue-500 mx-auto mb-2" />
                                     <p className="text-sm font-medium text-slate-700">Check-out</p>
-                                    <p className="text-sm text-slate-500">{accommodation?.checkOutTime || '11:00'}</p>
+                                    <p className="text-sm text-slate-500">{accommodation?.checkOutTime}</p>
                                 </div>
                                 <div className="text-center">
-                                    <Home className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-                                    <p className="text-sm font-medium text-slate-700">Property Type</p>
-                                    <p className="text-sm text-slate-500">{accommodation?.accommodationType || 'Hotel'}</p>
+                                    <Users className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                                    <p className="text-sm font-medium text-slate-700">Total Rooms</p>
+                                    <p className="text-sm text-slate-500">{accommodation?.totalRooms}</p>
                                 </div>
-                            </div>
-                        </Card>
-
-                        {/* Nearby Attractions */}
-                        <Card className="p-6">
-                            <h2 className="text-2xl font-bold text-slate-800 mb-4">Nearby Attractions</h2>
-                            <div className="space-y-3">
-                                {(accommodation?.nearbyAttractions || [
-                                    { name: 'Local Beach', type: 'Beach', distance: '2.5 km' },
-                                    { name: 'City Center', type: 'Shopping', distance: '5.0 km' },
-                                    { name: 'National Park', type: 'Nature', distance: '8.2 km' }
-                                ]).map((attraction, index) => (
-                                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                                        <div className="flex items-center space-x-3">
-                                            <MapPin className="w-4 h-4 text-blue-500" />
-                                            <div>
-                                                <p className="font-medium text-slate-800">{attraction?.name || 'Local Attraction'}</p>
-                                                <p className="text-sm text-slate-500">{attraction?.type || 'Point of Interest'}</p>
-                                            </div>
-                                        </div>
-                                        <span className="text-sm font-medium text-slate-600">{attraction?.distance || 'Unknown'}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-
-                        {/* Policies */}
-                        <Card className="p-6">
-                            <h2 className="text-2xl font-bold text-slate-800 mb-4">Policies</h2>
-                            <div className="space-y-3">
-                                {(accommodation?.policies || [
-                                    'Check-in: 2:00 PM - 11:00 PM',
-                                    'Check-out: Before 11:00 AM',
-                                    'No smoking in rooms',
-                                    'Pets allowed with additional fee',
-                                    'Free cancellation up to 24 hours before arrival'
-                                ]).map((policy, index) => (
-                                    <div key={index} className="flex items-start space-x-3">
-                                        <CheckCircle className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                                        <span className="text-slate-700">{policy}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-
-                        {/* Reviews */}
-                        <Card className="p-6">
-                            <h2 className="text-2xl font-bold text-slate-800 mb-4">Guest Reviews</h2>
-                            <div className="space-y-6">
-                                {(accommodation?.userReviews || [
-                                    {
-                                        id: 1,
-                                        name: 'Sarah Johnson',
-                                        profileImage: '/api/placeholder/48/48',
-                                        rating: 5,
-                                        review: 'Amazing stay! The staff was incredibly helpful and the location was perfect.',
-                                        date: 'March 2024',
-                                        helpful: 12
-                                    },
-                                    {
-                                        id: 2,
-                                        name: 'Michael Chen',
-                                        profileImage: '/api/placeholder/48/48',
-                                        rating: 4,
-                                        review: 'Great accommodation with excellent amenities. Would definitely stay again.',
-                                        date: 'February 2024',
-                                        helpful: 8
-                                    }
-                                ]).map((review) => (
-                                    <div key={review?.id || Math.random()} className="border-b border-slate-200 pb-6 last:border-b-0">
-                                        <div className="flex items-start space-x-4">
-                                            <img
-                                                src={review?.profileImage || '/api/placeholder/48/48'}
-                                                alt={review?.name || 'Guest'}
-                                                className="w-12 h-12 rounded-full object-cover"
-                                            />
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h4 className="font-semibold text-slate-800">{review?.name || 'Anonymous Guest'}</h4>
-                                                    <div className="flex items-center space-x-1">
-                                                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                                        <span className="text-sm text-slate-600">{review?.rating || 5}</span>
-                                                    </div>
-                                                </div>
-                                                <p className="text-slate-600 mb-3">{review?.review || 'Great accommodation!'}</p>
-                                                <div className="flex items-center justify-between text-sm text-slate-400">
-                                                    <span>{review?.date || 'Recent'}</span>
-                                                    <span>{review?.helpful || 0} people found this helpful</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                <Button variant="outline" size="sm" className="mt-4">
-                                    See all {accommodation.reviews} reviews
-                                </Button>
                             </div>
                         </Card>
                     </div>
@@ -486,115 +651,223 @@ const AccommodationDetails = () => {
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
                                             Check-in Date
+                                            {isFromTripPlanning && (
+                                                <span className="text-xs text-blue-600 ml-2">(Fixed from trip planning)</span>
+                                            )}
                                         </label>
                                         <Input
                                             type="date"
                                             value={bookingData.checkIn}
                                             onChange={(e) => setBookingData(prev => ({ ...prev, checkIn: e.target.value }))}
+                                            disabled={isFromTripPlanning}
+                                            className={isFromTripPlanning ? 'bg-gray-100 cursor-not-allowed' : ''}
                                         />
                                     </div>
                                     
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
                                             Check-out Date
+                                            {isFromTripPlanning && (
+                                                <span className="text-xs text-blue-600 ml-2">(Fixed from trip planning)</span>
+                                            )}
                                         </label>
                                         <Input
                                             type="date"
                                             value={bookingData.checkOut}
                                             onChange={(e) => setBookingData(prev => ({ ...prev, checkOut: e.target.value }))}
+                                            disabled={isFromTripPlanning}
+                                            className={isFromTripPlanning ? 'bg-gray-100 cursor-not-allowed' : ''}
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-slate-700">Adults</span>
-                                        <div className="flex items-center space-x-3">
-                                            <button
-                                                onClick={() => setBookingData(prev => ({ 
-                                                    ...prev, 
-                                                    adults: Math.max(1, prev.adults - 1) 
-                                                }))}
-                                                className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
-                                            >
-                                                <Minus className="w-4 h-4" />
-                                            </button>
-                                            <span className="font-semibold w-8 text-center">{bookingData.adults}</span>
-                                            <button
-                                                onClick={() => setBookingData(prev => ({ 
-                                                    ...prev, 
-                                                    adults: prev.adults + 1 
-                                                }))}
-                                                className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                            </button>
+                                {/* Room Type Selection */}
+                                <div className="space-y-4">
+                                    <h4 className="text-lg font-semibold text-slate-800">Select Room Types</h4>
+                                    {accommodation?.roomTypes && accommodation.roomTypes.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {accommodation.roomTypes.map((roomType, index) => (
+                                                <div key={index} className="border border-slate-200 rounded-lg p-4">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div>
+                                                            <h5 className="font-semibold text-slate-800 capitalize">{roomType.type}</h5>
+                                                            <p className="text-sm text-slate-600">{roomType.size} • Up to {roomType.occupancy} guests</p>
+                                                            <p className="text-sm text-slate-500">{roomType.availableRooms} of {roomType.totalRooms} available</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-lg font-bold text-blue-600">${roomType.pricePerNight}/night</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-sm font-medium text-slate-700">Quantity</span>
+                                                        <div className="flex items-center space-x-3">
+                                                            <button
+                                                                onClick={() => removeRoomType(roomType)}
+                                                                disabled={!bookingData.selectedRooms.find(room => room.type === roomType.type)}
+                                                                className="p-1 rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                <Minus className="w-4 h-4" />
+                                                            </button>
+                                                            <span className="font-semibold w-8 text-center">
+                                                                {bookingData.selectedRooms.find(room => room.type === roomType.type)?.quantity || 0}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => addRoomType(roomType)}
+                                                                disabled={roomType.availableRooms <= (bookingData.selectedRooms.find(room => room.type === roomType.type)?.quantity || 0)}
+                                                                className="p-1 rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                <Plus className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="border border-slate-200 rounded-lg p-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div>
+                                                    <h5 className="font-semibold text-slate-800">Standard Room</h5>
+                                                    <p className="text-sm text-slate-600">Comfortable accommodation</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-lg font-bold text-blue-600">${accommodation?.price || 0}/night</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium text-slate-700">Quantity</span>
+                                                <div className="flex items-center space-x-3">
+                                                    <button
+                                                        onClick={() => removeRoomType({ type: 'normal', pricePerNight: accommodation?.price || 0 })}
+                                                        disabled={!bookingData.selectedRooms.find(room => room.type === 'normal')}
+                                                        className="p-1 rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        <Minus className="w-4 h-4" />
+                                                    </button>
+                                                    <span className="font-semibold w-8 text-center">
+                                                        {bookingData.selectedRooms.find(room => room.type === 'normal')?.quantity || 0}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => addRoomType({ type: 'normal', pricePerNight: accommodation?.price || 0 })}
+                                                        className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Success Message */}
+                                {showSuccessMessage && (
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                                        <div className="flex items-center">
+                                            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                                            <div>
+                                                <p className="text-green-800 font-medium">Successfully added to your trip!</p>
+                                                <p className="text-green-600 text-sm">You can continue adding more services or view your trip summary.</p>
+                                            </div>
                                         </div>
                                     </div>
+                                )}
 
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-slate-700">Children</span>
-                                        <div className="flex items-center space-x-3">
-                                            <button
-                                                onClick={() => setBookingData(prev => ({ 
-                                                    ...prev, 
-                                                    children: Math.max(0, prev.children - 1) 
+                                {/* Guest Details Form */}
+                                <div className="space-y-4">
+                                    <h4 className="text-lg font-semibold text-slate-800">Guest Details</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                First Name *
+                                            </label>
+                                            <Input
+                                                type="text"
+                                                value={bookingData.guestDetails.firstName}
+                                                onChange={(e) => setBookingData(prev => ({
+                                                    ...prev,
+                                                    guestDetails: { ...prev.guestDetails, firstName: e.target.value }
                                                 }))}
-                                                className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
-                                            >
-                                                <Minus className="w-4 h-4" />
-                                            </button>
-                                            <span className="font-semibold w-8 text-center">{bookingData.children}</span>
-                                            <button
-                                                onClick={() => setBookingData(prev => ({ 
-                                                    ...prev, 
-                                                    children: prev.children + 1 
+                                                placeholder="Enter first name"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                Last Name *
+                                            </label>
+                                            <Input
+                                                type="text"
+                                                value={bookingData.guestDetails.lastName}
+                                                onChange={(e) => setBookingData(prev => ({
+                                                    ...prev,
+                                                    guestDetails: { ...prev.guestDetails, lastName: e.target.value }
                                                 }))}
-                                                className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                            </button>
+                                                placeholder="Enter last name"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                Email *
+                                            </label>
+                                            <Input
+                                                type="email"
+                                                value={bookingData.guestDetails.email}
+                                                onChange={(e) => setBookingData(prev => ({
+                                                    ...prev,
+                                                    guestDetails: { ...prev.guestDetails, email: e.target.value }
+                                                }))}
+                                                placeholder="Enter email address"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                Phone *
+                                            </label>
+                                            <Input
+                                                type="tel"
+                                                value={bookingData.guestDetails.phone}
+                                                onChange={(e) => setBookingData(prev => ({
+                                                    ...prev,
+                                                    guestDetails: { ...prev.guestDetails, phone: e.target.value }
+                                                }))}
+                                                placeholder="Enter phone number"
+                                            />
                                         </div>
                                     </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-slate-700">Rooms</span>
-                                        <div className="flex items-center space-x-3">
-                                            <button
-                                                onClick={() => setBookingData(prev => ({ 
-                                                    ...prev, 
-                                                    rooms: Math.max(1, prev.rooms - 1) 
-                                                }))}
-                                                className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
-                                            >
-                                                <Minus className="w-4 h-4" />
-                                            </button>
-                                            <span className="font-semibold w-8 text-center">{bookingData.rooms}</span>
-                                            <button
-                                                onClick={() => setBookingData(prev => ({ 
-                                                    ...prev, 
-                                                    rooms: prev.rooms + 1 
-                                                }))}
-                                                className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                                            Special Requests
+                                        </label>
+                                        <textarea
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            rows={3}
+                                            value={bookingData.guestDetails.specialRequests}
+                                            onChange={(e) => setBookingData(prev => ({
+                                                ...prev,
+                                                guestDetails: { ...prev.guestDetails, specialRequests: e.target.value }
+                                            }))}
+                                            placeholder="Any special requests or notes..."
+                                        />
                                     </div>
                                 </div>
 
                                 {/* Price Breakdown */}
                                 <div className="border-t border-slate-200 pt-4">
                                     <div className="space-y-2">
-                                        {getNights() > 0 && (
+                                        {getNights() > 0 && bookingData.selectedRooms.length > 0 && (
                                             <>
+                                                {bookingData.selectedRooms.map((room, index) => (
+                                                    <div key={index} className="flex justify-between text-sm">
+                                                        <span className="text-slate-600">
+                                                            {room.quantity} {room.type} room(s) x {getNights()} nights
+                                                        </span>
+                                                        <span className="text-slate-800">
+                                                            ${room.pricePerNight * room.quantity * getNights()}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                                 <div className="flex justify-between text-sm">
-                                                    <span className="text-slate-600">
-                                                        ${accommodation.price} x {getNights()} nights x {bookingData.rooms} room(s)
-                                                    </span>
-                                                    <span className="text-slate-800">
-                                                        ${accommodation.price * getNights() * bookingData.rooms}
-                                                    </span>
+                                                    <span className="text-slate-600">Subtotal</span>
+                                                    <span className="text-slate-800">${calculateSubtotal()}</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm">
                                                     <span className="text-slate-600">Service fee</span>
@@ -614,7 +887,16 @@ const AccommodationDetails = () => {
                                     size="lg"
                                     className="w-full"
                                     onClick={handleBookingSubmit}
-                                    disabled={!bookingData.checkIn || !bookingData.checkOut || getNights() <= 0}
+                                    disabled={
+                                        !bookingData.checkIn || 
+                                        !bookingData.checkOut || 
+                                        getNights() <= 0 || 
+                                        bookingData.selectedRooms.length === 0 ||
+                                        !bookingData.guestDetails.firstName ||
+                                        !bookingData.guestDetails.lastName ||
+                                        !bookingData.guestDetails.email ||
+                                        !bookingData.guestDetails.phone
+                                    }
                                 >
                                     {isFromTripPlanning ? 'Add to Itinerary' : 'Proceed to Payment'}
                                 </Button>
@@ -625,6 +907,31 @@ const AccommodationDetails = () => {
                                         : 'Complete booking and payment'
                                     }
                                 </p>
+                                
+                                {/* Summary Button for Trip Planning */}
+                                {isFromTripPlanning && (
+                                    <Button
+                                        variant="outline"
+                                        size="lg"
+                                        className="w-full mt-3"
+                                        onClick={() => setShowSummaryModal(true)}
+                                    >
+                                        📋 View Trip Summary
+                                    </Button>
+                                )}
+                                
+                                {/* Debug Authentication Button (remove in production) */}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full mt-2"
+                                    onClick={() => {
+                                        const authStatus = authUtils.debugAuth();
+                                        alert(`Auth Status:\nToken: ${authStatus.token ? 'Found' : 'Missing'}\nUser: ${authStatus.user ? 'Found' : 'Missing'}\nRole: ${authStatus.role || 'None'}\nAuthenticated: ${authStatus.isAuthenticated ? 'Yes' : 'No'}`);
+                                    }}
+                                >
+                                    🔍 Debug Auth Status
+                                </Button>
                             </div>
                         </Card>
                     </div>
@@ -641,6 +948,7 @@ const AccommodationDetails = () => {
                 totalAmount={calculateTotal()}
             />
 
+<<<<<<< HEAD
             {/* Chat Box */}
             <ChatBox 
                 isOpen={showChat}
@@ -648,6 +956,16 @@ const AccommodationDetails = () => {
                 serviceType="accommodation"
                 serviceId={accommodation?._id || accommodation?.id}
                 bookingId={null}
+=======
+            {/* Trip Summary Modal */}
+            <TripSummaryModal
+                isOpen={showSummaryModal}
+                onClose={() => setShowSummaryModal(false)}
+                tripData={null} // Will be populated from localStorage
+                dayNotes={{}}
+                dayChecklists={{}}
+                dayPlaces={{}}
+>>>>>>> main
             />
         </div>
     );
