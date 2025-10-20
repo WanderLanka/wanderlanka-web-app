@@ -15,6 +15,9 @@ import {
   TransportationDetails,
   TourGuideDetails
 } from '../pages';
+import SubmitComplaint from '../pages/traveler/SubmitComplaint';
+import ComplaintsList from '../pages/traveler/ComplaintsList';
+import ComplaintDetail from '../pages/traveler/ComplaintDetail';
 
 const TravelerRoutes = () => {
   return (
@@ -47,6 +50,11 @@ const TravelerRoutes = () => {
       
       {/* Profile */}
       <Route path="profile" element={<Profile />} />
+      
+      {/* Complaints */}
+      <Route path="complaints" element={<ComplaintsList />} />
+      <Route path="complaints/submit" element={<SubmitComplaint />} />
+      <Route path="complaints/:id" element={<ComplaintDetail />} />
     </Routes>
   );
 };

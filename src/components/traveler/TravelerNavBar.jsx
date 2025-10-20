@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button, Logo, NavLink, Container, Avatar } from "../common";
 import { toast } from 'react-toastify';
 import { useState, useEffect, useRef } from "react";
-import { LogOut, ChevronDown, Home, Car, Users, User } from "lucide-react";
+import { LogOut, ChevronDown, Home, Car, Users, User, AlertTriangle } from "lucide-react";
 
 const TravelerNavbar = () => {
   const [user, setUser] = useState({ username: "", role: "" });
@@ -78,7 +78,8 @@ const handleLogout = () => {
     { path: '/user', label: 'Dashboard' },
     { path: '/user/mybookings', label: 'My Bookings' },
     { path: '/user/mytrips', label: 'My Trips' },
-    { path: '/user/payments', label: 'Payments' }
+    { path: '/user/payments', label: 'Payments' },
+    { path: '/user/complaints', label: 'Complaints', icon: AlertTriangle }
   ];
 
   const servicesSubmenu = [
@@ -117,17 +118,23 @@ const handleLogout = () => {
           {/* Center Section - Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             <ul className="flex items-center space-x-1">
-              {navItems.map((item) => (
-                <li key={item.path}>
-                  <NavLink 
-                    to={item.path}
-                    activeClass="bg-green-200 text-green-700 shadow-sm"
-                    inactiveClass="text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  >
-                    {item.label}
-                  </NavLink>
-                </li>
-              ))}
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.path}>
+                    <NavLink 
+                      to={item.path}
+                      activeClass="bg-green-200 text-green-700 shadow-sm"
+                      inactiveClass="text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    >
+                      <div className="flex items-center space-x-1">
+                        {Icon && <Icon className="w-4 h-4" />}
+                        <span>{item.label}</span>
+                      </div>
+                    </NavLink>
+                  </li>
+                );
+              })}
               
               {/* Services Dropdown */}
               <li className="relative" ref={servicesDropdownRef}>

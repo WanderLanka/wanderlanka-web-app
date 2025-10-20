@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button, Logo, NavLink, Container, Avatar } from "../common";
 import { toast } from 'react-toastify';
+import { AlertTriangle } from "lucide-react";
 
 const AccommodationNavbar = () => {
 const handleLogout = () => {
@@ -43,6 +44,7 @@ const handleLogout = () => {
     { path: '/accommodation/hotels', label: 'My Hotels' },
     { path: '/accommodation/bookings', label: 'Bookings' },
     { path: '/accommodation/payments', label: 'Payments' },
+    { path: '/accommodation/complaints', label: 'Complaints', icon: AlertTriangle },
     { path: '/accommodation/profile', label: 'Profile' }
   ];
 
@@ -62,17 +64,23 @@ const handleLogout = () => {
           {/* Center Section - Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             <ul className="flex items-center space-x-1">
-              {navItems.map((item) => (
-                <li key={item.path}>
-                  <NavLink 
-                    to={item.path}
-                    activeClass="bg-blue-50 text-blue-700 shadow-sm"
-                    inactiveClass="text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  >
-                    {item.label}
-                  </NavLink>
-                </li>
-              ))}
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.path}>
+                    <NavLink 
+                      to={item.path}
+                      activeClass="bg-blue-50 text-blue-700 shadow-sm"
+                      inactiveClass="text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    >
+                      <div className="flex items-center space-x-1">
+                        {Icon && <Icon className="w-4 h-4" />}
+                        <span>{item.label}</span>
+                      </div>
+                    </NavLink>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
 

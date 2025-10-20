@@ -150,7 +150,7 @@ const TripPlanning = () => {
 
   const handleAddToDay = (item) => {
     // TODO: Implement add to day functionality
-    setToastMessage(${item.name} added to Day ${selectedDateIndex + 1});
+    setToastMessage(`${item.name} added to Day ${selectedDateIndex + 1}`);
     setShowToast(true);
     setHasUnsavedProgress(true);
   };

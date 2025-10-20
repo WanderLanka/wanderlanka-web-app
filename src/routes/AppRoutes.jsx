@@ -32,6 +32,11 @@ import {
   TourGuideDetails
 } from '../pages';
 import AddNewTransport from '../pages/transport/AddNewTransport';
+import TransportComplaints from '../pages/transport/TransportComplaints';
+import AccommodationComplaints from '../pages/accommodation/AccommodationComplaints';
+import SubmitComplaint from '../pages/traveler/SubmitComplaint';
+import ComplaintsList from '../pages/traveler/ComplaintsList';
+import ComplaintDetail from '../pages/traveler/ComplaintDetail';
 import { ProtectedRoute } from '../components';
 import {
   TransportLayout,
@@ -54,6 +59,7 @@ const AppRoutes = () => {
           <Route index element={<TransportDashboard />} />
           <Route path="vehicles" element={<VehiclesPage />} />
           <Route path="add-new" element={<AddNewTransport />} />
+          <Route path="complaints" element={<TransportComplaints />} />
         </Route>
       </Route>
 
@@ -66,6 +72,7 @@ const AppRoutes = () => {
           <Route path="hotels/:hotelid" element={<Rooms />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="payments" element={<AccommodationPayments />} />
+          <Route path="complaints" element={<AccommodationComplaints />} />
         </Route>
       </Route>
 
@@ -96,6 +103,9 @@ const AppRoutes = () => {
           <Route path="tour-guides" element={<TourGuides />} />
           <Route path="tour-guides/:id" element={<TourGuideDetails />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="complaints" element={<ComplaintsList />} />
+          <Route path="complaints/submit" element={<SubmitComplaint />} />
+          <Route path="complaints/:id" element={<ComplaintDetail />} />
         </Route>
       </Route>
       
