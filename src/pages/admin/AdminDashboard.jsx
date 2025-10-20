@@ -230,7 +230,7 @@ const AdminDashboard = () => {
       {/* Floating Message Button */}
       <button
         onClick={() => setIsComposerOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-50 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-xl hover:shadow-2xl transform transition-all duration-200 hover:-translate-y-1 hover:scale-105 border border-white/20"
+        className="fixed bottom-6 right-6 z-50 rounded-full bg-gradient-to-br from-green-600 to-emerald-600 text-white shadow-xl hover:shadow-2xl transform transition-all duration-200 hover:-translate-y-1 hover:scale-105 border border-white/20"
         style={{ width: '56px', height: '56px' }}
         aria-label="Open admin message composer"
       >
