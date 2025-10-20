@@ -1,4 +1,4 @@
-import { MapPin, Star, Clock, X, CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, Star, X, XCircle } from 'lucide-react';
 
 /**
  * WaypointCard Component

@@ -1,4 +1,4 @@
-import { Navigation, Zap, Camera } from 'lucide-react';
+import { Camera, Navigation, Zap } from 'lucide-react';
 
 const RouteButtons = ({ onRouteSelect, selectedRoute, disabled }) => {
   const routes = [

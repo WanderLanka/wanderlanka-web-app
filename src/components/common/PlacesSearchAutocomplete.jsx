@@ -1,4 +1,4 @@
-import { MapPin, Star, Clock, X, Loader } from 'lucide-react';
+import { Clock, Loader, MapPin, Star, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 /**

@@ -1,5 +1,5 @@
+import { AlertCircle, Clock, MapPin, Navigation } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { MapPin, Navigation, Clock, AlertCircle } from 'lucide-react';
 
 const TripMap = ({ 
   startingDestination, 
