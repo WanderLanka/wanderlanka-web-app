@@ -10,3 +10,6 @@ export { default as Header } from './Header';
 export { default as Input } from './Input';
 export { default as Modal } from './Modal';
 export { default as Breadcrumb } from './Breadcrumb';
+export { default as ChatButton } from './ChatButton';
+export { default as ChatBox } from './ChatBox';
+export { default as ChatWidget } from './ChatWidget';
