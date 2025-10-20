@@ -1,7 +1,28 @@
 import React, { useState } from 'react';
+import { messagesAPI } from '../../services/api';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [toUserId, setToUserId] = useState('');
+  const [subject, setSubject] = useState('Account Notice');
+  const [body, setBody] = useState('');
+  const [sending, setSending] = useState(false);
+  const [resultMsg, setResultMsg] = useState('');
+
+  const handleSend = async () => {
+    try {
+      setSending(true);
+      setResultMsg('');
+      await messagesAPI.sendToUser({ toUserId, subject, body, reason: 'ACCOUNT_RESTRICTION' });
+      setResultMsg('Message sent');
+      setBody('');
+    } catch (e) {
+      setResultMsg('Failed to send message');
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -205,6 +226,47 @@ const AdminDashboard = () => {
           </a>
         </div>
       </footer>
+
+      {/* Floating Message Button */}
+      <button
+        onClick={() => setIsComposerOpen((v) => !v)}
+        className="fixed bottom-6 right-6 z-50 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-xl hover:shadow-2xl transform transition-all duration-200 hover:-translate-y-1 hover:scale-105 border border-white/20"
+        style={{ width: '56px', height: '56px' }}
+        aria-label="Open admin message composer"
+      >
+        {/* Message icon */}
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mx-auto">
+          <path d="M4 5h16v10H7l-3 3V5z" fill="currentColor" opacity="0.9"/>
+        </svg>
+      </button>
+
+      {isComposerOpen && (
+        <div className="fixed bottom-24 right-6 z-50 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white px-4 py-3 flex items-center justify-between">
+            <div className="font-semibold">Admin Message</div>
+            <button onClick={() => setIsComposerOpen(false)} className="text-slate-300 hover:text-white">✕</button>
+          </div>
+          <div className="p-4 space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">To User ID</label>
+              <input value={toUserId} onChange={(e) => setToUserId(e.target.value)} placeholder="Mongo ObjectId" className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+              <input value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
+              <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type your message to the user..." />
+            </div>
+            {resultMsg && <div className="text-sm text-slate-600">{resultMsg}</div>}
+          </div>
+          <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+            <button onClick={() => setIsComposerOpen(false)} className="px-4 py-2 text-sm rounded-lg text-slate-700 hover:bg-slate-100">Cancel</button>
+            <button onClick={handleSend} disabled={sending || !toUserId || !body} className="px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50">{sending ? 'Sending...' : 'Send'}</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

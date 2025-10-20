@@ -309,3 +309,19 @@ export const tourGuideAPI = {
 
 // Export the configured axios instance for direct use if needed
 export { api as axiosInstance };
+
+// Admin messaging endpoints
+export const messagesAPI = {
+  sendToUser: async ({ toUserId, subject, body, reason = 'ACCOUNT_RESTRICTION' }) => {
+    const response = await api.post('/auth/admin/messages/send', { toUserId, subject, body, reason });
+    return response.data;
+  },
+  listUserMessages: async (userId) => {
+    const response = await api.get(`/auth/admin/messages/${userId}`);
+    return response.data;
+  },
+  listMyMessages: async () => {
+    const response = await api.get('/auth/messages');
+    return response.data;
+  }
+};
