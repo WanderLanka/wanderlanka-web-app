@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        #suggestions {
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .suggestion {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .suggestion:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google Maps Places API Test</h1>
+    
+    <div id="status"></div>
+    
+    <div>
+        <label for="search">Search for a place:</label>
+        <input type="text" id="search" placeholder="Type a city name...">
+        <div id="suggestions"></div>
+    </div>
+
+    <div id="logs" style="margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+        <h3>Console Logs:</h3>
+        <div id="log-content"></div>
+    </div>
+
+    <script>
+        // Replace with your actual API key
+        const API_KEY = 'AIzaSyBPAjLGZlFyzwIRo60j3HlhR7Qp0pmqQQ8';
+        const statusDiv = document.getElementById('status');
+        const searchInput = document.getElementById('search');
+        const suggestionsDiv = document.getElementById('suggestions');
+        const logContent = document.getElementById('log-content');
+        
+        let autocompleteService;
+
+        // Custom console log
+        function log(message, type = 'info') {
+            console.log(message);
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEntry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logContent.appendChild(logEntry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        // Load Google Maps API
+        function loadGoogleMapsAPI() {
+            log('Loading Google Maps API...');
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places`;
+            script.async = true;
+            script.defer = true;
+            
+            script.onload = () => {
+                log('✅ Google Maps API loaded successfully', 'success');
+                initializeAutocomplete();
+            };
+            
+            script.onerror = () => {
+                log('❌ Failed to load Google Maps API', 'error');
+                statusDiv.innerHTML = '<div class="status error">Failed to load Google Maps API. Check your API key and network connection.</div>';
+            };
+            
+            document.head.appendChild(script);
+        }
+
+        // Initialize autocomplete service
+        function initializeAutocomplete() {
+            if (window.google && window.google.maps && window.google.maps.places) {
+                autocompleteService = new window.google.maps.places.AutocompleteService();
+                statusDiv.innerHTML = '<div class="status success">✅ Google Maps API is ready! Start typing to search.</div>';
+                log('✅ Autocomplete service initialized', 'success');
+            } else {
+                log('❌ Google Maps API not available', 'error');
+                statusDiv.innerHTML = '<div class="status error">Google Maps API not available</div>';
+            }
+        }
+
+        // Fetch suggestions
+        function fetchSuggestions(input) {
+            if (!input || input.length < 2) {
+                suggestionsDiv.innerHTML = '';
+                return;
+            }
+
+            if (!autocompleteService) {
+                log('⚠️ Autocomplete service not ready', 'error');
+                return;
+            }
+
+            log(`🔍 Fetching suggestions for: "${input}"`);
+
+            autocompleteService.getPlacePredictions(
+                {
+                    input: input,
+                    types: ['geocode'], // All geographic locations
+                    componentRestrictions: { country: 'lk' } // Restrict to Sri Lanka
+                },
+                (predictions, status) => {
+                    log(`📍 API Status: ${status}`);
+                    
+                    if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+                        log(`✅ Found ${predictions.length} suggestions`, 'success');
+                        displaySuggestions(predictions);
+                    } else {
+                        log(`❌ No suggestions. Status: ${status}`, 'error');
+                        suggestionsDiv.innerHTML = '<div class="suggestion">No results found</div>';
+                    }
+                }
+            );
+        }
+
+        // Display suggestions
+        function displaySuggestions(predictions) {
+            suggestionsDiv.innerHTML = '';
+            predictions.forEach(prediction => {
+                const div = document.createElement('div');
+                div.className = 'suggestion';
+                div.innerHTML = `
+                    <strong>${prediction.structured_formatting.main_text}</strong><br>
+                    <small>${prediction.structured_formatting.secondary_text}</small>
+                `;
+                div.onclick = () => {
+                    searchInput.value = prediction.description;
+                    suggestionsDiv.innerHTML = '';
+                    log(`✅ Selected: ${prediction.description}`, 'success');
+                };
+                suggestionsDiv.appendChild(div);
+            });
+        }
+
+        // Event listener for input
+        let debounceTimer;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetchSuggestions(e.target.value);
+            }, 300);
+        });
+
+        // Load API on page load
+        log('Page loaded, starting initialization...');
+        loadGoogleMapsAPI();
+    </script>
+</body>
+</html>
