@@ -24,7 +24,7 @@ import { Button, Card, Input } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import PaymentModal from '../../components/PaymentModal';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
-import { transportationAPI } from '../../services/api';
+import { transportationAPI, bookingsAPI } from '../../services/api';
 
 function TransportationDetails() {
     const { id } = useParams();
@@ -67,6 +67,9 @@ function TransportationDetails() {
                 // Extract vehicle data from nested response structure
                 const vehicleData = response?.data || response;
                 console.log('Vehicle data extracted:', vehicleData);
+                console.log('Vehicle userId:', vehicleData?.userId);
+                console.log('Vehicle _id:', vehicleData?._id);
+                console.log('Vehicle id:', vehicleData?.id);
                 
                 setVehicle(vehicleData);
                 setError(null);
@@ -106,7 +109,7 @@ function TransportationDetails() {
         setCurrentImage(prev => prev === vehicle.images.length - 1 ? 0 : prev + 1);
     };
 
-    const handleBookingSubmit = () => {
+    const handleBookingSubmit = async () => {
         if (!vehicle) {
             alert('Transportation data not available. Please try refreshing the page.');
             return;
@@ -117,13 +120,20 @@ function TransportationDetails() {
             const planningBooking = {
                 id: `trans_${vehicle._id || vehicle.id}_${Date.now()}`,
                 serviceId: vehicle._id || vehicle.id,
+                id: `trans_${vehicle._id || vehicle.id}_${Date.now()}`,
+                serviceId: vehicle._id || vehicle.id,
                 name: vehicle?.brand && vehicle?.model ? `${vehicle.brand} ${vehicle.model}` : 'Vehicle',
+                provider: vehicle?.userId || 'Vehicle Owner',
                 provider: vehicle?.userId || 'Vehicle Owner',
                 location: vehicle?.location || 'Location not specified',
                 type: 'transportation',
                 startDate: bookingData.startDate,
                 days: bookingData.days,
                 passengers: bookingData.passengers,
+                pickupLocation: bookingData.pickupLocation,
+                dropoffLocation: bookingData.dropoffLocation,
+                estimatedDistance: bookingData.estimatedDistance,
+                pricePerKm: vehicle.pricingPerKm || 0,
                 pickupLocation: bookingData.pickupLocation,
                 dropoffLocation: bookingData.dropoffLocation,
                 estimatedDistance: bookingData.estimatedDistance,
@@ -134,30 +144,60 @@ function TransportationDetails() {
             };
             
             addToTripPlanning(planningBooking, 'transportation');
+            
+            // Store updated trip data in localStorage for persistence
+            const currentTripData = localStorage.getItem('tripSummaryData');
+            if (currentTripData) {
+              try {
+                const parsedData = JSON.parse(currentTripData);
+                parsedData.planningBookings = {
+                  ...parsedData.planningBookings,
+                  transportation: [...(parsedData.planningBookings.transportation || []), planningBooking]
+                };
+                parsedData.timestamp = new Date().toISOString();
+                localStorage.setItem('tripSummaryData', JSON.stringify(parsedData));
+                console.log('Updated trip data stored:', parsedData);
+              } catch (error) {
+                console.error('Error updating trip data:', error);
+              }
+            }
+            
             alert('Added to your trip planning! Continue adding more services or review your summary.');
         } else {
-            // Navigate to payment page for direct booking
-            const directBooking = {
-                id: `trans_${vehicle._id || vehicle.id}_${Date.now()}`,
-                serviceId: vehicle._id || vehicle.id,
-                name: vehicle?.brand && vehicle?.model ? `${vehicle.brand} ${vehicle.model}` : 'Vehicle',
-                provider: vehicle?.userId || 'Vehicle Owner',
-                location: vehicle?.location || 'Location not specified',
-                type: 'transportation',
-                startDate: bookingData.startDate,
-                days: bookingData.days,
-                passengers: bookingData.passengers,
-                pickupLocation: bookingData.pickupLocation,
-                dropoffLocation: bookingData.dropoffLocation,
-                estimatedDistance: bookingData.estimatedDistance,
-                pricePerKm: vehicle.pricingPerKm || 0,
-                totalPrice: calculateTotal(),
-                image: vehicle.images?.[0] || '/placeholder-transport.jpg'
-            };
-            
-            // Store booking data in localStorage for payment page
-            localStorage.setItem('directBookingData', JSON.stringify([directBooking]));
-            navigate('/user/individual-booking-payment');
+            try {
+                console.log('Vehicle data for booking:', {
+                    vehicleId: vehicle._id || vehicle.id,
+                    userId: vehicle.userId,
+                    vehicleType: vehicle.vehicleType,
+                    pricingPerKm: vehicle.pricingPerKm
+                });
+                
+                const payload = {
+                    serviceType: 'transportation',
+                    transportId: vehicle._id || vehicle.id,
+                    transportProviderId: vehicle.userId, // Include transport provider ID
+                    startDate: bookingData.startDate,
+                    days: bookingData.days,
+                    passengers: bookingData.passengers,
+                    pickupLocation: bookingData.pickupLocation,
+                    dropoffLocation: bookingData.dropoffLocation,
+                    estimatedDistance: bookingData.estimatedDistance,
+                    pricingPerKm: vehicle.pricingPerKm || 0,
+                    vehicleType: vehicle.vehicleType,
+                };
+                console.log('Transport booking payload:', payload);
+                console.log('Transport provider ID being sent:', vehicle.userId);
+                console.log('Vehicle object at booking time:', vehicle);
+                const res = await bookingsAPI.createCheckoutSession(payload);
+                if (res?.url) {
+                    window.location.href = res.url;
+                } else {
+                    alert('Failed to start payment session.');
+                }
+            } catch (e) {
+                console.error('Failed to create transport checkout session:', e);
+                alert('Could not start payment. Please try again.');
+            }
         }
     };
 
@@ -668,6 +708,7 @@ function TransportationDetails() {
                                                 onClick={() => setBookingData(prev => ({ 
                                                     ...prev, 
                                                     passengers: Math.min(vehicle.seats, prev.passengers + 1) 
+                                                    passengers: Math.min(vehicle.seats, prev.passengers + 1) 
                                                 }))}
                                                 className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
                                             >
@@ -675,6 +716,7 @@ function TransportationDetails() {
                                             </button>
                                         </div>
                                     </div>
+                                    <p className="text-xs text-slate-500">Maximum {vehicle.seats} passengers</p>
                                     <p className="text-xs text-slate-500">Maximum {vehicle.seats} passengers</p>
                                 </div>
 

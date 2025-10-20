@@ -205,13 +205,6 @@ const Accommodations = () => {
                                     </div>
                                     <div className="flex gap-2">
                                         <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => navigate(`/user/accommodations/${accommodation._id}`)}
-                                        >
-                                            Details
-                                        </Button>
-                                        <Button 
                                             variant="primary" 
                                             size="sm"
                                             disabled={accommodation.status === 'inactive'}

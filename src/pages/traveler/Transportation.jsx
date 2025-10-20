@@ -188,8 +188,8 @@ const Transportation = () => {
                         >
                             <div className="relative">
                                 <img
-                                    src={transport.image}
-                                    alt={transport.name}
+                                    src={transport.images?.[0] || transport.image || '/placeholder-vehicle.jpg'}
+                                    alt={`${transport.brand || ''} ${transport.model || ''}`.trim() || 'Vehicle'}
                                     className="w-full h-48 object-cover"
                                 />
                                 <div className="absolute top-4 right-4">
@@ -260,24 +260,16 @@ const Transportation = () => {
                                 <div className="flex items-center justify-between pt-4 border-t border-slate-200">
                                     <div>
                                         <span className="text-2xl font-bold text-slate-800">
-                                            ${transport.price}
+                                            LKR {Number(transport.pricingPerKm || 0).toLocaleString()}
                                         </span>
-                                        <span className="text-sm text-slate-500">
-                                            /{transport.priceUnit}
-                                        </span>
+                                        <span className="text-sm text-slate-500">/km</span>
                                     </div>
                                     <div className="flex gap-2">
                                         <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => navigate(`/user/transportation/${transport._id || transport.id}`)}
-                                        >
-                                            Details
-                                        </Button>
-                                        <Button 
                                             variant="primary" 
                                             size="sm"
-                                            disabled={transport.availability === 'Unavailable'}
+                                            disabled={(transport.availability || '').toLowerCase() !== 'available'}
+                                            onClick={() => navigate(`/user/transportation/${transport._id || transport.id}`)}
                                         >
                                             Book Now
                                         </Button>
