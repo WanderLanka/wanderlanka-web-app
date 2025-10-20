@@ -207,7 +207,7 @@ export const bookingsAPI = {
   // Get user bookings
   getUserBookings: async () => {
     try {
-      const response = await api.get('/bookings/user');
+      const response = await api.get('/bookings/userBookings');
       return response.data;
     } catch (error) {
       console.error('Get user bookings failed:', error.response?.data || error.message);
