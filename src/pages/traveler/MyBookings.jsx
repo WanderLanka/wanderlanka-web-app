@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Users, Phone, Mail, DollarSign, Loader2 } from 'lucide-react';
+import { Calendar, Clock, Phone, Mail, DollarSign, Loader2, Eye, MoreHorizontal } from 'lucide-react';
 import { Button, Card, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import { bookingsAPI } from '../../services/api';
@@ -9,6 +9,9 @@ const MyBookings = () => {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectedBooking, setSelectedBooking] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    // Removed viewMode state - only using list/table view
 
     // Fetch user bookings from API
     useEffect(() => {
@@ -36,26 +39,59 @@ const MyBookings = () => {
                     return;
                 }
                 
-                console.log('Fetching bookings for user ID:', userId);
+                console.log('🔍 [DEBUG] Fetching bookings for user ID:', userId);
                 const response = await bookingsAPI.getUserBookings();
-                console.log('Bookings API Response:', response);
+                console.log('📦 [DEBUG] Raw Bookings API Response:', response);
+                console.log('📊 [DEBUG] Response Type:', typeof response);
+                console.log('📋 [DEBUG] Response Data Type:', typeof response.data);
+                console.log('📋 [DEBUG] Response Data:', response.data);
+                console.log('📋 [DEBUG] Response Data Length:', response.data?.length);
+                
+                // Debug: Log each booking individually
+                if (response.data && Array.isArray(response.data)) {
+                    console.log('📝 [DEBUG] Processing array of bookings:');
+                    response.data.forEach((booking, index) => {
+                        console.log(`📝 [DEBUG] Booking ${index + 1}:`, {
+                            id: booking._id || booking.id,
+                            serviceType: booking.serviceType,
+                            serviceName: booking.serviceName,
+                            serviceProvider: booking.serviceProvider,
+                            bookingDetails: booking.bookingDetails,
+                            totalAmount: booking.totalAmount,
+                            status: booking.status,
+                            createdAt: booking.createdAt,
+                            fullBooking: booking
+                        });
+                    });
+                } else if (response.data && typeof response.data === 'object') {
+                    console.log('📝 [DEBUG] Processing single booking object:', response.data);
+                }
                 
                 // Transform API response to match our component structure
-                const transformedBookings = (response.data || response || []).map(booking => ({
-                    id: booking._id || booking.id,
-                    type: booking.serviceType || booking.type,
-                    title: booking.serviceName || booking.title,
-                    location: booking.serviceProvider || booking.location,
-                    dates: booking.bookingDetails || booking.dates,
-                    guests: booking.bookingDetails?.adults || booking.guests,
-                    passengers: booking.bookingDetails?.passengers || booking.passengers,
-                    participants: booking.bookingDetails?.groupSize || booking.participants,
-                    price: booking.totalAmount || booking.price,
-                    status: booking.status || 'confirmed',
-                    image: booking.image || '/api/placeholder/300/200',
-                    bookingRef: booking.bookingReference || booking.bookingRef || `REF${booking._id?.slice(-6) || '000000'}`
-                }));
+                const transformedBookings = (response.data || response || []).map(booking => {
+                    const transformed = {
+                        id: booking._id || booking.id,
+                        type: booking.serviceType || booking.type,
+                        title: booking.serviceName || booking.title,
+                        provider: booking.serviceProvider || booking.provider,
+                        location: booking.bookingDetails?.location || booking.location,
+                        dates: booking.bookingDetails || booking.dates,
+                        guests: booking.bookingDetails?.adults || booking.guests,
+                        passengers: booking.bookingDetails?.passengers || booking.passengers,
+                        participants: booking.bookingDetails?.groupSize || booking.participants,
+                        price: booking.totalAmount || booking.price,
+                        status: booking.status || 'confirmed',
+                        image: booking.image || '/api/placeholder/300/200',
+                        bookingRef: booking.bookingReference || booking.bookingRef || `REF${booking._id?.slice(-6) || '000000'}`,
+                        // Store full booking data for modal
+                        fullBookingData: booking
+                    };
+                    
+                    console.log('🔄 [DEBUG] Transformed booking:', transformed);
+                    return transformed;
+                });
                 
+                console.log('✅ [DEBUG] Final transformed bookings:', transformedBookings);
                 setBookings(transformedBookings);
             } catch (err) {
                 console.error('Failed to fetch bookings:', err);
@@ -81,6 +117,16 @@ const MyBookings = () => {
             case 'cancelled': return 'bg-red-100 text-red-700';
             default: return 'bg-gray-100 text-gray-700';
         }
+    };
+
+    const openBookingModal = (booking) => {
+        setSelectedBooking(booking);
+        setIsModalOpen(true);
+    };
+
+    const closeBookingModal = () => {
+        setSelectedBooking(null);
+        setIsModalOpen(false);
     };
 
     return (
@@ -146,74 +192,97 @@ const MyBookings = () => {
                             </div>
                         </div>
 
-                        {/* Bookings Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filterBookings(activeTab).map((booking) => (
-                        <Card
-                            key={booking.id}
-                            className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                            hover={true}
-                            padding="none"
-                        >
-                            <img
-                                src={booking.image}
-                                alt={booking.title}
-                                className="w-full h-48 object-cover"
-                            />
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-sm font-medium text-blue-600 capitalize">
-                                        {booking.type}
-                                    </span>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                                    </span>
-                                </div>
-
-                                <h3 className="text-xl font-bold text-slate-800 mb-2">{booking.title}</h3>
-                                <div className="flex items-center text-slate-600 mb-3">
-                                    <MapPin className="w-4 h-4 mr-2" />
-                                    <span className="text-sm">{booking.location}</span>
-                                </div>
-
-                                <div className="space-y-2 mb-4">
-                                    {booking.dates.checkIn && (
-                                        <div className="flex items-center text-slate-600">
-                                            <Calendar className="w-4 h-4 mr-2" />
-                                            <span className="text-sm">
-                                                {new Date(booking.dates.checkIn).toLocaleDateString()} - {new Date(booking.dates.checkOut).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                    )}
-                                    {booking.dates.date && (
-                                        <div className="flex items-center text-slate-600">
-                                            <Calendar className="w-4 h-4 mr-2" />
-                                            <span className="text-sm">
-                                                {new Date(booking.dates.date).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                    )}
-                                    {booking.guests && (
-                                        <div className="flex items-center text-slate-600">
-                                            <Users className="w-4 h-4 mr-2" />
-                                            <span className="text-sm">{booking.guests} guests</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-                                    <div>
-                                        <span className="text-2xl font-bold text-slate-800">{booking.price}</span>
-                                        <p className="text-sm text-slate-500">Ref: {booking.bookingRef}</p>
-                                    </div>
-                                    <Button variant="primary" size="sm">
-                                        View Details
-                                    </Button>
-                                </div>
+                        {/* Bookings Display - List/Table View Only */}
+                        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-slate-50 border-b border-slate-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Service Type
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Provider
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Dates
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Price
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-slate-200">
+                                        {filterBookings(activeTab).map((booking) => {
+                                            console.log('🎯 [DEBUG] Rendering booking in table:', booking);
+                                            return (
+                                                <tr key={booking.id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-slate-900 capitalize">
+                                                            {booking.type}
+                                                        </div>
+                                                        <div className="text-xs text-slate-500">
+                                                            {booking.title}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm text-slate-600">
+                                                            {booking.provider || 'N/A'}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                                        {booking.dates?.checkIn ? (
+                                                            <div>
+                                                                <div>{new Date(booking.dates.checkIn).toLocaleDateString()}</div>
+                                                                <div className="text-xs text-slate-400">
+                                                                    to {new Date(booking.dates.checkOut).toLocaleDateString()}
+                                                                </div>
+                                                            </div>
+                                                        ) : booking.dates?.date ? (
+                                                            new Date(booking.dates.date).toLocaleDateString()
+                                                        ) : booking.dates?.startDate ? (
+                                                            new Date(booking.dates.startDate).toLocaleDateString()
+                                                        ) : booking.dates?.tourDate ? (
+                                                            new Date(booking.dates.tourDate).toLocaleDateString()
+                                                        ) : (
+                                                            'N/A'
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                                                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-slate-900">
+                                                            LKR {booking.price}
+                                                        </div>
+                                                        <div className="text-xs text-slate-500">
+                                                            Ref: {booking.bookingRef}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                        <button
+                                                            onClick={() => openBookingModal(booking)}
+                                                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="View booking details"
+                                                        >
+                                                            <Eye className="w-5 h-5" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
-                        </Card>
-                    ))}
-                </div>
+                        </div>
 
                         {filterBookings(activeTab).length === 0 && (
                             <div className="text-center py-12">
@@ -230,6 +299,129 @@ const MyBookings = () => {
                     </>
                 )}
             </div>
+
+            {/* Booking Details Modal */}
+            {isModalOpen && selectedBooking && (
+                <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            {/* Modal Header */}
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-slate-800">Booking Details</h2>
+                                <button
+                                    onClick={closeBookingModal}
+                                    className="text-slate-400 hover:text-slate-600 text-2xl font-bold"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            {/* Booking Information */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Basic Information */}
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-semibold text-slate-700 border-b pb-2">Basic Information</h3>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-500">Service Type</label>
+                                            <p className="text-slate-800 capitalize">{selectedBooking.type}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-500">Service Name</label>
+                                            <p className="text-slate-800">{selectedBooking.title}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-500">Provider</label>
+                                            <p className="text-slate-800">{selectedBooking.provider || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-500">Location</label>
+                                            <p className="text-slate-800">{selectedBooking.location || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-500">Status</label>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedBooking.status)}`}>
+                                                {selectedBooking.status.charAt(0).toUpperCase() + selectedBooking.status.slice(1)}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-500">Booking Reference</label>
+                                            <p className="text-slate-800 font-mono">{selectedBooking.bookingRef}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Dates and Pricing */}
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-semibold text-slate-700 border-b pb-2">Dates & Pricing</h3>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-500">Dates</label>
+                                            <div className="text-slate-800">
+                                                {selectedBooking.dates?.checkIn ? (
+                                                    <div>
+                                                        <div>Check-in: {new Date(selectedBooking.dates.checkIn).toLocaleDateString()}</div>
+                                                        <div>Check-out: {new Date(selectedBooking.dates.checkOut).toLocaleDateString()}</div>
+                                                    </div>
+                                                ) : selectedBooking.dates?.date ? (
+                                                    <div>Date: {new Date(selectedBooking.dates.date).toLocaleDateString()}</div>
+                                                ) : selectedBooking.dates?.startDate ? (
+                                                    <div>Start Date: {new Date(selectedBooking.dates.startDate).toLocaleDateString()}</div>
+                                                ) : selectedBooking.dates?.tourDate ? (
+                                                    <div>Tour Date: {new Date(selectedBooking.dates.tourDate).toLocaleDateString()}</div>
+                                                ) : (
+                                                    'N/A'
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-slate-500">Total Price</label>
+                                            <p className="text-slate-800 text-xl font-bold">LKR {selectedBooking.price}</p>
+                                        </div>
+                                        {selectedBooking.guests && (
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-500">Guests</label>
+                                                <p className="text-slate-800">{selectedBooking.guests} guests</p>
+                                            </div>
+                                        )}
+                                        {selectedBooking.passengers && (
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-500">Passengers</label>
+                                                <p className="text-slate-800">{selectedBooking.passengers} passengers</p>
+                                            </div>
+                                        )}
+                                        {selectedBooking.participants && (
+                                            <div>
+                                                <label className="text-sm font-medium text-slate-500">Participants</label>
+                                                <p className="text-slate-800">{selectedBooking.participants} participants</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="flex justify-between items-center mt-6 pt-4 border-t">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => {
+                                        // TODO: Implement cancel booking functionality
+                                        console.log('Cancel booking:', selectedBooking.id);
+                                        alert('Cancel booking functionality will be implemented');
+                                    }}
+                                    className="text-red-600 border-red-300 hover:bg-red-50"
+                                >
+                                    Cancel Booking
+                                </Button>
+                                <Button variant="outline" onClick={closeBookingModal}>
+                                    Close
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <TravelerFooter />
         </div>
     );

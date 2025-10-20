@@ -15,10 +15,14 @@ export const TripPlanningProvider = ({ children }) => {
         const saved = localStorage.getItem('tripPlanningBookings');
         if (saved) {
             try {
-                setPlanningBookings(JSON.parse(saved));
+                const parsedData = JSON.parse(saved);
+                console.log('📦 TripPlanningContext: Loading data from localStorage:', parsedData);
+                setPlanningBookings(parsedData);
             } catch (error) {
                 console.error('Error loading trip planning bookings:', error);
             }
+        } else {
+            console.log('📦 TripPlanningContext: No saved data found in localStorage');
         }
     }, []);
 
@@ -28,10 +32,15 @@ export const TripPlanningProvider = ({ children }) => {
     }, [planningBookings]);
 
     const addToTripPlanning = (booking, type) => {
-        setPlanningBookings(prev => ({
-            ...prev,
-            [type]: [...prev[type], { ...booking, addedAt: new Date().toISOString() }]
-        }));
+        console.log('➕ TripPlanningContext: Adding booking:', { booking, type });
+        setPlanningBookings(prev => {
+            const newBookings = {
+                ...prev,
+                [type]: [...prev[type], { ...booking, addedAt: new Date().toISOString() }]
+            };
+            console.log('➕ TripPlanningContext: Updated bookings:', newBookings);
+            return newBookings;
+        });
     };
 
     const removeFromTripPlanning = (bookingId, type) => {

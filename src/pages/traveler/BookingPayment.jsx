@@ -17,6 +17,7 @@ import {
 import { Button, Card } from '../../components/common';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import { TravelerFooter } from '../../components/traveler';
+import { itineraryAPI } from '../../services/api';
 
 const BookingPayment = () => {
   const navigate = useNavigate();
@@ -32,7 +33,13 @@ const BookingPayment = () => {
         return { directBooking: JSON.parse(directBooking) };
       }
       
-      // Then check for trip planning data
+      // Then check for trip summary data (from TripSummaryModal)
+      const tripSummaryData = localStorage.getItem('tripSummaryData');
+      if (tripSummaryData) {
+        return JSON.parse(tripSummaryData);
+      }
+      
+      // Finally check for current trip data
       const stored = localStorage.getItem('currentTripData');
       return stored ? JSON.parse(stored) : {};
     } catch (error) {
@@ -42,7 +49,17 @@ const BookingPayment = () => {
   };
   
   const tripData = location.state?.tripData || getTripData();
-  // const isDirectBooking = tripData.directBooking ? true : false;
+  const isDirectBooking = tripData.directBooking ? true : false;
+  
+  // Extract the actual trip data if it's nested
+  const actualTripData = tripData.tripData || tripData;
+  
+  // Get user data from navigation state or localStorage
+  const dayPlaces = location.state?.dayPlaces || tripData.dayPlaces || {};
+  const dayNotes = location.state?.dayNotes || tripData.dayNotes || {};
+  const dayChecklists = location.state?.dayChecklists || tripData.dayChecklists || {};
+  
+  
   
   // Payment form state
   const [paymentData, setPaymentData] = useState({
@@ -68,26 +85,27 @@ const BookingPayment = () => {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   // Calculate total amount for both direct booking and trip planning
-  // const getCalculatedTotalAmount = () => {
-  //   if (isDirectBooking && tripData.directBooking) {
-  //     return tripData.directBooking.reduce((total, booking) => total + booking.totalPrice, 0);
-  //   }
-  //   return getTotalAmount();
-  // };
+  const getCalculatedTotalAmount = () => {
+    if (isDirectBooking && tripData.directBooking) {
+      return tripData.directBooking.reduce((total, booking) => total + booking.totalPrice, 0);
+    }
+    return getTotalAmount();
+  };
 
-  // // Get bookings data for display
-  // const getBookingsData = () => {
-  //   if (isDirectBooking && tripData.directBooking) {
-  //     return tripData.directBooking;
-  //   }
-  //   return planningBookings;
-  // };
+  // Get bookings data for display
+  const getBookingsData = () => {
+    if (isDirectBooking && tripData.directBooking) {
+      return tripData.directBooking;
+    }
+    // Use planningBookings from tripData if available (from TripSummaryModal), otherwise use hook
+    return tripData.planningBookings || planningBookings;
+  };
 
   // Calculate trip days for summary
   const tripDays = [];
-  if (tripData?.startDate && tripData?.endDate) {
-    const start = new Date(tripData.startDate);
-    const end = new Date(tripData.endDate);
+  if (actualTripData?.startDate && actualTripData?.endDate) {
+    const start = new Date(actualTripData.startDate);
+    const end = new Date(actualTripData.endDate);
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       tripDays.push(new Date(d));
     }
@@ -107,30 +125,33 @@ const BookingPayment = () => {
   });
 
   // Distribute bookings to their respective days
-  Object.entries(planningBookings).forEach(([type, bookings]) => {
-    bookings.forEach(booking => {
-      let matchingDayNum = 1;
-      if (booking.selectedDate) {
-        try {
-          const bookingDate = new Date(booking.selectedDate).toISOString().split('T')[0];
-          tripDays.forEach((tripDay, index) => {
-            const tripDayStr = tripDay.toISOString().split('T')[0];
-            if (bookingDate === tripDayStr) {
-              matchingDayNum = index + 1;
-            }
-          });
-        } catch (error) {
-          console.warn('Error parsing booking date:', booking.selectedDate, error);
+  const bookingsToProcess = getBookingsData();
+  Object.entries(bookingsToProcess).forEach(([type, bookings]) => {
+    if (Array.isArray(bookings)) {
+      bookings.forEach(booking => {
+        let matchingDayNum = 1;
+        if (booking.selectedDate) {
+          try {
+            const bookingDate = new Date(booking.selectedDate).toISOString().split('T')[0];
+            tripDays.forEach((tripDay, index) => {
+              const tripDayStr = tripDay.toISOString().split('T')[0];
+              if (bookingDate === tripDayStr) {
+                matchingDayNum = index + 1;
+              }
+            });
+          } catch (error) {
+            console.warn('Error parsing booking date:', booking.selectedDate, error);
+          }
         }
-      }
-      
-      if (dailyBookings[matchingDayNum]) {
-        const targetArray = dailyBookings[matchingDayNum][type] || dailyBookings[matchingDayNum]['destinations'];
-        if (targetArray) {
-          targetArray.push(booking);
+        
+        if (dailyBookings[matchingDayNum]) {
+          const targetArray = dailyBookings[matchingDayNum][type] || dailyBookings[matchingDayNum]['destinations'];
+          if (targetArray) {
+            targetArray.push(booking);
+          }
         }
-      }
-    });
+      });
+    }
   });
 
   const formatDate = (dateString) => {
@@ -205,9 +226,34 @@ const BookingPayment = () => {
     
     try {
       // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Clear trip planning data after successful payment
+      // Prepare trip data for itinerary service
+      const tripDataForItinerary = {
+        tripData: actualTripData,
+        planningBookings: getBookingsData(),
+        dayPlaces: dayPlaces,
+        dayNotes: dayNotes,
+        dayChecklists: dayChecklists,
+        totalAmount: getCalculatedTotalAmount(),
+        paymentData: paymentData
+      };
+
+      console.log('Sending trip data to itinerary service:', tripDataForItinerary);
+
+      // Store trip data in itinerary service
+      const itineraryResponse = await itineraryAPI.storeCompletedTrip(tripDataForItinerary);
+      
+      console.log('Itinerary service response:', itineraryResponse);
+      
+      if (itineraryResponse.success) {
+        console.log('✅ Trip data successfully stored in itinerary database');
+        console.log('📊 Itinerary ID:', itineraryResponse.data.itineraryId);
+        console.log('💰 Total Cost:', itineraryResponse.data.totalCost);
+        console.log('📅 Day Plans:', itineraryResponse.data.dayPlans);
+      }
+      
+      // Clear trip planning data after successful payment and storage
       clearTripPlanning();
       
       setPaymentSuccess(true);
@@ -218,20 +264,32 @@ const BookingPayment = () => {
           state: { 
             bookingConfirmed: true,
             tripData: tripData,
-            totalAmount: getTotalAmount()
+            totalAmount: getCalculatedTotalAmount(),
+            itineraryData: itineraryResponse.data
           } 
         });
       }, 2000);
       
     } catch (error) {
-      console.error('Payment error:', error);
-      alert('Payment failed. Please try again.');
+      console.error('Payment/Storage error:', error);
+      
+      // Check if it's an itinerary service error
+      if (error.response?.data?.message?.includes('itinerary')) {
+        alert('Payment successful, but failed to store trip data. Please contact support.');
+      } else {
+        alert('Payment failed. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const hasBookings = Object.values(planningBookings).some(bookings => bookings.length > 0);
+  const hasBookings = isDirectBooking 
+    ? (tripData.directBooking && tripData.directBooking.length > 0)
+    : Object.values(getBookingsData()).some(bookings => Array.isArray(bookings) && bookings.length > 0) ||
+      (dayPlaces && Object.keys(dayPlaces).length > 0) ||
+      (dayNotes && Object.keys(dayNotes).length > 0) ||
+      (dayChecklists && Object.keys(dayChecklists).length > 0);
 
   if (!hasBookings) {
     return (
@@ -288,7 +346,7 @@ const BookingPayment = () => {
             </div>
             <div className="text-right bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
               <div className="text-sm text-gray-300">Total Amount</div>
-              <div className="text-2xl font-bold text-white">{formatCurrency(getTotalAmount())}</div>
+              <div className="text-2xl font-bold text-white">{formatCurrency(getCalculatedTotalAmount())}</div>
             </div>
           </div>
         </div>
@@ -308,30 +366,57 @@ const BookingPayment = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center space-x-2">
                     <MapPin className="w-4 h-4 text-emerald-600" />
-                    <span className="text-sm text-gray-700">{tripData?.destination || 'Sri Lanka'}</span>
+                    <span className="text-sm text-gray-700">{actualTripData?.destination || 'Sri Lanka'}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4 text-emerald-600" />
                     <span className="text-sm text-gray-700">
-                      {tripData?.startDate && tripData?.endDate
-                        ? `${formatDate(tripData.startDate)} - ${formatDate(tripData.endDate)}`
+                      {actualTripData?.startDate && actualTripData?.endDate
+                        ? `${formatDate(actualTripData.startDate)} - ${formatDate(actualTripData.endDate)}`
                         : 'Dates not selected'}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Users className="w-4 h-4 text-emerald-600" />
-                    <span className="text-sm text-gray-700">{tripData?.travelers || 2} travelers</span>
+                    <span className="text-sm text-gray-700">{actualTripData?.travelers || 2} travelers</span>
                   </div>
                 </div>
               </div>
 
               {/* Daily Bookings */}
               <div className="space-y-4">
-                {Object.entries(dailyBookings).map(([dayNum, dayData]) => {
+                {(() => {
+                  // Get all day numbers that have any data (bookings or user data)
+                  const allDayNumbers = new Set([
+                    ...Object.keys(dailyBookings).map(Number),
+                    ...(dayPlaces ? Object.keys(dayPlaces).map(Number) : []),
+                    ...(dayNotes ? Object.keys(dayNotes).map(Number) : []),
+                    ...(dayChecklists ? Object.keys(dayChecklists).map(Number) : [])
+                  ]);
+                  
+
+                  // Create entries for days that have user data but no bookings
+                  allDayNumbers.forEach(dayNum => {
+                    if (!dailyBookings[dayNum]) {
+                      dailyBookings[dayNum] = {
+                        date: tripDays[dayNum - 1] || new Date(),
+                        destinations: [],
+                        accommodations: [],
+                        transportation: [],
+                        guides: []
+                      };
+                    }
+                  });
+
+                  return Object.entries(dailyBookings);
+                })().map(([dayNum, dayData]) => {
                   const hasActivities = dayData.destinations.length > 0 || 
                                       dayData.accommodations.length > 0 || 
                                       dayData.transportation.length > 0 || 
-                                      dayData.guides.length > 0;
+                                      dayData.guides.length > 0 ||
+                                      (dayPlaces && dayPlaces[dayNum] && dayPlaces[dayNum].length > 0) ||
+                                      (dayNotes && dayNotes[dayNum] && dayNotes[dayNum].length > 0) ||
+                                      (dayChecklists && dayChecklists[dayNum] && dayChecklists[dayNum].length > 0);
 
                   if (!hasActivities) return null;
 
@@ -351,13 +436,20 @@ const BookingPayment = () => {
                             </p>
                           </div>
                           <span className="text-sm text-gray-500">
-                            {dayData.destinations.length + dayData.accommodations.length + dayData.transportation.length + dayData.guides.length} items
+                            {(() => {
+                              const bookingCount = dayData.destinations.length + dayData.accommodations.length + dayData.transportation.length + dayData.guides.length;
+                              const placesCount = (dayPlaces && dayPlaces[dayNum] ? dayPlaces[dayNum].length : 0);
+                              const notesCount = (dayNotes && dayNotes[dayNum] ? dayNotes[dayNum].length : 0);
+                              const checklistsCount = (dayChecklists && dayChecklists[dayNum] ? dayChecklists[dayNum].length : 0);
+                              return bookingCount + placesCount + notesCount + checklistsCount;
+                            })()} items
                           </span>
                         </div>
                       </div>
 
                       {/* Day Content */}
                       <div className="p-4 space-y-3">
+                        {/* Bookings (Accommodations, Transportation, Guides, Destinations) */}
                         {Object.entries(dayData).map(([type, items]) => {
                           if (type === 'date' || items.length === 0) return null;
                           
@@ -384,6 +476,96 @@ const BookingPayment = () => {
                             </div>
                           ));
                         })}
+
+                        {/* Day Places */}
+                        {dayPlaces && dayPlaces[dayNum] && dayPlaces[dayNum].length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-semibold text-gray-700 flex items-center">
+                              <MapPin className="w-4 h-4 mr-2 text-blue-500" />
+                              Places to Visit
+                            </h5>
+                            {dayPlaces[dayNum].map((place, index) => (
+                              <div key={index} className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h6 className="text-sm font-semibold text-gray-800">{place.name}</h6>
+                                    <p className="text-xs text-gray-600">{place.address}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-xs text-gray-500">
+                                      {place.duration || '2-3 hours'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Day Notes */}
+                        {dayNotes && dayNotes[dayNum] && dayNotes[dayNum].length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-semibold text-gray-700 flex items-center">
+                              <svg className="w-4 h-4 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Notes
+                            </h5>
+                            {dayNotes[dayNum].map((note, index) => (
+                              <div key={index} className="bg-yellow-50 rounded-lg p-3 border-l-4 border-yellow-500">
+                                <p className="text-sm text-gray-800">{note.content}</p>
+                                {note.timestamp && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {new Date(note.timestamp).toLocaleTimeString()}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Day Checklists */}
+                        {dayChecklists && dayChecklists[dayNum] && dayChecklists[dayNum].length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-semibold text-gray-700 flex items-center">
+                              <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                              Checklists
+                            </h5>
+                            {dayChecklists[dayNum].map((checklist, index) => {
+                              const completedCount = checklist.items.filter(item => item.completed).length;
+                              const totalCount = checklist.items.length;
+                              
+                              return (
+                                <div key={index} className="bg-green-50 rounded-lg p-3 border-l-4 border-green-500">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h6 className="text-sm font-semibold text-gray-800">{checklist.title}</h6>
+                                    <span className="text-xs text-gray-500">{completedCount}/{totalCount} completed</span>
+                                  </div>
+                                  
+                                  <div className="space-y-1">
+                                    {checklist.items.slice(0, 3).map((item) => (
+                                      <div key={item.id} className="flex items-center">
+                                        <div className={`w-4 h-4 mr-2 ${item.completed ? 'text-green-500' : 'text-gray-400'}`}>
+                                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                          </svg>
+                                        </div>
+                                        <span className={`text-xs ${item.completed ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                                          {item.title}
+                                        </span>
+                                      </div>
+                                    ))}
+                                    {checklist.items.length > 3 && (
+                                      <div className="text-xs text-gray-500 ml-6">
+                                        +{checklist.items.length - 3} more items
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -394,7 +576,7 @@ const BookingPayment = () => {
               <div className="border-t pt-4 mt-6">
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold text-gray-900">Total Amount</span>
-                  <span className="text-2xl font-bold text-emerald-600">{formatCurrency(getTotalAmount())}</span>
+                  <span className="text-2xl font-bold text-emerald-600">{formatCurrency(getCalculatedTotalAmount())}</span>
                 </div>
               </div>
             </Card>
@@ -552,7 +734,7 @@ const BookingPayment = () => {
                         <span>Processing Payment...</span>
                       </div>
                     ) : (
-                      `Pay ${formatCurrency(getTotalAmount())}`
+                      `Pay ${formatCurrency(getCalculatedTotalAmount())}`
                     )}
                   </Button>
                   

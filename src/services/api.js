@@ -395,5 +395,102 @@ export const tourGuideAPI = {
   }
 };
 
+// Itinerary endpoints
+export const itineraryAPI = {
+  // Store completed trip data
+  storeCompletedTrip: async (tripData) => {
+    try {
+      const response = await api.post('/itinerary/store-completed-trip', tripData);
+      return response.data;
+    } catch (error) {
+      console.error('Store completed trip failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Create new itinerary
+  create: async (itineraryData) => {
+    try {
+      const response = await api.post('/itinerary/create', itineraryData);
+      return response.data;
+    } catch (error) {
+      console.error('Create itinerary failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get user itineraries
+  getUserItineraries: async (status = null) => {
+    try {
+      const url = status ? `/itinerary/user?status=${status}` : '/itinerary/user';
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Get user itineraries failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get itinerary by ID
+  getById: async (id) => {
+    try {
+      const response = await api.get(`/itinerary/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get itinerary failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Update itinerary
+  update: async (id, updates) => {
+    try {
+      const response = await api.put(`/itinerary/${id}`, updates);
+      return response.data;
+    } catch (error) {
+      console.error('Update itinerary failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Delete itinerary
+  delete: async (id) => {
+    try {
+      const response = await api.delete(`/itinerary/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete itinerary failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Search places
+  searchPlaces: async (query, location = null) => {
+    try {
+      const params = new URLSearchParams({ query });
+      if (location) {
+        params.append('latitude', location.latitude);
+        params.append('longitude', location.longitude);
+      }
+      const response = await api.get(`/itinerary/places/search?${params}`);
+      return response.data;
+    } catch (error) {
+      console.error('Search places failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get place details
+  getPlaceDetails: async (placeId) => {
+    try {
+      const response = await api.get(`/itinerary/places/${placeId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get place details failed:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
 // Export the configured axios instance for direct use if needed
 export { api as axiosInstance };

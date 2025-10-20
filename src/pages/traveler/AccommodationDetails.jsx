@@ -73,22 +73,63 @@ const AccommodationDetails = () => {
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
+                console.log('🏨 [DEBUG] Starting to fetch accommodation data...');
+                console.log('🏨 [DEBUG] Accommodation ID from params:', id);
+                console.log('🏨 [DEBUG] Location state:', location.state);
+                console.log('🏨 [DEBUG] Is from trip planning:', isFromTripPlanning);
+                
                 setLoading(true);
-                const data = await accommodationAPI.getById(id);
-                setAccommodation(data);
                 setError(null);
+                
+                console.log('🏨 [DEBUG] Calling accommodationAPI.getById with ID:', id);
+                const data = await accommodationAPI.getById(id);
+                
+                console.log('🏨 [DEBUG] Raw API response data:', data);
+                console.log('🏨 [DEBUG] Data type:', typeof data);
+                console.log('🏨 [DEBUG] Data keys:', data ? Object.keys(data) : 'No data');
+                
+                if (data) {
+                    console.log('🏨 [DEBUG] Accommodation details:');
+                    console.log('  - ID:', data._id || data.id);
+                    console.log('  - Name:', data.name);
+                    console.log('  - Location:', data.location);
+                    console.log('  - Provider:', data.provider);
+                    console.log('  - Price per night:', data.pricePerNight);
+                    console.log('  - Rating:', data.rating);
+                    console.log('  - Reviews count:', data.reviews?.length || 0);
+                    console.log('  - Amenities:', data.amenities);
+                    console.log('  - Images:', data.images?.length || 0);
+                    console.log('  - Description:', data.description?.substring(0, 100) + '...');
+                    console.log('  - Policies:', data.policies);
+                    console.log('  - Availability:', data.availability);
+                    console.log('  - Full data object:', data);
+                }
+                
+                setAccommodation(data);
+                console.log('🏨 [DEBUG] Accommodation state set successfully');
             } catch (err) {
-                console.error('Failed to fetch accommodation:', err);
+                console.error('❌ [DEBUG] Failed to fetch accommodation:', err);
+                console.error('❌ [DEBUG] Error details:', {
+                    message: err.message,
+                    status: err.response?.status,
+                    statusText: err.response?.statusText,
+                    data: err.response?.data,
+                    config: err.config
+                });
                 setError('Failed to load accommodation details. Please try again.');
             } finally {
                 setLoading(false);
+                console.log('🏨 [DEBUG] Loading state set to false');
             }
         };
 
         if (id) {
+            console.log('🏨 [DEBUG] ID exists, fetching accommodation...');
             fetchAccommodation();
+        } else {
+            console.log('❌ [DEBUG] No ID provided, skipping fetch');
         }
-    }, [id]);
+    }, [id, isFromTripPlanning, location.state]);
 
     // (Reverted) No dynamic availability fetch; rely on roomType.availableRooms from backend
 
@@ -529,22 +570,32 @@ const AccommodationDetails = () => {
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
                                             Check-in Date
+                                            {isFromTripPlanning && (
+                                                <span className="text-xs text-blue-600 ml-2">(Fixed from trip planning)</span>
+                                            )}
                                         </label>
                                         <Input
                                             type="date"
                                             value={bookingData.checkIn}
                                             onChange={(e) => setBookingData(prev => ({ ...prev, checkIn: e.target.value }))}
+                                            disabled={isFromTripPlanning}
+                                            className={isFromTripPlanning ? 'bg-gray-100 cursor-not-allowed' : ''}
                                         />
                                     </div>
                                     
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
                                             Check-out Date
+                                            {isFromTripPlanning && (
+                                                <span className="text-xs text-blue-600 ml-2">(Fixed from trip planning)</span>
+                                            )}
                                         </label>
                                         <Input
                                             type="date"
                                             value={bookingData.checkOut}
                                             onChange={(e) => setBookingData(prev => ({ ...prev, checkOut: e.target.value }))}
+                                            disabled={isFromTripPlanning}
+                                            className={isFromTripPlanning ? 'bg-gray-100 cursor-not-allowed' : ''}
                                         />
                                     </div>
                                 </div>
