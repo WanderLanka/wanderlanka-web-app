@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -17,7 +17,7 @@ import {
 import { Button, Card } from '../../components/common';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import { TravelerFooter } from '../../components/traveler';
-import { itineraryAPI } from '../../services/api';
+import { itineraryAPI, bookingsAPI } from '../../services/api';
 
 const BookingPayment = () => {
   const navigate = useNavigate();
@@ -83,6 +83,65 @@ const BookingPayment = () => {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  // After Stripe redirect back from booking-service success URL, finalize itinerary storage
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const bookingStatus = params.get('bookingStatus');
+    const sessionId = params.get('sessionId');
+    
+    // Check if this session has already been processed
+    const processedKey = `processed_${sessionId}`;
+    if (localStorage.getItem(processedKey)) {
+      return;
+    }
+    
+    if (bookingStatus === 'success') {
+      try {
+        const pending = localStorage.getItem('pendingTripPayment');
+        
+        if (!pending) {
+          return;
+        }
+        
+        const parsed = JSON.parse(pending);
+        
+        // Mark this session as processed immediately
+        localStorage.setItem(processedKey, 'true');
+        
+        (async () => {
+          try {
+            const res = await itineraryAPI.storeCompletedTrip(parsed);
+            
+            if (res?.success) {
+              clearTripPlanning();
+              localStorage.removeItem('pendingTripPayment');
+              setPaymentSuccess(true);
+              setTimeout(() => {
+                navigate('/user/mybookings', {
+                  state: {
+                    bookingConfirmed: true,
+                    tripData,
+                    totalAmount: parsed.totalAmount,
+                    itineraryData: res.data
+                  }
+                });
+              }, 1500);
+            } else {
+              // Remove processed flag on failure to allow retry
+              localStorage.removeItem(processedKey);
+            }
+          } catch (e) {
+            // Remove processed flag on error to allow retry
+            localStorage.removeItem(processedKey);
+          }
+        })();
+      } catch (parseError) {
+        localStorage.removeItem(processedKey);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Calculate total amount for both direct booking and trip planning
   const getCalculatedTotalAmount = () => {
@@ -225,50 +284,59 @@ const BookingPayment = () => {
     setIsProcessing(true);
     
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Prepare trip data for itinerary service
-      const tripDataForItinerary = {
+      // Persist payload locally to finalize after Stripe success
+      const pendingPayload = {
         tripData: actualTripData,
         planningBookings: getBookingsData(),
-        dayPlaces: dayPlaces,
-        dayNotes: dayNotes,
-        dayChecklists: dayChecklists,
+        dayPlaces,
+        dayNotes,
+        dayChecklists,
         totalAmount: getCalculatedTotalAmount(),
-        paymentData: paymentData
+        paymentData
       };
-
-      console.log('Sending trip data to itinerary service:', tripDataForItinerary);
-
-      // Store trip data in itinerary service
-      const itineraryResponse = await itineraryAPI.storeCompletedTrip(tripDataForItinerary);
       
-      console.log('Itinerary service response:', itineraryResponse);
+      try { localStorage.setItem('pendingTripPayment', JSON.stringify(pendingPayload)); } catch {}
+
+      // Create Stripe checkout session via booking-service
+      const sessionPayload = {
+        accommodationId: 'trip_total',
+        checkInDate: new Date().toISOString().split('T')[0],
+        checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+        selectedRooms: [{ roomType: 'trip_total', quantity: 1, pricePerNight: pendingPayload.totalAmount }],
+        guestDetails: {
+          firstName: paymentData.cardholderName?.split(' ')?.[0] || 'Guest',
+          lastName: paymentData.cardholderName?.split(' ')?.slice(1).join(' ') || '',
+          email: paymentData.contactInfo?.email || 'guest@example.com',
+          phone: paymentData.contactInfo?.phone || 'N/A'
+        }
+      };
       
-      if (itineraryResponse.success) {
-        console.log('✅ Trip data successfully stored in itinerary database');
-        console.log('📊 Itinerary ID:', itineraryResponse.data.itineraryId);
-        console.log('💰 Total Cost:', itineraryResponse.data.totalCost);
-        console.log('📅 Day Plans:', itineraryResponse.data.dayPlans);
+      const session = await bookingsAPI.createCheckoutSession(sessionPayload);
+      
+      if (session?.success && session.url) {
+        window.location.href = session.url;
+        return;
       }
+
+      // Fallback: direct store if session not created
+      const itineraryResponse = await itineraryAPI.storeCompletedTrip(pendingPayload);
       
-      // Clear trip planning data after successful payment and storage
-      clearTripPlanning();
-      
-      setPaymentSuccess(true);
-      
-      // Redirect to confirmation page after 2 seconds
-      setTimeout(() => {
-        navigate('/user/mybookings', { 
-          state: { 
-            bookingConfirmed: true,
-            tripData: tripData,
-            totalAmount: getCalculatedTotalAmount(),
-            itineraryData: itineraryResponse.data
-          } 
-        });
-      }, 2000);
+      if (itineraryResponse?.success) {
+        clearTripPlanning();
+        setPaymentSuccess(true);
+        setTimeout(() => {
+          navigate('/user/mybookings', {
+            state: {
+              bookingConfirmed: true,
+              tripData,
+              totalAmount: pendingPayload.totalAmount,
+              itineraryData: itineraryResponse.data
+            }
+          });
+        }, 2000);
+      } else {
+        alert('Failed to process payment. Please try again.');
+      }
       
     } catch (error) {
       console.error('Payment/Storage error:', error);
