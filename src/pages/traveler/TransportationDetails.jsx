@@ -23,6 +23,7 @@ import Breadcrumb from '../../components/common/Breadcrumb';
 import { Button, Card, Input } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
 import PaymentModal from '../../components/PaymentModal';
+import TripSummaryModal from '../../components/TripSummaryModal';
 import { useTripPlanning } from '../../hooks/useTripPlanning';
 import { transportationAPI, bookingsAPI } from '../../services/api';
 
@@ -34,6 +35,8 @@ function TransportationDetails() {
     
     const [currentImage, setCurrentImage] = useState(0);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showSummaryModal, setShowSummaryModal] = useState(false);
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [vehicle, setVehicle] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -186,26 +189,14 @@ function TransportationDetails() {
             
             console.log('✅ Transportation added to trip planning:', planningBooking);
             
-            // Show success popup and let user navigate back manually
+            // Show success message without alert - user stays on the same page
+            console.log('✅ Transportation successfully added to trip planning!');
+            setShowSuccessMessage(true);
             
-            // Store updated trip data in localStorage for persistence
-            const currentTripData = localStorage.getItem('tripSummaryData');
-            if (currentTripData) {
-              try {
-                const parsedData = JSON.parse(currentTripData);
-                parsedData.planningBookings = {
-                  ...parsedData.planningBookings,
-                  transportation: [...(parsedData.planningBookings.transportation || []), planningBooking]
-                };
-                parsedData.timestamp = new Date().toISOString();
-                localStorage.setItem('tripSummaryData', JSON.stringify(parsedData));
-                console.log('Updated trip data stored:', parsedData);
-              } catch (error) {
-                console.error('Error updating trip data:', error);
-              }
-            }
-            
-            alert('✅ Transportation added to your itinerary successfully! You can now go back to the planning page to view your summary.');
+            // Hide success message after 3 seconds
+            setTimeout(() => {
+                setShowSuccessMessage(false);
+            }, 3000);
         } else {
             try {
                 console.log('Vehicle data for booking:', {
@@ -663,6 +654,19 @@ function TransportationDetails() {
                         <Card className="p-6 sticky top-24">
                             <h3 className="text-xl font-bold text-slate-800 mb-4">Book this vehicle</h3>
                             
+                            {/* Success Message */}
+                            {showSuccessMessage && (
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                                    <div className="flex items-center">
+                                        <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                                        <div>
+                                            <p className="text-green-800 font-medium">Successfully added to your trip!</p>
+                                            <p className="text-green-600 text-sm">You can continue adding more services or view your trip summary.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 gap-4">
                                     <div>
@@ -751,7 +755,7 @@ function TransportationDetails() {
                                                 onClick={() => setBookingData(prev => ({ 
                                                     ...prev, 
                                                     passengers: Math.min(vehicle.seats, prev.passengers + 1) 
-                                                    passengers: Math.min(vehicle.seats, prev.passengers + 1) 
+                                                   
                                                 }))}
                                                 className="p-1 rounded-full border border-slate-300 hover:bg-slate-50"
                                             >
@@ -801,6 +805,18 @@ function TransportationDetails() {
                                         : 'Complete booking and payment'
                                     }
                                 </p>
+                                
+                                {/* Summary Button for Trip Planning */}
+                                {isFromTripPlanning && (
+                                    <Button
+                                        variant="outline"
+                                        size="lg"
+                                        className="w-full mt-3"
+                                        onClick={() => setShowSummaryModal(true)}
+                                    >
+                                        📋 View Trip Summary
+                                    </Button>
+                                )}
                             </div>
                         </Card>
                     </div>
@@ -815,6 +831,16 @@ function TransportationDetails() {
                 onClose={() => setShowPaymentModal(false)}
                 bookingData={vehicle}
                 totalAmount={calculateTotal()}
+            />
+
+            {/* Trip Summary Modal */}
+            <TripSummaryModal
+                isOpen={showSummaryModal}
+                onClose={() => setShowSummaryModal(false)}
+                tripData={null} // Will be populated from localStorage
+                dayNotes={{}}
+                dayChecklists={{}}
+                dayPlaces={{}}
             />
                 </>
             )}
