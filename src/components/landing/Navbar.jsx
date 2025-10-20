@@ -34,13 +34,12 @@ const Navbar = ({
             </NavButton>
             <NavButton 
               variant="secondary"
-              onClick={() => navigate('/auth')}>
+              onClick={() => navigate("/auth", { state: { mode: "login" } })}>
               Login
             </NavButton>
             <NavButton 
               variant="primary"
-              onClick={() => navigate('/auth')}
-            >
+              onClick={() => navigate("/auth", { state: { mode: "signup" } })}>
               Sign Up
             </NavButton>
           </div>

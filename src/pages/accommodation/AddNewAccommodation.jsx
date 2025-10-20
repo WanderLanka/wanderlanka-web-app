@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, X, Camera, MapPin, Clock, Phone, Hotel, Users, Star, Image as ImageIcon } from 'lucide-react';
 import api from '../../services/axiosConfig.js';
@@ -26,8 +26,92 @@ const AddNewAccommodation = () => {
     website: '',
     email: ''
   });
+
+  // Room types state for luxury/deluxe/normal with pricing and counts
+  const [roomTypes, setRoomTypes] = useState([
+    { type: 'luxury', pricePerNight: '', totalRooms: '', availableRooms: '' },
+    { type: 'deluxe', pricePerNight: '', totalRooms: '', availableRooms: '' },
+    { type: 'normal', pricePerNight: '', totalRooms: '', availableRooms: '' }
+  ]);
   
   const [formErrors, setFormErrors] = useState({});
+
+  // Coordinates state (selected via map)
+  const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
+  const mapContainerRef = useRef(null);
+  const leafletLoadedRef = useRef(false);
+  const leafletMapRef = useRef(null);
+  const leafletMarkerRef = useRef(null);
+
+  // Dynamically load Leaflet (CSS + JS) and set up map for picking coordinates
+  useEffect(() => {
+    // Helper to load a stylesheet
+    const loadCSS = (href) => new Promise((resolve, reject) => {
+      if (document.querySelector(`link[href="${href}"]`)) return resolve();
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.onload = resolve;
+      link.onerror = reject;
+      document.head.appendChild(link);
+    });
+
+    // Helper to load a script
+    const loadScript = (src) => new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) return resolve();
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.body.appendChild(script);
+    });
+
+    const initMap = async () => {
+      try {
+        await loadCSS('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+        await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+        leafletLoadedRef.current = true;
+
+        // Initialize map only once
+        if (mapContainerRef.current && !leafletMapRef.current && window.L) {
+          const defaultCenter = [7.8731, 80.7718]; // Sri Lanka
+          const L = window.L;
+          const map = L.map(mapContainerRef.current).setView(defaultCenter, 7);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(map);
+
+          // Click handler to drop/update marker and store coordinates
+          map.on('click', (e) => {
+            const { lat, lng } = e.latlng;
+            setCoordinates({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) });
+            if (leafletMarkerRef.current) {
+              leafletMarkerRef.current.setLatLng([lat, lng]);
+            } else {
+              leafletMarkerRef.current = L.marker([lat, lng]).addTo(map);
+            }
+          });
+
+          leafletMapRef.current = map;
+        }
+      } catch (err) {
+        console.error('Failed to initialize map picker:', err);
+      }
+    };
+
+    initMap();
+
+    return () => {
+      // Optional: cleanup map on unmount
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current = null;
+        leafletMarkerRef.current = null;
+      }
+    };
+  }, []);
 
   // Available amenities
   const availableAmenities = [
@@ -58,6 +142,13 @@ const AddNewAccommodation = () => {
         ? prev.amenities.filter(a => a !== amenity)
         : [...prev.amenities, amenity]
     }));
+  };
+
+  const handleRoomTypeChange = (idx, field, value) => {
+    setRoomTypes(prev => prev.map((rt, i) => i === idx ? { ...rt, [field]: value } : rt));
+    if (['pricePerNight', 'totalRooms', 'availableRooms'].includes(field) && formErrors[`room_${idx}_${field}`]) {
+      setFormErrors(prev => ({ ...prev, [`room_${idx}_${field}`]: '' }));
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -127,6 +218,25 @@ const AddNewAccommodation = () => {
       errors.images = 'Please upload at least one image';
     }
 
+    // Validate room types: numbers and available <= total
+    roomTypes.forEach((rt, idx) => {
+      const price = parseFloat(rt.pricePerNight);
+      const total = parseInt(rt.totalRooms);
+      const avail = parseInt(rt.availableRooms);
+      if (isNaN(price) || price <= 0) {
+        errors[`room_${idx}_pricePerNight`] = 'Enter a valid nightly price';
+      }
+      if (isNaN(total) || total < 0) {
+        errors[`room_${idx}_totalRooms`] = 'Enter a valid total count (>= 0)';
+      }
+      if (isNaN(avail) || avail < 0) {
+        errors[`room_${idx}_availableRooms`] = 'Enter a valid available count (>= 0)';
+      }
+      if (!isNaN(total) && !isNaN(avail) && avail > total) {
+        errors[`room_${idx}_availableRooms`] = 'Available cannot exceed total';
+      }
+    });
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -145,7 +255,18 @@ const AddNewAccommodation = () => {
         ...formData,
         totalRooms: parseInt(formData.totalRooms),
         starRating: parseInt(formData.starRating),
-        images: imagePreviewUrls // In production, these would be URLs from your image service
+        images: imagePreviewUrls, // In production, these would be URLs from your image service
+        // Include coordinates if user picked a point on the map
+        ...(coordinates.lat && coordinates.lng ? { coordinates } : {}),
+        // Include structured room types with numeric values only for filled ones
+        roomTypes: roomTypes
+          .filter(rt => rt.totalRooms !== '' || rt.availableRooms !== '' || rt.pricePerNight !== '')
+          .map(rt => ({
+            type: rt.type,
+            pricePerNight: rt.pricePerNight,
+            totalRooms: rt.totalRooms,
+            availableRooms: rt.availableRooms
+          }))
       };
 
       const response = await api.post('/accommodation/addhotels', accommodationData);
@@ -395,6 +516,36 @@ const AddNewAccommodation = () => {
             </div>
           </div>
 
+          {/* Map Location Picker */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <MapPin className="w-5 h-5 mr-2" />
+              Location on Map
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Click on the map to set the exact location of your accommodation. The selected coordinates will be saved with your listing.
+            </p>
+
+            <div
+              ref={mapContainerRef}
+              className="w-full h-80 rounded-lg border border-gray-200"
+              style={{ minHeight: '320px' }}
+            />
+
+            <div className="mt-4 text-sm text-gray-700">
+              {coordinates.lat && coordinates.lng ? (
+                <div className="inline-flex items-center px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  <span className="font-medium">Selected:</span>
+                  <span className="ml-2">Lat {coordinates.lat}, Lng {coordinates.lng}</span>
+                </div>
+              ) : (
+                <span className="text-gray-500">No location selected yet.</span>
+              )}
+            </div>
+          </div>
+
           {/* Check-in/Check-out Times */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
@@ -451,6 +602,69 @@ const AddNewAccommodation = () => {
                   />
                   <span className="text-sm text-gray-700">{amenity}</span>
                 </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Room Types & Pricing */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <Hotel className="w-5 h-5 mr-2" />
+              Room Types & Pricing
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {roomTypes.map((rt, idx) => (
+                <div key={rt.type} className="border rounded-lg p-4">
+                  <div className="mb-3">
+                    <span className="text-sm font-semibold text-gray-700 uppercase">{rt.type}</span>
+                  </div>
+
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nightly Price</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={rt.pricePerNight}
+                    onChange={(e) => handleRoomTypeChange(idx, 'pricePerNight', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg ${formErrors[`room_${idx}_pricePerNight`] ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="e.g., 120"
+                  />
+                  {formErrors[`room_${idx}_pricePerNight`] && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors[`room_${idx}_pricePerNight`]}</p>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Total Rooms</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={rt.totalRooms}
+                        onChange={(e) => handleRoomTypeChange(idx, 'totalRooms', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg ${formErrors[`room_${idx}_totalRooms`] ? 'border-red-500' : 'border-gray-300'}`}
+                        placeholder="e.g., 10"
+                      />
+                      {formErrors[`room_${idx}_totalRooms`] && (
+                        <p className="text-red-500 text-xs mt-1">{formErrors[`room_${idx}_totalRooms`]}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Available</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={rt.availableRooms}
+                        onChange={(e) => handleRoomTypeChange(idx, 'availableRooms', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg ${formErrors[`room_${idx}_availableRooms`] ? 'border-red-500' : 'border-gray-300'}`}
+                        placeholder="e.g., 8"
+                      />
+                      {formErrors[`room_${idx}_availableRooms`] && (
+                        <p className="text-red-500 text-xs mt-1">{formErrors[`room_${idx}_availableRooms`]}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>

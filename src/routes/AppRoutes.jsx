@@ -20,6 +20,8 @@ import {
   AdminComplains,
   TravelerDashboard,
   TripPlanning,
+  BookingPayment,
+  IndividualBookingPayment,
   MyBookings,
   MyTrips,
   Payments,
@@ -30,9 +32,12 @@ import {
   TourGuides,
   AccommodationDetails,
   TransportationDetails,
+  TransportTrips,
+
   TourGuideDetails
 } from '../pages';
 import AddNewTransport from '../pages/transport/AddNewTransport';
+import Drivers from '../pages/transport/Drivers';
 import { ProtectedRoute } from '../components';
 import {
   TransportLayout,
@@ -55,6 +60,8 @@ const AppRoutes = () => {
           <Route index element={<TransportDashboard />} />
           <Route path="vehicles" element={<VehiclesPage />} />
           <Route path="add-new" element={<AddNewTransport />} />
+          <Route path="drivers" element={<Drivers />} />
+          <Route path="trips" element={<TransportTrips/>}/>
         </Route>
       </Route>
 
@@ -87,6 +94,8 @@ const AppRoutes = () => {
           <Route index element={<TravelerDashboard />} />
           <Route path="dashboard" element={<TravelerDashboard />} />
           <Route path="trip-planning" element={<TripPlanning />} />
+          <Route path="booking-payment" element={<BookingPayment />} />
+          <Route path="individual-booking-payment" element={<IndividualBookingPayment />} />
           <Route path="mybookings" element={<MyBookings />} />
           <Route path="mytrips" element={<MyTrips />} />
           <Route path="payments" element={<Payments />} />

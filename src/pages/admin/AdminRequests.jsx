@@ -1,259 +1,79 @@
 import React, { useState, useEffect } from "react";
-// import "../styles/AdminRequests.css"; // Converted to Tailwind CSS
+import { adminAPI } from "../../services/api";
+import config from "../../config/config.js";
 
 const AdminRequests = () => {
-  // State management
   const [requests, setRequests] = useState([]);
-  const [filteredRequests, setFilteredRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   
-  // Filter states
-  const [filterRole, setFilterRole] = useState("all"); // all, accommodation, transport, guide
-  const [filterStatus, setFilterStatus] = useState("all"); // all, pending, approved, rejected
-  const [filterDate, setFilterDate] = useState("all"); // all, today, week, month
+  const [filterRole, setFilterRole] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterDate, setFilterDate] = useState("all");
   
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // Mock access request data - replace with actual API call
-  const mockRequests = [
-    {
-      id: "REQ-001",
-      applicantName: "Cinnamon Hotels & Resorts",
-      applicantEmail: "admin@cinnamonhotels.com",
-      role: "accommodation",
-      status: "pending",
-      submittedDate: "2025-01-22T09:30:00Z",
-      businessName: "Cinnamon Grand Colombo",
-      businessAddress: "77 Galle Rd, Colombo 03, Sri Lanka",
-      contactNumber: "+94 11 249 1000",
-      website: "https://cinnamonhotels.com",
-      businessRegistration: "BR-2018-001234",
-      taxId: "TAX-001234567",
-      description: "Leading luxury hotel chain seeking to join WanderLanka platform to reach more international tourists.",
-      documents: [
-        { name: "Business Registration Certificate", url: "#", type: "pdf" },
-        { name: "Tax Registration Document", url: "#", type: "pdf" },
-        { name: "Hotel Photos Portfolio", url: "#", type: "zip" },
-        { name: "Service Brochure", url: "#", type: "pdf" }
-      ],
-      additionalInfo: {
-        roomCount: 501,
-        starRating: 5,
-        amenities: ["Pool", "Spa", "Gym", "Restaurant", "Bar", "Business Center"],
-        checkInTime: "14:00",
-        checkOutTime: "12:00"
-      }
-    },
-    {
-      id: "REQ-002",
-      applicantName: "Lanka Taxi Services",
-      applicantEmail: "contact@lankataxi.lk",
-      role: "transport",
-      status: "pending",
-      submittedDate: "2025-01-21T14:45:00Z",
-      businessName: "Lanka Express Taxi Service",
-      businessAddress: "No. 45, Galle Road, Mount Lavinia",
-      contactNumber: "+94 77 123 4567",
-      website: "https://lankataxi.lk",
-      businessRegistration: "BR-2020-005678",
-      taxId: "TAX-005678901",
-      description: "Reliable taxi service with 15+ years experience providing airport transfers and city tours.",
-      documents: [
-        { name: "Business License", url: "#", type: "pdf" },
-        { name: "Vehicle Registration Documents", url: "#", type: "zip" },
-        { name: "Driver License Copies", url: "#", type: "zip" },
-        { name: "Insurance Certificates", url: "#", type: "pdf" }
-      ],
-      additionalInfo: {
-        vehicleCount: 25,
-        serviceTypes: ["Airport Transfer", "City Tours", "Long Distance"],
-        operatingHours: "24/7",
-        coverage: ["Colombo", "Galle", "Kandy", "Negombo"]
-      }
-    },
-    {
-      id: "REQ-003",
-      applicantName: "Samantha Perera",
-      applicantEmail: "samantha.guide@gmail.com",
-      role: "guide",
-      status: "approved",
-      submittedDate: "2025-01-20T11:20:00Z",
-      businessName: "Cultural Heritage Tours",
-      businessAddress: "Temple Road, Kandy",
-      contactNumber: "+94 71 234 5678",
-      website: "",
-      businessRegistration: "GUIDE-2021-001",
-      taxId: "TAX-234567890",
-      description: "Licensed tour guide specializing in cultural and historical tours with 8 years experience.",
-      documents: [
-        { name: "Tour Guide License", url: "#", type: "pdf" },
-        { name: "Language Certificates", url: "#", type: "pdf" },
-        { name: "Tourism Board Registration", url: "#", type: "pdf" },
-        { name: "Previous Client Reviews", url: "#", type: "pdf" }
-      ],
-      additionalInfo: {
-        languages: ["English", "German", "Japanese", "Sinhala"],
-        specializations: ["Cultural Tours", "Historical Sites", "Temple Visits", "Nature Walks"],
-        experience: "8 years",
-        certifications: ["Licensed Tour Guide", "First Aid Certified"]
-      },
-      processedDate: "2025-01-21T10:15:00Z",
-      processedBy: "admin@wanderlanka.com"
-    },
-    {
-      id: "REQ-004",
-      applicantName: "Green Villa Eco Resort",
-      applicantEmail: "info@greenvilla.lk",
-      role: "accommodation",
-      status: "pending",
-      submittedDate: "2025-01-19T16:30:00Z",
-      businessName: "Green Villa Eco Resort",
-      businessAddress: "Ella, Badulla District",
-      contactNumber: "+94 57 223 8900",
-      website: "https://greenvilla.lk",
-      businessRegistration: "BR-2019-009876",
-      taxId: "TAX-987654321",
-      description: "Eco-friendly boutique resort nestled in the hills of Ella, offering sustainable tourism experiences.",
-      documents: [
-        { name: "Environmental Certification", url: "#", type: "pdf" },
-        { name: "Business Registration", url: "#", type: "pdf" },
-        { name: "Property Photos", url: "#", type: "zip" },
-        { name: "Sustainability Report", url: "#", type: "pdf" }
-      ],
-      additionalInfo: {
-        roomCount: 12,
-        starRating: 4,
-        amenities: ["Organic Garden", "Yoga Deck", "Nature Trails", "Eco-friendly Facilities"],
-        checkInTime: "15:00",
-        checkOutTime: "11:00"
-      }
-    },
-    {
-      id: "REQ-005",
-      applicantName: "Adventure Sports Lanka",
-      applicantEmail: "info@adventuresportslk.com",
-      role: "guide",
-      status: "rejected",
-      submittedDate: "2025-01-18T13:15:00Z",
-      businessName: "Extreme Adventures Lanka",
-      businessAddress: "Kitulgala, Kegalle District",
-      contactNumber: "+94 36 228 7654",
-      website: "https://adventuresportslk.com",
-      businessRegistration: "GUIDE-2022-002",
-      taxId: "TAX-345678901",
-      description: "Adventure tourism company offering white water rafting, rock climbing, and jungle trekking.",
-      documents: [
-        { name: "Adventure Sports License", url: "#", type: "pdf" },
-        { name: "Safety Certifications", url: "#", type: "pdf" },
-        { name: "Equipment Inspection Reports", url: "#", type: "pdf" }
-      ],
-      additionalInfo: {
-        languages: ["English", "Sinhala"],
-        specializations: ["White Water Rafting", "Rock Climbing", "Jungle Trekking", "Canyoning"],
-        experience: "5 years",
-        certifications: ["Adventure Sports License", "Safety Instructor"]
-      },
-      processedDate: "2025-01-19T09:30:00Z",
-      processedBy: "admin@wanderlanka.com",
-      rejectionReason: "Incomplete safety documentation and missing insurance coverage details."
-    },
-    {
-      id: "REQ-006",
-      applicantName: "Royal Express Transport",
-      applicantEmail: "bookings@royalexpress.lk",
-      role: "transport",
-      status: "approved",
-      submittedDate: "2025-01-17T10:00:00Z",
-      businessName: "Royal Express Coach Service",
-      businessAddress: "Colombo 07, Sri Lanka",
-      contactNumber: "+94 11 269 8745",
-      website: "https://royalexpress.lk",
-      businessRegistration: "BR-2017-112233",
-      taxId: "TAX-112233445",
-      description: "Premium coach service providing luxury transportation for tourists across Sri Lanka.",
-      documents: [
-        { name: "Transport License", url: "#", type: "pdf" },
-        { name: "Fleet Registration", url: "#", type: "zip" },
-        { name: "Safety Inspection Reports", url: "#", type: "pdf" },
-        { name: "Insurance Documentation", url: "#", type: "pdf" }
-      ],
-      additionalInfo: {
-        vehicleCount: 45,
-        serviceTypes: ["Luxury Coaches", "Mini Buses", "Airport Transfers"],
-        operatingHours: "06:00 - 22:00",
-        coverage: ["All Major Cities", "Tourist Destinations", "Airports"]
-      },
-      processedDate: "2025-01-18T14:20:00Z",
-      processedBy: "admin@wanderlanka.com"
-    }
-  ];
-
-  // Simulate API call
+  // Fetch requests on mount
   useEffect(() => {
-    const fetchRequests = async () => {
-      setLoading(true);
-      try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setRequests(mockRequests);
-        setFilteredRequests(mockRequests);
-        setError("");
-      } catch (err) {
-        setError("Failed to fetch access requests. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchRequests();
   }, []);
 
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const result = await adminAPI.requests();
+      // Handle different response formats
+      // API may return an array OR an object with numeric keys (e.g. {"0": {...}, "1": {...}, "message":"..."})
+      const raw = result?.data ?? result;
+
+      let requestsArray = [];
+      if (Array.isArray(raw)) {
+        requestsArray = raw;
+      } else if (raw && typeof raw === 'object') {
+        // If it's an object with numeric keys, extract the object values that look like requests
+        const values = Object.values(raw).filter(v => v && typeof v === 'object' && (v._id || v.username || v.email));
+        if (values.length) requestsArray = values;
+        // If there's a nested 'requests' array, prefer that
+        else if (Array.isArray(raw.requests)) requestsArray = raw.requests;
+      }
+
+      setRequests(requestsArray);
+      // If API provided a message and there are no request items, surface it as info
+      if ((!requestsArray || requestsArray.length === 0) && raw && raw.message) {
+        setError(raw.message);
+      }
+    } catch (err) {
+      console.error("Failed to fetch requests:", err);
+      setError(err.response?.data?.message || "Failed to load requests. Please try again.");
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter requests
-  useEffect(() => {
-    let filtered = [...requests];
-
-    // Filter by role
-    if (filterRole !== "all") {
-      filtered = filtered.filter(request => request.role === filterRole);
-    }
-
-    // Filter by status
-    if (filterStatus !== "all") {
-      filtered = filtered.filter(request => request.status === filterStatus);
-    }
-
-    // Filter by date
+  const filteredRequests = requests.filter(request => {
+    const matchesRole = filterRole === "all" || request.role === filterRole;
+    const matchesStatus = filterStatus === "all" || request.status === filterStatus;
+    
+    let matchesDate = true;
     if (filterDate !== "all") {
+      const requestDate = new Date(request.createdAt || request.submittedDate);
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const daysDiff = Math.floor((now - requestDate) / (1000 * 60 * 60 * 24));
       
-      filtered = filtered.filter(request => {
-        const requestDate = new Date(request.submittedDate);
-        
-        switch (filterDate) {
-          case "today":
-            return requestDate >= today;
-          case "week":
-            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-            return requestDate >= weekAgo;
-          case "month":
-            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-            return requestDate >= monthAgo;
-          default:
-            return true;
-        }
-      });
+      if (filterDate === "today") matchesDate = daysDiff === 0;
+      else if (filterDate === "week") matchesDate = daysDiff <= 7;
+      else if (filterDate === "month") matchesDate = daysDiff <= 30;
     }
-
-    setFilteredRequests(filtered);
-    setCurrentPage(1);
-  }, [requests, filterRole, filterStatus, filterDate]);
+    
+    return matchesRole && matchesStatus && matchesDate;
+  });
 
   // Calculate statistics
   const stats = {
@@ -269,8 +89,8 @@ const AdminRequests = () => {
   const currentRequests = filteredRequests.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
-  // Helper functions
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -282,11 +102,11 @@ const AdminRequests = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      pending: "status-badge status-badge--warning",
-      approved: "status-badge status-badge--success",
-      rejected: "status-badge status-badge--error"
+      pending: "px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800",
+      approved: "px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800",
+      rejected: "px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
     };
-    return badges[status] || "status-badge";
+    return badges[status] || "px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800";
   };
 
   const getRoleIcon = (role) => {
@@ -318,30 +138,23 @@ const AdminRequests = () => {
   };
 
   const handleAction = async (requestId, action) => {
+    if (!window.confirm(`Are you sure you want to ${action} this request?`)) {
+      return;
+    }
+
     setActionLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call API to approve/reject
+      await adminAPI.updateRequestStatus(requestId, action);
       
-      // Update the request status
-      const updatedRequests = requests.map(request => 
-        request.id === requestId 
-          ? { 
-              ...request, 
-              status: action,
-              processedDate: new Date().toISOString(),
-              processedBy: "admin@wanderlanka.com"
-            }
-          : request
-      );
+      // Refresh requests
+      await fetchRequests();
       
-      setRequests(updatedRequests);
       closeModal();
-      
-      // Show success message (you can implement a toast notification here)
-      console.log(`Request ${requestId} has been ${action}`);
-    } catch (error) {
-      console.error(`Failed to ${action} request:`, error);
+      alert(`Request has been ${action} successfully!`);
+    } catch (err) {
+      console.error(`Failed to ${action} request:`, err);
+      alert(err.response?.data?.message || `Failed to ${action} request. Please try again.`);
     } finally {
       setActionLoading(false);
     }
@@ -349,190 +162,214 @@ const AdminRequests = () => {
 
   if (loading) {
     return (
-      <div className="access-requests">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <div className="loading-text">Loading access requests...</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="mt-4 text-gray-600">Loading access requests...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="access-requests">
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header Section */}
-      <div className="page-header">
-        <div className="header-content">
-          <div className="header-text">
-            <h1 className="page-title">Access Requests</h1>
-            <p className="page-subtitle">
-              Manage and review access requests from accommodation providers, transport services, and tour guides
-            </p>
-          </div>
-          
-          <div className="header-stats">
-            <div className="stats-grid">
-              <div className="stat-item stat-item--warning">
-                <div className="stat-icon">⏳</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.pendingRequests}</div>
-                  <div className="stat-label">Pending</div>
-                </div>
-              </div>
-              <div className="stat-item stat-item--success">
-                <div className="stat-icon">✅</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.approvedRequests}</div>
-                  <div className="stat-label">Approved</div>
-                </div>
-              </div>
-              <div className="stat-item stat-item--error">
-                <div className="stat-icon">❌</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.rejectedRequests}</div>
-                  <div className="stat-label">Rejected</div>
-                </div>
-              </div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Access Requests</h1>
+        <p className="text-gray-600">
+          Manage and review access requests from accommodation providers, transport services, and tour guides
+        </p>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Requests</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalRequests}</p>
             </div>
+            <div className="text-3xl">📋</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Pending</p>
+              <p className="text-2xl font-bold text-yellow-600">{stats.pendingRequests}</p>
+            </div>
+            <div className="text-3xl">⏳</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Approved</p>
+              <p className="text-2xl font-bold text-green-600">{stats.approvedRequests}</p>
+            </div>
+            <div className="text-3xl">✅</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Rejected</p>
+              <p className="text-2xl font-bold text-red-600">{stats.rejectedRequests}</p>
+            </div>
+            <div className="text-3xl">❌</div>
           </div>
         </div>
       </div>
 
       {/* Filters Section */}
-      <div className="filters-section">
-        <div className="filters-container">
-          <div className="filters-group">
-            <div className="filter-item">
-              <label className="filter-label">Provider Type:</label>
-              <select 
-                className="filter-select"
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-              >
-                <option value="all">All Providers</option>
-                <option value="accommodation">Hotels & Accommodations</option>
-                <option value="transport">Transport Services</option>
-                <option value="guide">Tour Guides</option>
-              </select>
-            </div>
-
-            <div className="filter-item">
-              <label className="filter-label">Status:</label>
-              <select 
-                className="filter-select"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending Review</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-
-            <div className="filter-item">
-              <label className="filter-label">Date Range:</label>
-              <select 
-                className="filter-select"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-              >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">Last 7 Days</option>
-                <option value="month">Last 30 Days</option>
-              </select>
-            </div>
+      <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Provider Type</label>
+            <select 
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+            >
+              <option value="all">All Providers</option>
+              <option value="accommodation">Hotels & Accommodations</option>
+              <option value="transport">Transport Services</option>
+              <option value="guide">Tour Guides</option>
+            </select>
           </div>
 
-          <div className="results-info">
-            <span className="results-count">
-              {filteredRequests.length} request{filteredRequests.length !== 1 ? 's' : ''} found
-            </span>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select 
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending Review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+            <select 
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">Last 30 Days</option>
+            </select>
+          </div>
+
+          <div className="flex items-end">
+            <button 
+              onClick={fetchRequests}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 text-sm text-gray-600">
+          {filteredRequests.length} request{filteredRequests.length !== 1 ? 's' : ''} found
         </div>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="error-message">
-          <span className="error-icon">⚠️</span>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+          <span className="mr-2">⚠️</span>
           {error}
         </div>
       )}
 
       {/* Requests Table */}
-      <div className="requests-section">
+      <div className="bg-white rounded-lg shadow overflow-hidden">
         {currentRequests.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📋</div>
-            <h3 className="empty-title">No Access Requests Found</h3>
-            <p className="empty-description">
-              No access requests match your current filter criteria.
-            </p>
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📋</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Access Requests Found</h3>
+            <p className="text-gray-600">No access requests match your current filter criteria.</p>
           </div>
         ) : (
           <>
-            <div className="requests-table-container">
-              <table className="requests-table">
-                <thead>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th>Request ID</th>
-                    <th>Applicant</th>
-                    <th>Provider Type</th>
-                    <th>Business Name</th>
-                    <th>Status</th>
-                    <th>Submitted Date</th>
-                    <th>Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white divide-y divide-gray-200">
                   {currentRequests.map((request) => (
-                    <tr key={request.id} className="request-row">
-                      <td className="request-id-cell">
-                        <div className="request-id">{request.id}</div>
+                    <tr key={request._id || request.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {request._id?.slice(-8) || request.id}
                       </td>
                       
-                      <td className="applicant-cell">
-                        <div className="applicant-info">
-                          <div className="applicant-name">{request.applicantName}</div>
-                          <div className="applicant-email">{request.applicantEmail}</div>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">{request.username}</div>
+                        <div className="text-sm text-gray-500">{request.email}</div>
+                      </td>
+                      
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <span className="text-2xl mr-2">{getRoleIcon(request.role)}</span>
+                          <span className="text-sm text-gray-900">{getRoleName(request.role)}</span>
                         </div>
                       </td>
                       
-                      <td className="role-cell">
-                        <div className="provider-type">
-                          <span className="role-icon">{getRoleIcon(request.role)}</span>
-                          <span className="role-text">{getRoleName(request.role)}</span>
-                        </div>
-                      </td>
-                      
-                      <td className="business-cell">
-                        <div className="business-info">
-                          <div className="business-name">{request.businessName}</div>
-                          <div className="business-address">{request.businessAddress}</div>
-                        </div>
-                      </td>
-                      
-                      <td className="status-cell">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className={getStatusBadge(request.status)}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                          {request.status?.charAt(0).toUpperCase() + request.status?.slice(1)}
                         </span>
                       </td>
                       
-                      <td className="date-cell">
-                        <div className="date-info">
-                          {formatDate(request.submittedDate)}
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(request.createdAt || request.submittedDate)}
                       </td>
                       
-                      <td className="actions-cell">
-                        <button 
-                          className="view-btn"
-                          onClick={() => handleRequestClick(request)}
-                        >
-                          View Details
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex gap-2">
+                          <button 
+                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                            onClick={() => handleRequestClick(request)}
+                          >
+                            View
+                          </button>
+                          {request.status === 'pending' && (
+                            <>
+                              <button 
+                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50"
+                                onClick={() => handleAction(request._id || request.id, 'approved')}
+                                disabled={actionLoading}
+                              >
+                                Approve
+                              </button>
+                              <button 
+                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+                                onClick={() => handleAction(request._id || request.id, 'rejected')}
+                                disabled={actionLoading}
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -542,31 +379,53 @@ const AdminRequests = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="pagination">
-                <button 
-                  className="pagination-btn"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                >
-                  Previous
-                </button>
-                
-                <div className="pagination-info">
-                  <span className="page-numbers">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <span className="items-info">
-                    Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredRequests.length)} of {filteredRequests.length}
-                  </span>
+              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button 
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  >
+                    Previous
+                  </button>
+                  <button 
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  >
+                    Next
+                  </button>
                 </div>
-                
-                <button 
-                  className="pagination-btn"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                >
-                  Next
-                </button>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
+                      <span className="font-medium">{Math.min(indexOfLastItem, filteredRequests.length)}</span> of{' '}
+                      <span className="font-medium">{filteredRequests.length}</span> results
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                      <button 
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      >
+                        Previous
+                      </button>
+                      <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <button 
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      >
+                        Next
+                      </button>
+                    </nav>
+                  </div>
+                </div>
               </div>
             )}
           </>
@@ -575,173 +434,99 @@ const AdminRequests = () => {
 
       {/* Modal */}
       {showModal && selectedRequest && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Access Request Details</h2>
-              <button className="modal-close" onClick={closeModal}>×</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={closeModal}>
+          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Request Details</h2>
+              <button className="text-gray-400 hover:text-gray-600 text-3xl" onClick={closeModal}>×</button>
             </div>
             
-            <div className="modal-body">
-              <div className="request-details">
-                {/* Basic Information */}
-                <div className="details-section">
-                  <h3 className="section-title">Basic Information</h3>
-                  <div className="details-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Request ID:</span>
-                      <span className="detail-value">{selectedRequest.id}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Status:</span>
-                      <span className={getStatusBadge(selectedRequest.status)}>
-                        {selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}
-                      </span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Provider Type:</span>
-                      <span className="detail-value">
-                        {getRoleIcon(selectedRequest.role)} {getRoleName(selectedRequest.role)}
-                      </span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Submitted Date:</span>
-                      <span className="detail-value">{formatDate(selectedRequest.submittedDate)}</span>
-                    </div>
+            <div className="p-6">
+              {/* Basic Information */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm text-gray-600">Request ID:</span>
+                    <p className="font-medium">{selectedRequest._id?.slice(-8) || selectedRequest.id}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Status:</span>
+                    <p><span className={getStatusBadge(selectedRequest.status)}>
+                      {selectedRequest.status?.charAt(0).toUpperCase() + selectedRequest.status?.slice(1)}
+                    </span></p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Provider Type:</span>
+                    <p className="font-medium">{getRoleIcon(selectedRequest.role)} {getRoleName(selectedRequest.role)}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Submitted Date:</span>
+                    <p className="font-medium">{formatDate(selectedRequest.createdAt || selectedRequest.submittedDate)}</p>
                   </div>
                 </div>
-
-                {/* Applicant Information */}
-                <div className="details-section">
-                  <h3 className="section-title">Applicant Information</h3>
-                  <div className="details-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Name:</span>
-                      <span className="detail-value">{selectedRequest.applicantName}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Email:</span>
-                      <span className="detail-value">{selectedRequest.applicantEmail}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Contact:</span>
-                      <span className="detail-value">{selectedRequest.contactNumber}</span>
-                    </div>
-                    {selectedRequest.website && (
-                      <div className="detail-item">
-                        <span className="detail-label">Website:</span>
-                        <a href={selectedRequest.website} className="detail-link" target="_blank" rel="noopener noreferrer">
-                          {selectedRequest.website}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Business Information */}
-                <div className="details-section">
-                  <h3 className="section-title">Business Information</h3>
-                  <div className="details-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Business Name:</span>
-                      <span className="detail-value">{selectedRequest.businessName}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Address:</span>
-                      <span className="detail-value">{selectedRequest.businessAddress}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Registration:</span>
-                      <span className="detail-value">{selectedRequest.businessRegistration}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Tax ID:</span>
-                      <span className="detail-value">{selectedRequest.taxId}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="details-section">
-                  <h3 className="section-title">Description</h3>
-                  <p className="description-text">{selectedRequest.description}</p>
-                </div>
-
-                {/* Additional Information */}
-                {selectedRequest.additionalInfo && (
-                  <div className="details-section">
-                    <h3 className="section-title">Additional Information</h3>
-                    <div className="additional-info">
-                      {Object.entries(selectedRequest.additionalInfo).map(([key, value]) => (
-                        <div key={key} className="detail-item">
-                          <span className="detail-label">
-                            {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
-                          </span>
-                          <span className="detail-value">
-                            {Array.isArray(value) ? value.join(', ') : value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Documents */}
-                <div className="details-section">
-                  <h3 className="section-title">Attached Documents</h3>
-                  <div className="documents-list">
-                    {selectedRequest.documents.map((doc, index) => (
-                      <div key={index} className="document-item">
-                        <div className="document-info">
-                          <span className="document-icon">📄</span>
-                          <span className="document-name">{doc.name}</span>
-                          <span className="document-type">({doc.type.toUpperCase()})</span>
-                        </div>
-                        <a href={doc.url} className="document-link" target="_blank" rel="noopener noreferrer">
-                          View Document
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Processing Information (for approved/rejected requests) */}
-                {(selectedRequest.status === 'approved' || selectedRequest.status === 'rejected') && (
-                  <div className="details-section">
-                    <h3 className="section-title">Processing Information</h3>
-                    <div className="details-grid">
-                      <div className="detail-item">
-                        <span className="detail-label">Processed Date:</span>
-                        <span className="detail-value">{formatDate(selectedRequest.processedDate)}</span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Processed By:</span>
-                        <span className="detail-value">{selectedRequest.processedBy}</span>
-                      </div>
-                      {selectedRequest.rejectionReason && (
-                        <div className="detail-item rejection-reason">
-                          <span className="detail-label">Rejection Reason:</span>
-                          <span className="detail-value">{selectedRequest.rejectionReason}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
+
+              {/* Applicant Information */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Applicant Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm text-gray-600">Username:</span>
+                    <p className="font-medium">{selectedRequest.username}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Email:</span>
+                    <p className="font-medium">{selectedRequest.email}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Platform:</span>
+                    <p className="font-medium">{selectedRequest.platform}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Email Verified:</span>
+                    <p className="font-medium">{selectedRequest.emailVerified ? 'Yes' : 'No'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Document */}
+              {selectedRequest.document && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Attached Document</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center">
+                      <span className="text-3xl mr-3">📄</span>
+                      <div>
+                        <p className="font-medium text-gray-900">Document</p>
+                        <p className="text-sm text-gray-600">{selectedRequest.document}</p>
+                      </div>
+                    </div>
+                    <a 
+                      href={`${config.API_BASE_URL.replace(/\/$/, '')}/auth/requests/${selectedRequest._id || selectedRequest.id}/document`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      View Document
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
             
             {selectedRequest.status === 'pending' && (
-              <div className="modal-footer">
+              <div className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
                 <button 
-                  className="action-btn reject-btn" 
-                  onClick={() => handleAction(selectedRequest.id, 'rejected')}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  onClick={() => handleAction(selectedRequest._id || selectedRequest.id, 'rejected')}
                   disabled={actionLoading}
                 >
                   {actionLoading ? 'Processing...' : 'Reject Request'}
                 </button>
                 <button 
-                  className="action-btn approve-btn" 
-                  onClick={() => handleAction(selectedRequest.id, 'approved')}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  onClick={() => handleAction(selectedRequest._id || selectedRequest.id, 'approved')}
                   disabled={actionLoading}
                 >
                   {actionLoading ? 'Processing...' : 'Approve Request'}

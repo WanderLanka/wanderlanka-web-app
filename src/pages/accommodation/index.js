@@ -5,3 +5,4 @@ export { default as HotelsPage } from './HotelsPage.jsx';
 export { default as Rooms } from './Rooms.jsx';
 export { default as AddNewAccommodation } from './AddNewAccommodation.jsx';
 export { default as AccommodationProfile } from './AccommodationProfile.jsx';
+export { default as ProviderBookings } from './ProviderBookings.jsx';

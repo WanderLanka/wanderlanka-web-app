@@ -35,11 +35,9 @@ const Transportation = () => {
 
     const vehicleTypes = useMemo(() => [
         { key: 'all', label: 'All Vehicles' },
-        { key: 'Car', label: 'Cars' },
-        { key: 'SUV', label: 'SUVs' },
-        { key: 'Bus', label: 'Buses' },
-        { key: 'Motorcycle', label: 'Motorcycles' },
-        { key: 'Tuk-Tuk', label: 'Tuk-Tuks' }
+        { key: 'car', label: 'Cars' },
+        { key: 'van', label: 'Vans' },
+        { key: 'bus', label: 'Buses' }
     ], []);
 
     const priceRanges = useMemo(() => [
@@ -183,15 +181,15 @@ const Transportation = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredTransportation.map((transport) => (
                         <Card
-                            key={transport.id}
+                            key={transport._id || transport.id}
                             className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                             hover={true}
                             padding="none"
                         >
                             <div className="relative">
                                 <img
-                                    src={transport.image}
-                                    alt={transport.name}
+                                    src={transport.images?.[0] || transport.image || '/placeholder-vehicle.jpg'}
+                                    alt={`${transport.brand || ''} ${transport.model || ''}`.trim() || 'Vehicle'}
                                     className="w-full h-48 object-cover"
                                 />
                                 <div className="absolute top-4 right-4">
@@ -201,80 +199,77 @@ const Transportation = () => {
                                 </div>
                                 <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 backdrop-blur-sm rounded-lg px-3 py-1">
                                     <span className="text-sm font-medium text-slate-700">
-                                        {transport.vehicleType}
+                                        {transport.brand} {transport.model}
                                     </span>
                                 </div>
                             </div>
 
                             <div className="p-6">
-                                <h3 className="text-xl font-bold text-slate-800 mb-2">{transport.name}</h3>
-                                <p className="text-sm text-slate-600 mb-3">{transport.provider}</p>
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">
+                                    {transport.vehicleType.charAt(0).toUpperCase() + transport.vehicleType.slice(1)} - {transport.year}
+                                </h3>
+                                <p className="text-sm text-slate-600 mb-3">License: {transport.licensePlate}</p>
                                 
                                 <div className="flex items-center text-slate-600 mb-3">
-                                    <MapPin className="w-4 h-4 mr-2" />
-                                    <span className="text-sm">{transport.location}</span>
+                                    <Car className="w-4 h-4 mr-2" />
+                                    <span className="text-sm capitalize">{transport.vehicleType}</span>
+                                    <span className="mx-2">•</span>
+                                    <Fuel className="w-4 h-4 mr-2" />
+                                    <span className="text-sm">{transport.fuelType}</span>
                                 </div>
 
                                 <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center">
-                                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
-                                        <span className="text-sm font-medium text-slate-700">
-                                            {transport.rating}
-                                        </span>
-                                        <span className="text-sm text-slate-500 ml-1">
-                                            ({transport.reviews} reviews)
-                                        </span>
-                                    </div>
                                     <div className="flex items-center text-slate-600">
                                         <Users className="w-4 h-4 mr-1" />
-                                        <span className="text-sm">{transport.capacity} seats</span>
+                                        <span className="text-sm">{transport.seats} seats</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <Clock className="w-4 h-4 text-slate-600 mr-1" />
+                                        <span className="text-sm font-medium text-slate-700">
+                                            {transport.availability}
+                                        </span>
                                     </div>
                                 </div>
 
-                                <p className="text-sm text-slate-600 mb-4 line-clamp-2">
-                                    {transport.description}
-                                </p>
+                                <div className="flex flex-col gap-2 mb-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-slate-600">Price per km:</span>
+                                        <span className="text-sm font-semibold text-slate-800">
+                                            LKR {transport.pricingPerKm.toLocaleString()}
+                                        </span>
+                                    </div>
+                                </div>
 
                                 {/* Features */}
                                 <div className="mb-4">
-                                    <div className="flex flex-wrap gap-1">
-                                        {transport.features.slice(0, 3).map((feature, index) => (
-                                            <span
-                                                key={index}
-                                                className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
-                                            >
-                                                {feature}
-                                            </span>
-                                        ))}
-                                        {transport.features.length > 3 && (
-                                            <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full">
-                                                +{transport.features.length - 3} more
+                                    <div className="flex flex-wrap gap-2">
+                                        {transport.ac && (
+                                            <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
+                                                Air Conditioned
                                             </span>
                                         )}
+                                        <span className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full">
+                                            {transport.fuelType}
+                                        </span>
+                                        <span className="px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-full capitalize">
+                                            {transport.vehicleType}
+                                        </span>
                                     </div>
                                 </div>
 
                                 <div className="flex items-center justify-between pt-4 border-t border-slate-200">
                                     <div>
                                         <span className="text-2xl font-bold text-slate-800">
-                                            ${transport.price}
+                                            LKR {Number(transport.pricingPerKm || 0).toLocaleString()}
                                         </span>
-                                        <span className="text-sm text-slate-500">
-                                            /{transport.priceUnit}
-                                        </span>
+                                        <span className="text-sm text-slate-500">/km</span>
                                     </div>
                                     <div className="flex gap-2">
                                         <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => navigate(`/user/transportation/${transport.id}`)}
-                                        >
-                                            Details
-                                        </Button>
-                                        <Button 
                                             variant="primary" 
                                             size="sm"
-                                            disabled={transport.availability === 'Unavailable'}
+                                            disabled={(transport.availability || '').toLowerCase() !== 'available'}
+                                            onClick={() => navigate(`/user/transportation/${transport._id || transport.id}`)}
                                         >
                                             Book Now
                                         </Button>

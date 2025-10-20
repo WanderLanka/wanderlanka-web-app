@@ -21,6 +21,7 @@ export { default as AccommodationProfile } from './accommodation/AccommodationPr
 // Transport pages
 export { default as TransportDashboard } from './transport/TransportDashboard.jsx';
 export { default as VehiclesPage } from './transport/VehiclesPage.jsx';
+export { default as TransportTrips } from './transport/TransportTrips.jsx';
 
 // User pages
 export { default as TravelerDashboard } from './traveler/TravelerDashboard.jsx';
@@ -36,6 +37,8 @@ export { default as TourGuides } from './traveler/TourGuides.jsx';
 export { default as AccommodationDetails } from './traveler/AccommodationDetails.jsx';
 export { default as TransportationDetails } from './traveler/TransportationDetails.jsx';
 export { default as TourGuideDetails } from './traveler/TourGuideDetails.jsx';
+export { default as BookingPayment } from './traveler/BookingPayment.jsx';
+export { default as IndividualBookingPayment } from './traveler/IndividualBookingPayment.jsx';
 
 
 export { default as Bookings } from './user/Bookings.jsx';

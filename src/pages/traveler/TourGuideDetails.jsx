@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ArrowLeft, 
@@ -174,10 +174,50 @@ const TourGuideDetails = () => {
         }
     ];
 
+    // Debug: Log the guide selection process
+    console.log('👨‍🏫 [DEBUG] Starting TourGuideDetails component...');
+    console.log('👨‍🏫 [DEBUG] Guide ID from params:', id);
+    console.log('👨‍🏫 [DEBUG] Location state:', location.state);
+    console.log('👨‍🏫 [DEBUG] Available mock guides:', mockTourGuides.length);
+    console.log('👨‍🏫 [DEBUG] Looking for guide with ID:', parseInt(id));
+    
     const guide = mockTourGuides.find(g => g.id === parseInt(id)) || mockTourGuides[0];
+    
+    console.log('👨‍🏫 [DEBUG] Selected guide:', guide);
+    console.log('👨‍🏫 [DEBUG] Guide details:');
+    if (guide) {
+        console.log('  - ID:', guide.id);
+        console.log('  - Name:', guide.guideName);
+        console.log('  - Provider:', guide.provider);
+        console.log('  - Location:', guide.location);
+        console.log('  - Rating:', guide.rating);
+        console.log('  - Price:', guide.price);
+        console.log('  - Price Unit:', guide.priceUnit);
+        console.log('  - Specialty:', guide.specialty);
+        console.log('  - Languages:', guide.languages);
+        console.log('  - Experience:', guide.experience);
+        console.log('  - Images count:', guide.images?.length || 0);
+        console.log('  - Features:', guide.features);
+        console.log('  - Availability:', guide.availability);
+        console.log('  - Description:', guide.description?.substring(0, 100) + '...');
+        console.log('  - Full guide object:', guide);
+    }
 
     // Check if user came from trip planning page
     const isFromTripPlanning = location.state?.fromTripPlanning === true;
+    console.log('👨‍🏫 [DEBUG] Is from trip planning:', isFromTripPlanning);
+
+    // Set default dates when coming from trip planning
+    useEffect(() => {
+        if (isFromTripPlanning && location.state?.selectedDateValue) {
+            const selectedDate = location.state.selectedDateValue; // This is the specific date user clicked
+            
+            setBookingData(prev => ({
+                ...prev,
+                tourDate: selectedDate
+            }));
+        }
+    }, [isFromTripPlanning, location.state]);
 
     const handlePrevImage = () => {
         setCurrentImage(prev => prev === 0 ? guide.images.length - 1 : prev - 1);
@@ -203,14 +243,37 @@ const TourGuideDetails = () => {
                 totalPrice: calculateTotal(),
                 image: guide.images[0],
                 specialties: guide.specialties,
-                languages: guide.languages
+                languages: guide.languages,
+                selectedDate: location.state?.selectedDateValue || bookingData.tourDate // Store the specific selected date
             };
             
             addToTripPlanning(planningBooking, 'guides');
-            alert('Added to your trip planning! Continue adding more services or review your summary.');
+            
+            console.log('✅ Guide added to trip planning:', planningBooking);
+            
+            // Show success popup and let user navigate back manually
+            alert('✅ Guide added to your itinerary successfully! You can now go back to the planning page to view your summary.');
         } else {
-            // Open payment modal for direct booking
-            setShowPaymentModal(true);
+            // Navigate to payment page for direct booking
+            const directBooking = {
+                id: `guide_${guide.id}_${Date.now()}`,
+                serviceId: guide.id,
+                name: guide.name,
+                location: guide.location,
+                type: 'guide',
+                tourDate: bookingData.tourDate,
+                duration: bookingData.duration,
+                groupSize: bookingData.groupSize,
+                pricePerHour: guide.price,
+                totalPrice: calculateTotal(),
+                image: guide.images[0],
+                specialties: guide.specialties,
+                languages: guide.languages
+            };
+            
+            // Store booking data in localStorage for payment page
+            localStorage.setItem('directBookingData', JSON.stringify([directBooking]));
+            navigate('/user/individual-booking-payment');
         }
     };
 
