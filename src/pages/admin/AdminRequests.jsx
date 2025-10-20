@@ -282,11 +282,11 @@ const AdminRequests = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      pending: "status-badge status-badge--warning",
-      approved: "status-badge status-badge--success",
-      rejected: "status-badge status-badge--error"
+      pending: "bg-amber-100 text-amber-800",
+      approved: "bg-green-100 text-green-800",
+      rejected: "bg-red-100 text-red-800"
     };
-    return badges[status] || "status-badge";
+    return badges[status] || "bg-slate-100 text-slate-800";
   };
 
   const getRoleIcon = (role) => {
@@ -349,63 +349,63 @@ const AdminRequests = () => {
 
   if (loading) {
     return (
-      <div className="access-requests">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <div className="loading-text">Loading access requests...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="text-slate-600">Loading access requests...</div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="access-requests">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Header Section */}
-      <div className="page-header">
-        <div className="header-content">
-          <div className="header-text">
-            <h1 className="page-title">Access Requests</h1>
-            <p className="page-subtitle">
+      <section className="bg-gradient-to-b from-slate-950 to-slate-900 relative py-16 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 via-transparent to-indigo-500/10 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+        
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="text-center text-white mb-12">
+            <h1 className="text-4xl lg:text-5xl font-extrabold leading-tight mb-6 bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent tracking-tight">
+              Access Requests
+            </h1>
+            <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
               Manage and review access requests from accommodation providers, transport services, and tour guides
             </p>
           </div>
           
-          <div className="header-stats">
-            <div className="stats-grid">
-              <div className="stat-item stat-item--warning">
-                <div className="stat-icon">⏳</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.pendingRequests}</div>
-                  <div className="stat-label">Pending</div>
-                </div>
-              </div>
-              <div className="stat-item stat-item--success">
-                <div className="stat-icon">✅</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.approvedRequests}</div>
-                  <div className="stat-label">Approved</div>
-                </div>
-              </div>
-              <div className="stat-item stat-item--error">
-                <div className="stat-icon">❌</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.rejectedRequests}</div>
-                  <div className="stat-label">Rejected</div>
-                </div>
-              </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 hover:border-amber-500/30 transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-3xl font-extrabold text-amber-200 mb-2 leading-none">{stats.pendingRequests}</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">Pending</div>
+            </div>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 hover:border-green-500/30 transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-3xl font-extrabold text-green-200 mb-2 leading-none">{stats.approvedRequests}</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">Approved</div>
+            </div>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 hover:border-red-500/30 transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+              <div className="text-3xl font-extrabold text-red-200 mb-2 leading-none">{stats.rejectedRequests}</div>
+              <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">Rejected</div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Filters Section */}
-      <div className="filters-section">
-        <div className="filters-container">
-          <div className="filters-group">
-            <div className="filter-item">
-              <label className="filter-label">Provider Type:</label>
+      <section className="max-w-7xl mx-auto px-6 py-8">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Provider Type:</label>
               <select 
-                className="filter-select"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
               >
@@ -416,10 +416,10 @@ const AdminRequests = () => {
               </select>
             </div>
 
-            <div className="filter-item">
-              <label className="filter-label">Status:</label>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Status:</label>
               <select 
-                className="filter-select"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
@@ -430,10 +430,10 @@ const AdminRequests = () => {
               </select>
             </div>
 
-            <div className="filter-item">
-              <label className="filter-label">Date Range:</label>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Date Range:</label>
               <select 
-                className="filter-select"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
               >
@@ -443,125 +443,129 @@ const AdminRequests = () => {
                 <option value="month">Last 30 Days</option>
               </select>
             </div>
-          </div>
 
-          <div className="results-info">
-            <span className="results-count">
-              {filteredRequests.length} request{filteredRequests.length !== 1 ? 's' : ''} found
-            </span>
+            <div className="text-right">
+              <span className="text-sm text-slate-600">
+                {filteredRequests.length} request{filteredRequests.length !== 1 ? 's' : ''} found
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Error Message */}
       {error && (
-        <div className="error-message">
-          <span className="error-icon">⚠️</span>
-          {error}
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
+            <div className="flex items-center">
+              <span className="text-red-400 text-xl mr-3">⚠️</span>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Requests Table */}
-      <div className="requests-section">
+      <section className="max-w-7xl mx-auto px-6 py-8">
         {currentRequests.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📋</div>
-            <h3 className="empty-title">No Access Requests Found</h3>
-            <p className="empty-description">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+            <div className="text-6xl mb-4">📋</div>
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No Access Requests Found</h3>
+            <p className="text-slate-600">
               No access requests match your current filter criteria.
             </p>
           </div>
         ) : (
           <>
-            <div className="requests-table-container">
-              <table className="requests-table">
-                <thead>
-                  <tr>
-                    <th>Request ID</th>
-                    <th>Applicant</th>
-                    <th>Provider Type</th>
-                    <th>Business Name</th>
-                    <th>Status</th>
-                    <th>Submitted Date</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentRequests.map((request) => (
-                    <tr key={request.id} className="request-row">
-                      <td className="request-id-cell">
-                        <div className="request-id">{request.id}</div>
-                      </td>
-                      
-                      <td className="applicant-cell">
-                        <div className="applicant-info">
-                          <div className="applicant-name">{request.applicantName}</div>
-                          <div className="applicant-email">{request.applicantEmail}</div>
-                        </div>
-                      </td>
-                      
-                      <td className="role-cell">
-                        <div className="provider-type">
-                          <span className="role-icon">{getRoleIcon(request.role)}</span>
-                          <span className="role-text">{getRoleName(request.role)}</span>
-                        </div>
-                      </td>
-                      
-                      <td className="business-cell">
-                        <div className="business-info">
-                          <div className="business-name">{request.businessName}</div>
-                          <div className="business-address">{request.businessAddress}</div>
-                        </div>
-                      </td>
-                      
-                      <td className="status-cell">
-                        <span className={getStatusBadge(request.status)}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                        </span>
-                      </td>
-                      
-                      <td className="date-cell">
-                        <div className="date-info">
-                          {formatDate(request.submittedDate)}
-                        </div>
-                      </td>
-                      
-                      <td className="actions-cell">
-                        <button 
-                          className="view-btn"
-                          onClick={() => handleRequestClick(request)}
-                        >
-                          View Details
-                        </button>
-                      </td>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Request ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Applicant</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Provider Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Business Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Submitted Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {currentRequests.map((request) => (
+                      <tr key={request.id} className="hover:bg-slate-50 transition-colors duration-150">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-slate-900">{request.id}</div>
+                        </td>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-slate-900">{request.applicantName}</div>
+                            <div className="text-sm text-slate-500">{request.applicantEmail}</div>
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <span className="text-lg mr-2">{getRoleIcon(request.role)}</span>
+                            <span className="text-sm text-slate-900">{getRoleName(request.role)}</span>
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <div>
+                            <div className="text-sm font-medium text-slate-900">{request.businessName}</div>
+                            <div className="text-sm text-slate-500">{request.businessAddress}</div>
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(request.status)}`}>
+                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                          </span>
+                        </td>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                          {formatDate(request.submittedDate)}
+                        </td>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button 
+                            className="text-blue-600 hover:text-blue-900 transition-colors duration-150"
+                            onClick={() => handleRequestClick(request)}
+                          >
+                            View Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="pagination">
+              <div className="flex items-center justify-between mt-6">
                 <button 
-                  className="pagination-btn"
+                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 >
                   Previous
                 </button>
                 
-                <div className="pagination-info">
-                  <span className="page-numbers">
+                <div className="text-sm text-slate-700">
+                  <span className="font-medium">
                     Page {currentPage} of {totalPages}
                   </span>
-                  <span className="items-info">
+                  <span className="ml-2 text-slate-500">
                     Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredRequests.length)} of {filteredRequests.length}
                   </span>
                 </div>
                 
                 <button 
-                  className="pagination-btn"
+                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 >
@@ -575,62 +579,62 @@ const AdminRequests = () => {
 
       {/* Modal */}
       {showModal && selectedRequest && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Access Request Details</h2>
-              <button className="modal-close" onClick={closeModal}>×</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={closeModal}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Access Request Details</h2>
+              <button className="text-slate-300 hover:text-white text-2xl" onClick={closeModal}>×</button>
             </div>
             
-            <div className="modal-body">
-              <div className="request-details">
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <div className="space-y-6">
                 {/* Basic Information */}
-                <div className="details-section">
-                  <h3 className="section-title">Basic Information</h3>
-                  <div className="details-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Request ID:</span>
-                      <span className="detail-value">{selectedRequest.id}</span>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Basic Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Request ID:</span>
+                      <span className="text-slate-900">{selectedRequest.id}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Status:</span>
-                      <span className={getStatusBadge(selectedRequest.status)}>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Status:</span>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(selectedRequest.status)}`}>
                         {selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}
                       </span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Provider Type:</span>
-                      <span className="detail-value">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Provider Type:</span>
+                      <span className="text-slate-900">
                         {getRoleIcon(selectedRequest.role)} {getRoleName(selectedRequest.role)}
                       </span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Submitted Date:</span>
-                      <span className="detail-value">{formatDate(selectedRequest.submittedDate)}</span>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Submitted Date:</span>
+                      <span className="text-slate-900">{formatDate(selectedRequest.submittedDate)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Applicant Information */}
-                <div className="details-section">
-                  <h3 className="section-title">Applicant Information</h3>
-                  <div className="details-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Name:</span>
-                      <span className="detail-value">{selectedRequest.applicantName}</span>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Applicant Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Name:</span>
+                      <span className="text-slate-900">{selectedRequest.applicantName}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Email:</span>
-                      <span className="detail-value">{selectedRequest.applicantEmail}</span>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Email:</span>
+                      <span className="text-slate-900">{selectedRequest.applicantEmail}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Contact:</span>
-                      <span className="detail-value">{selectedRequest.contactNumber}</span>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Contact:</span>
+                      <span className="text-slate-900">{selectedRequest.contactNumber}</span>
                     </div>
                     {selectedRequest.website && (
-                      <div className="detail-item">
-                        <span className="detail-label">Website:</span>
-                        <a href={selectedRequest.website} className="detail-link" target="_blank" rel="noopener noreferrer">
+                      <div className="flex justify-between">
+                        <span className="font-medium text-slate-700">Website:</span>
+                        <a href={selectedRequest.website} className="text-blue-600 hover:text-blue-800" target="_blank" rel="noopener noreferrer">
                           {selectedRequest.website}
                         </a>
                       </div>
@@ -639,45 +643,45 @@ const AdminRequests = () => {
                 </div>
 
                 {/* Business Information */}
-                <div className="details-section">
-                  <h3 className="section-title">Business Information</h3>
-                  <div className="details-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Business Name:</span>
-                      <span className="detail-value">{selectedRequest.businessName}</span>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Business Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Business Name:</span>
+                      <span className="text-slate-900">{selectedRequest.businessName}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Address:</span>
-                      <span className="detail-value">{selectedRequest.businessAddress}</span>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Address:</span>
+                      <span className="text-slate-900">{selectedRequest.businessAddress}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Registration:</span>
-                      <span className="detail-value">{selectedRequest.businessRegistration}</span>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Registration:</span>
+                      <span className="text-slate-900">{selectedRequest.businessRegistration}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Tax ID:</span>
-                      <span className="detail-value">{selectedRequest.taxId}</span>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-slate-700">Tax ID:</span>
+                      <span className="text-slate-900">{selectedRequest.taxId}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Description */}
-                <div className="details-section">
-                  <h3 className="section-title">Description</h3>
-                  <p className="description-text">{selectedRequest.description}</p>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Description</h3>
+                  <p className="text-slate-700 leading-relaxed">{selectedRequest.description}</p>
                 </div>
 
                 {/* Additional Information */}
                 {selectedRequest.additionalInfo && (
-                  <div className="details-section">
-                    <h3 className="section-title">Additional Information</h3>
-                    <div className="additional-info">
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Additional Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {Object.entries(selectedRequest.additionalInfo).map(([key, value]) => (
-                        <div key={key} className="detail-item">
-                          <span className="detail-label">
+                        <div key={key} className="flex justify-between">
+                          <span className="font-medium text-slate-700">
                             {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
                           </span>
-                          <span className="detail-value">
+                          <span className="text-slate-900">
                             {Array.isArray(value) ? value.join(', ') : value}
                           </span>
                         </div>
@@ -687,17 +691,19 @@ const AdminRequests = () => {
                 )}
 
                 {/* Documents */}
-                <div className="details-section">
-                  <h3 className="section-title">Attached Documents</h3>
-                  <div className="documents-list">
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Attached Documents</h3>
+                  <div className="space-y-3">
                     {selectedRequest.documents.map((doc, index) => (
-                      <div key={index} className="document-item">
-                        <div className="document-info">
-                          <span className="document-icon">📄</span>
-                          <span className="document-name">{doc.name}</span>
-                          <span className="document-type">({doc.type.toUpperCase()})</span>
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                        <div className="flex items-center">
+                          <span className="text-2xl mr-3">📄</span>
+                          <div>
+                            <span className="font-medium text-slate-900">{doc.name}</span>
+                            <span className="ml-2 text-sm text-slate-500">({doc.type.toUpperCase()})</span>
+                          </div>
                         </div>
-                        <a href={doc.url} className="document-link" target="_blank" rel="noopener noreferrer">
+                        <a href={doc.url} className="text-blue-600 hover:text-blue-800 font-medium" target="_blank" rel="noopener noreferrer">
                           View Document
                         </a>
                       </div>
@@ -707,21 +713,23 @@ const AdminRequests = () => {
 
                 {/* Processing Information (for approved/rejected requests) */}
                 {(selectedRequest.status === 'approved' || selectedRequest.status === 'rejected') && (
-                  <div className="details-section">
-                    <h3 className="section-title">Processing Information</h3>
-                    <div className="details-grid">
-                      <div className="detail-item">
-                        <span className="detail-label">Processed Date:</span>
-                        <span className="detail-value">{formatDate(selectedRequest.processedDate)}</span>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Processing Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex justify-between">
+                        <span className="font-medium text-slate-700">Processed Date:</span>
+                        <span className="text-slate-900">{formatDate(selectedRequest.processedDate)}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Processed By:</span>
-                        <span className="detail-value">{selectedRequest.processedBy}</span>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-slate-700">Processed By:</span>
+                        <span className="text-slate-900">{selectedRequest.processedBy}</span>
                       </div>
                       {selectedRequest.rejectionReason && (
-                        <div className="detail-item rejection-reason">
-                          <span className="detail-label">Rejection Reason:</span>
-                          <span className="detail-value">{selectedRequest.rejectionReason}</span>
+                        <div className="col-span-2">
+                          <span className="font-medium text-slate-700">Rejection Reason:</span>
+                          <p className="text-slate-900 mt-1 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            {selectedRequest.rejectionReason}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -731,16 +739,16 @@ const AdminRequests = () => {
             </div>
             
             {selectedRequest.status === 'pending' && (
-              <div className="modal-footer">
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
                 <button 
-                  className="action-btn reject-btn" 
+                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors duration-150" 
                   onClick={() => handleAction(selectedRequest.id, 'rejected')}
                   disabled={actionLoading}
                 >
                   {actionLoading ? 'Processing...' : 'Reject Request'}
                 </button>
                 <button 
-                  className="action-btn approve-btn" 
+                  className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 transition-colors duration-150" 
                   onClick={() => handleAction(selectedRequest.id, 'approved')}
                   disabled={actionLoading}
                 >
