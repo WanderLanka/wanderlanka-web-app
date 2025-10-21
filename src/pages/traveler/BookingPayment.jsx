@@ -325,39 +325,27 @@ const BookingPayment = () => {
           totalAmount: paymentSummary.totalAmount
         },
         // Add all provider information for each service (multiple providers supported)
-        accommodationProviders: paymentSummary.breakdown.accommodations.items.map((item, index) => {
-          const amount = item.price || item.totalPrice || item.cost || 0;
-          console.log(`[Payment] Accommodation ${index}:`, { name: item.name, price: item.price, totalPrice: item.totalPrice, cost: item.cost, finalAmount: amount });
-          return {
-            providerId: item.provider || `unknown_provider_${index}`,
-            providerName: item.name || `Accommodation Provider ${index + 1}`,
-            serviceId: item.serviceId || `trip_accommodation_${index}`,
-            amount: amount,
-            index: index
-          };
-        }),
-        transportProviders: paymentSummary.breakdown.transportation.items.map((item, index) => {
-          const amount = item.price || item.totalPrice || item.cost || 0;
-          console.log(`[Payment] Transport ${index}:`, { name: item.name, price: item.price, totalPrice: item.totalPrice, cost: item.cost, finalAmount: amount });
-          return {
-            providerId: item.provider || `unknown_provider_${index}`,
-            providerName: item.name || `Transport Provider ${index + 1}`,
-            serviceId: item.serviceId || `trip_transport_${index}`,
-            amount: amount,
-            index: index
-          };
-        }),
-        guideProviders: paymentSummary.breakdown.guides.items.map((item, index) => {
-          const amount = item.price || item.totalPrice || item.cost || 0;
-          console.log(`[Payment] Guide ${index}:`, { name: item.name, price: item.price, totalPrice: item.totalPrice, cost: item.cost, finalAmount: amount });
-          return {
-            providerId: item.provider || `unknown_provider_${index}`,
-            providerName: item.name || `Guide Provider ${index + 1}`,
-            serviceId: item.serviceId || `trip_guide_${index}`,
-            amount: amount,
-            index: index
-          };
-        })
+        accommodationProviders: paymentSummary.breakdown.accommodations.items.map((item, index) => ({
+          providerId: item.provider || `unknown_provider_${index}`,
+          providerName: item.name || `Accommodation Provider ${index + 1}`,
+          serviceId: item.serviceId || `trip_accommodation_${index}`,
+          amount: item.price || 0,
+          index: index
+        })),
+        transportProviders: paymentSummary.breakdown.transportation.items.map((item, index) => ({
+          providerId: item.provider || `unknown_provider_${index}`,
+          providerName: item.name || `Transport Provider ${index + 1}`,
+          serviceId: item.serviceId || `trip_transport_${index}`,
+          amount: item.price || 0,
+          index: index
+        })),
+        guideProviders: paymentSummary.breakdown.guides.items.map((item, index) => ({
+          providerId: item.provider || `unknown_provider_${index}`,
+          providerName: item.name || `Guide Provider ${index + 1}`,
+          serviceId: item.serviceId || `trip_guide_${index}`,
+          amount: item.price || 0,
+          index: index
+        }))
       };
       
       const session = await bookingsAPI.createCheckoutSession(sessionPayload);
