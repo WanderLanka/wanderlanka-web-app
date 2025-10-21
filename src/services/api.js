@@ -466,5 +466,41 @@ export const bookingsAPI = {
   }
 };
 
+// Payment endpoints
+export const paymentAPI = {
+  // Get user payments (for travelers)
+  getUserPayments: async () => {
+    try {
+      const response = await api.get('/payment/getUserPayments');
+      return response.data;
+    } catch (error) {
+      console.error('Get user payments failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get accommodation provider payments
+  getAccommodationPayments: async () => {
+    try {
+      const response = await api.get('/payment/getAccommodationPayments');
+      return response.data;
+    } catch (error) {
+      console.error('Get accommodation payments failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Get transportation provider payments
+  getTransportPayments: async () => {
+    try {
+      const response = await api.get('/payment/getTransportPayments');
+      return response.data;
+    } catch (error) {
+      console.error('Get transportation payments failed:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
 // Export the configured axios instance for direct use if needed
 export { api as axiosInstance };

@@ -1,13 +1,38 @@
-import { useState, useMemo } from 'react';
-import { CreditCard, Calendar, DollarSign, Download, Filter, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { CreditCard, Calendar, DollarSign, Download, Filter, CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react';
 import { Button, Card, Breadcrumb } from '../../components/common';
 import { TravelerFooter } from '../../components/traveler';
+import { paymentAPI } from '../../services/api';
 
 const Payments = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [showFilters, setShowFilters] = useState(false);
+    const [payments, setPayments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    // Mock data for payments
+    // Fetch payments from API
+    const fetchPayments = useCallback(async () => {
+        setLoading(true);
+        setError('');
+        
+        try {
+            const payments = await paymentAPI.getUserPayments();
+            setPayments(payments);
+        } catch (error) {
+            console.error('Error fetching payments:', error);
+            setError('Failed to fetch payments. Please try again later.');
+            setPayments([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchPayments();
+    }, [fetchPayments]);
+
+    // Mock data for payments (fallback)
     const mockPayments = useMemo(() => [
         {
             id: 1,
@@ -72,19 +97,22 @@ const Payments = () => {
     ], []);
 
     const paymentStats = useMemo(() => {
-        const stats = mockPayments.reduce((acc, payment) => {
-            if (payment.status === 'completed') acc.completed += payment.amount;
-            if (payment.status === 'pending') acc.pending += payment.amount;
-            if (payment.status === 'refunded') acc.refunded += payment.amount;
-            acc.total += payment.status === 'completed' ? payment.amount : 0;
+        const dataToUse = payments.length > 0 ? payments : mockPayments;
+        const stats = dataToUse.reduce((acc, payment) => {
+            const amount = payment.amount || 0;
+            if (payment.status === 'completed') acc.completed += amount;
+            if (payment.status === 'pending') acc.pending += amount;
+            if (payment.status === 'refunded') acc.refunded += amount;
+            acc.total += payment.status === 'completed' ? amount : 0;
             return acc;
         }, { total: 0, completed: 0, pending: 0, refunded: 0 });
         return stats;
-    }, [mockPayments]);
+    }, [payments, mockPayments]);
 
     const filterPayments = (status) => {
-        if (status === 'all') return mockPayments;
-        return mockPayments.filter(payment => payment.status === status);
+        const dataToUse = payments.length > 0 ? payments : mockPayments;
+        if (status === 'all') return dataToUse;
+        return dataToUse.filter(payment => payment.status === status);
     };
 
     const getStatusConfig = (status) => {
@@ -97,7 +125,9 @@ const Payments = () => {
         return configs[status] || { color: 'text-gray-700 bg-gray-100', icon: Clock };
     };
 
-    const getTypeIcon = (type) => {
+    const getTypeIcon = (payment) => {
+        // Handle both mock data and real API data
+        const type = payment.serviceType || payment.type;
         switch (type) {
             case 'accommodation': return '🏨';
             case 'transport': return '🚗';
@@ -180,6 +210,16 @@ const Payments = () => {
                             <Filter className="w-4 h-4 mr-2" />
                             Filters
                         </Button>
+                        <Button 
+                            variant="outline" 
+                            size="md" 
+                            onClick={fetchPayments}
+                            disabled={loading}
+                            className="flex items-center"
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </Button>
                         <Button variant="outline" size="md" className="flex items-center">
                             <Download className="w-4 h-4 mr-2" />
                             Export
@@ -187,34 +227,55 @@ const Payments = () => {
                     </div>
                 </div>
 
+                {/* Loading State */}
+                {loading && (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="flex items-center space-x-2 text-slate-600">
+                            <RefreshCw className="w-5 h-5 animate-spin" />
+                            <span>Loading payments...</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-center">
+                            <XCircle className="w-5 h-5 text-red-500 mr-2" />
+                            <span className="text-red-700">{error}</span>
+                        </div>
+                    </div>
+                )}
+
                 {/* Payments List */}
-                <div className="space-y-4">
-                    {filterPayments(activeTab).map((payment) => {
+                {!loading && !error && (
+                    <div className="space-y-4">
+                        {filterPayments(activeTab).map((payment) => {
                         const statusConfig = getStatusConfig(payment.status);
                         const StatusIcon = statusConfig.icon;
 
                         return (
-                            <Card key={payment.id} className="p-6 hover:shadow-lg transition-all duration-200" hover={true}>
+                            <Card key={payment._id || payment.id} className="p-6 hover:shadow-lg transition-all duration-200" hover={true}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-4">
                                         <div className="text-3xl">
-                                            {getTypeIcon(payment.type)}
+                                            {getTypeIcon(payment)}
                                         </div>
                                         <div>
                                             <h3 className="text-lg font-semibold text-slate-800 mb-1">
-                                                {payment.description}
+                                                {payment.description || payment.paymentDetails?.description || `${payment.serviceType} payment`}
                                             </h3>
                                             <div className="flex items-center space-x-4 text-sm text-slate-600">
                                                 <span className="flex items-center">
                                                     <Calendar className="w-4 h-4 mr-1" />
-                                                    {new Date(payment.date).toLocaleDateString()}
+                                                    {new Date(payment.createdAt || payment.date).toLocaleDateString()}
                                                 </span>
                                                 <span className="flex items-center">
                                                     <CreditCard className="w-4 h-4 mr-1" />
-                                                    {payment.method}
+                                                    {payment.paymentMethod || payment.method}
                                                 </span>
                                                 <span className="text-slate-500">
-                                                    ID: {payment.transactionId}
+                                                    ID: {payment.paymentId || payment.transactionId}
                                                 </span>
                                             </div>
                                         </div>
@@ -223,10 +284,10 @@ const Payments = () => {
                                     <div className="flex items-center space-x-6">
                                         <div className="text-right">
                                             <div className="text-2xl font-bold text-slate-800">
-                                                ${payment.amount}
+                                                {payment.currency === 'LKR' ? 'Rs.' : '$'}{payment.amount}
                                             </div>
                                             <div className="text-sm text-slate-500">
-                                                {payment.currency}
+                                                {payment.currency || 'USD'}
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-2">
@@ -243,15 +304,22 @@ const Payments = () => {
                             </Card>
                         );
                     })}
-                </div>
+                    </div>
+                )}
 
-                {filterPayments(activeTab).length === 0 && (
+                {!loading && !error && filterPayments(activeTab).length === 0 && (
                     <div className="text-center py-12">
                         <div className="text-6xl mb-4">💳</div>
-                        <h3 className="text-xl font-semibold text-slate-700 mb-2">No payments found</h3>
-                        <p className="text-slate-500">
-                            You don't have any {activeTab === 'all' ? '' : activeTab} payments.
+                        <h3 className="text-xl font-semibold text-slate-700 mb-2">You haven't made any payments yet</h3>
+                        <p className="text-slate-500 mb-4">
+                            Start exploring our amazing accommodations, transportation, and experiences to make your first payment.
                         </p>
+                        <Button 
+                            onClick={() => window.location.href = '/accommodations'}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            Start Exploring
+                        </Button>
                     </div>
                 )}
 
